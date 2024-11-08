@@ -52,3 +52,26 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
     npm run dev
 
 5. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
+
+## Usage
+Once installed, you can use the following commands to interact with the project:
+
+* `npm run dev` – Starts the development server.
+* `npm run build` – Builds the application for production.
+* `npm start` – Runs the production build of the app.
+* `npm run lint` – Lints the code for style and syntax issues.
+
+## Contributing
+Contributions are welcome! Please follow these steps to contribute:
+
+1. Fork the repository.
+2. Create a branch: git checkout -b feature/YourFeature.
+3. Commit your changes: git commit -m 'Add some feature'.
+4. Push to the branch: git push origin feature/YourFeature.
+5. Submit a pull request.
+
+## License
+This project is licensed under the MIT License – see the [LICENSE](https://github.com/Kyle-Ski/leaf-n-go/blob/main/LICENSE) file for details.
+
+## Contact
+Created by [Kyle](https://github.com/Kyle-Ski) – feel free to reach out for feedback, ideas, or collaboration.
