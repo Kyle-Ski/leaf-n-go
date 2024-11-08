@@ -17,7 +17,7 @@ const Dashboard = () => (
         <Button variant={"default"}>View Details</Button>
       </Card>
     </div>
-  </div>
+  </div>    
 );
 
 export default Dashboard;
