@@ -37,18 +37,18 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/kyle-ski/leaf-n-go.git```
+   git clone https://github.com/kyle-ski/leaf-n-go.git
 
 2. **Navigate to the project directory:**
     ```bash
-    cd leaf-n-go```
+    cd leaf-n-go
 
 3. **Install dependencies:**
     ```bash
-    npm install```
+    npm install
 
 4. **Run the development server:**
     ```bash
-    npm run dev```
+    npm run dev
 
 5. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
