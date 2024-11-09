@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Home, LayoutDashboard, ListTodo, Cog, BookOpenText } from "lucide-react";
+import { LayoutDashboard, ListTodo, Cog, BookOpenText } from "lucide-react";
 
 const menuItems = [
-  { title: "Home", url: "/", icon: Home },
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Checklists", url: "/checklists", icon: ListTodo },
   { title: "Settings", url: "/settings", icon: Cog },
   { title: "About", url: "/about", icon: BookOpenText },
