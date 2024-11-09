@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/bottomNav";
 import { usePathname } from "next/navigation";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname(); // Get the current pathname for active link
+  const pathname = usePathname();
 
   return (
     <SidebarProvider>
@@ -16,12 +16,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <SidebarTrigger />
       </div>
 
-      {/* Main Content */}
+      {/* Main Content with precise padding adjustments */}
       <main className="flex-grow p-4 md:p-6 lg:p-8 bg-gray-50">
-        <div className="container mx-auto">{children}</div>
+        <div className="max-w-screen-sm sm:max-w-screen-md lg:max-w-screen-lg w-full px-4 pb-20">
+          {children}
+        </div>
       </main>
 
-      {/* Bottom Navigation for mobile, passing pathname */}
+      {/* Bottom Navigation for mobile */}
       <BottomNav currentPath={pathname} />
     </SidebarProvider>
   );

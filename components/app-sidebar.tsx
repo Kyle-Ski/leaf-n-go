@@ -10,19 +10,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
   } from "@/components/ui/sidebar"
-  import { Home, LayoutDashboard, ListTodo, Cog, BookOpenText } from "lucide-react"
+  import { LayoutDashboard, ListTodo, Cog, BookOpenText } from "lucide-react"
 
   const menuItems = [
     {
-      title: "Home",
-      url: "/",
-      icon: Home,
-      
-    },
-    {
       title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard
+      url: "/",
+      icon: LayoutDashboard,
+      
     },
     {
       title: "Checklists",
