@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { UserProvider } from "@/lib/userProvider";
 import localFont from "next/font/local";
 import "./globals.css";
 import ClientLayout from "@/components/clientLayout"; // Import ClientLayout
@@ -28,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="flex min-h-screen">
-        <ClientLayout>{children}</ClientLayout>
+        <UserProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </UserProvider>
       </body>
     </html>
   );
