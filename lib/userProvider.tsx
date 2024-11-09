@@ -8,6 +8,7 @@ import { Session, User } from "@supabase/supabase-js";
 type UserContextType = {
   user: User | null;
   session: Session | null;
+  profile: { onboarded: boolean } | null;
   loading: boolean;
 };
 
@@ -40,12 +41,26 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState(mockProfile); // Simulated profile data
+  const [profile, setProfile] = useState<{ onboarded: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchUserProfile = async (userId: string) => {
+      const { data: userProfile, error } = await supabase
+        .from("profiles")
+        .select("onboarded")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+      } else {
+        setProfile(userProfile);
+      }
+    };
+
     if (process.env.NODE_ENV === "development") {
-      // In development, use mock user and session with mock profile data
+      // In development, use mock user, session, and profile data
       setUser(mockUser);
       setSession(mockSession);
       setProfile(mockProfile);
@@ -63,15 +78,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setLoading(false);
 
-        if (session) {
-          // Check profile onboarding status
-          const { data: userProfile } = await supabase
-            .from("profiles")
-            .select("onboarded")
-            .eq("id", session.user.id)
-            .single();
-
-          if (userProfile && !userProfile.onboarded) {
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+          if (profile && !profile.onboarded) {
             router.push("/welcome");
           }
         }
@@ -82,16 +91,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
         setUser(session?.user ?? null);
         setSession(session);
+        if (session?.user) fetchUserProfile(session.user.id);
       });
 
       return () => {
         listener.subscription.unsubscribe();
       };
     }
-  }, [router]);
+  }, [router, profile?.onboarded]);
 
   return (
-    <UserContext.Provider value={{ user, session, loading }}>
+    <UserContext.Provider value={{ user, session, profile, loading }}>
       {children}
     </UserContext.Provider>
   );
