@@ -25,7 +25,7 @@ export function BottomNav({ currentPath }: BottomNavProps) {
             key={item.title}
             href={item.url}
             className={`flex flex-col items-center text-gray-700 ${
-              isActive ? "text-blue-600" : ""
+              isActive ? "!text-blue-600" : ""
             }`}
           >
             <item.icon size={24} />
