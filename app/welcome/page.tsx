@@ -13,15 +13,21 @@ export default function Welcome() {
 
   const completeOnboarding = async () => {
     if (user) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ onboarded: true })
-        .eq("id", user.id);
-
-      if (error) {
-        console.error("Error completing onboarding:", error);
-      } else {
+      if (process.env.NODE_ENV === "development") {
+        // Simulate onboarding completion for mock mode
         router.push("/dashboard");
+      } else {
+        // Update onboarding status in Supabase for production
+        const { error } = await supabase
+          .from("profiles")
+          .update({ onboarded: true })
+          .eq("id", user.id);
+
+        if (error) {
+          console.error("Error completing onboarding:", error);
+        } else {
+          router.push("/dashboard");
+        }
       }
     }
   };
