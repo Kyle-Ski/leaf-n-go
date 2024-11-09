@@ -24,7 +24,7 @@ export default function Home() {
                 Leaf-N-Go Card Title
               </CardTitle>
               <CardContent>
-                Here's some content for the card!
+                Here&apos;s some content for the card!
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline">Cancel</Button>
