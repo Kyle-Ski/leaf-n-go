@@ -14,15 +14,10 @@ import {
 
   const menuItems = [
     {
-      title: "Home",
-      url: "/",
-      icon: Home,
-      
-    },
-    {
       title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard
+      url: "/",
+      icon: LayoutDashboard,
+      
     },
     {
       title: "Checklists",
