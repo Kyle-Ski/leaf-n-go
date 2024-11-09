@@ -58,8 +58,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(userProfile);
       }
     };
-
+    console.log("process.env.NODE_ENV", process.env.NODE_ENV)
     if (process.env.NODE_ENV === "development") {
+      
       // In development, use mock user, session, and profile data
       setUser(mockUser);
       setSession(mockSession);
