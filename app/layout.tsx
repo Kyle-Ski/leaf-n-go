@@ -1,9 +1,7 @@
-// app/layout.tsx
 import type { Metadata } from "next";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import localFont from "next/font/local";
 import "./globals.css";
+import ClientLayout from "@/components/clientLayout"; // Import ClientLayout
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,16 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="flex min-h-screen">
-        {/* Sidebar Wrapper */}
-        <SidebarProvider>
-          <AppSidebar />
-
-          {/* Main Content */}
-          <main className="flex-grow p-4 md:p-6 lg:p-8 bg-gray-50">
-            <SidebarTrigger />
-            <div className="container mx-auto">{children}</div>
-          </main>
-        </SidebarProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );
