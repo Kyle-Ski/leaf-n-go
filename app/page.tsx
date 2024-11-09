@@ -6,9 +6,9 @@ import Link from "next/link";
 
 export default function PlanningHub() {
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-6 space-y-8">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
       {/* Current Trip Overview */}
-      <section className="w-full max-w-4xl">
+      <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
         <Card className="p-6 bg-white shadow-lg">
           <CardHeader>
             <CardTitle>Upcoming Trip: Yosemite Adventure</CardTitle>
@@ -30,7 +30,7 @@ export default function PlanningHub() {
       </section>
 
       {/* Environmental Insights and Tips */}
-      <section className="w-full max-w-4xl grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <section className="w-full grid gap-4 sm:grid-cols-2 max-w-md sm:max-w-lg md:max-w-4xl">
         <Card className="p-4 bg-white shadow-lg">
           <CardHeader>
             <CardTitle>Sustainable Packing Tip</CardTitle>
@@ -50,7 +50,7 @@ export default function PlanningHub() {
       </section>
 
       {/* Recent Trips and Activity */}
-      <section className="w-full max-w-4xl">
+      <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
         <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <Card className="p-4 bg-white shadow-lg">
@@ -81,7 +81,7 @@ export default function PlanningHub() {
       </section>
 
       {/* Start a New Trip */}
-      <section className="w-full max-w-4xl text-center">
+      <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl text-center">
         <h2 className="text-xl font-semibold mb-4">Plan Your Next Adventure</h2>
         <Link href="/new-trip">
           <Button className="bg-green-600 text-white px-6 py-3 rounded-md">Start a New Trip</Button>
