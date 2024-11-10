@@ -12,6 +12,7 @@ export default function Welcome() {
   const router = useRouter();
 
   const completeOnboarding = async () => {
+    console.log("user", user, "process.env.NODE_ENV",process.env.NODE_ENV === "development")
     if (user) {
       if (process.env.NODE_ENV === "development") {
         // Simulate onboarding completion for mock mode
