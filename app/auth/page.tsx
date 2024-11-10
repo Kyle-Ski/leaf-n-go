@@ -21,6 +21,7 @@ export default function AuthPage() {
       process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
       "http://localhost:3000/";
     url = url.startsWith("http") ? url : `https://${url}`;
+    console.log("Getting URL:", url.endsWith("/") ? url : `${url}/`)
     return url.endsWith("/") ? url : `${url}/`;
   };
 
