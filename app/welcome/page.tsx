@@ -1,7 +1,6 @@
 "use client";
 
 import { useUser } from "@/lib/userProvider";
-import { supabase } from "@/lib/supbaseClient";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -13,44 +12,10 @@ export default function Welcome() {
 
   const completeOnboarding = async () => {
     console.log("user", user, "process.env.NODE_ENV", process.env.NODE_ENV === "development");
-    
+
+    // Directly navigate to dashboard after completing onboarding
     if (user) {
-      if (process.env.NODE_ENV === "development") {
-        // Simulate onboarding completion in development mode
-        router.push("/dashboard");
-      } else {
-        try {
-          // First, confirm that the profile exists
-          const { data: profileData, error: fetchError } = await supabase
-            .from("profiles")
-            .select("onboarded")
-            .eq("id", user.id)
-            .single();
-
-          if (fetchError) {
-            console.error("Error fetching profile:", fetchError.message);
-            return;
-          }
-
-          // If the profile exists, update the onboarding status
-          if (profileData) {
-            const { error: updateError } = await supabase
-              .from("profiles")
-              .update({ onboarded: true })
-              .eq("id", user.id);
-
-            if (updateError) {
-              console.error("Error completing onboarding:", updateError.message);
-            } else {
-              router.push("/dashboard");
-            }
-          } else {
-            console.log("Profile not found for this user.");
-          }
-        } catch (error) {
-          console.error("Unexpected error in completeOnboarding:", error);
-        }
-      }
+      router.push("/dashboard");
     }
   };
 

@@ -8,7 +8,6 @@ import { Session, User } from "@supabase/supabase-js";
 type UserContextType = {
   user: User | null;
   session: Session | null;
-  profile: { onboarded: boolean } | null;
   loading: boolean;
 };
 
@@ -35,47 +34,22 @@ const mockSession: Session = {
   user: mockUser,
 };
 
-const mockProfile = { onboarded: false }; // Set onboarded to false for testing
-
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<{ onboarded: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserProfile = async (userId: string) => {
-      try {
-        const { data: userProfile, error } = await supabase
-          .from("profiles")
-          .select("onboarded")
-          .eq("id", userId)
-          .single();
-
-        if (error) {
-          console.error("Error fetching user profile:", error.message);
-        } else if (userProfile) {
-          setProfile(userProfile);
-        }
-      } catch (error) {
-        console.error("Unexpected error fetching profile:", error);
-      }
-    };
-
     const handleSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       setSession(session);
       setLoading(false);
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-
-        // Redirect if user is not onboarded
-        if (profile && !profile.onboarded) {
-          router.push("/welcome");
-        }
+      // Optionally, redirect new users to `/welcome` if desired
+      if (session?.user && !loading) {
+        router.push("/welcome");
       }
     };
 
@@ -83,29 +57,26 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // In development, use mock data
       setUser(mockUser);
       setSession(mockSession);
-      setProfile(mockProfile);
       setLoading(false);
 
-      if (!mockProfile.onboarded) {
-        router.push("/welcome");
-      }
+      // Optionally, redirect to `/welcome` in development
+      router.push("/welcome");
     } else {
       handleSession();
 
       const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
         setUser(session?.user ?? null);
         setSession(session);
-        if (session?.user) fetchUserProfile(session.user.id);
       });
 
       return () => {
         listener.subscription.unsubscribe();
       };
     }
-  }, [router, profile?.onboarded]);
+  }, [router]);
 
   return (
-    <UserContext.Provider value={{ user, session, profile, loading }}>
+    <UserContext.Provider value={{ user, session, loading }}>
       {children}
     </UserContext.Provider>
   );
