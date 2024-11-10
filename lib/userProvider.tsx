@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supbaseClient";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
-import { NextPage } from "next";
+import { ComponentType } from "react";
 
 type UserContextType = {
   user: User | null;
@@ -101,7 +101,7 @@ export const useUser = (): UserContextType => {
   return context;
 };
 
-export function withAuth<T extends Record<string, unknown>>(Component: NextPage<T>): NextPage<T> {
+export function withAuth<T extends object>(Component: ComponentType<T>): ComponentType<T> {
   return function AuthenticatedComponent(props: T) {
     const { user, loading } = useUser();
     const router = useRouter();
