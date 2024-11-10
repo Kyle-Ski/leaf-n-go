@@ -1,35 +1,165 @@
-// app/settings/page.tsx
 "use client";
 
-// import Navbar from "@/components/Navbar";
+import { useUser, withAuth } from "@/lib/userProvider";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-import { withAuth } from "@/lib/userProvider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
-const Settings = () => {
+const SettingsPage = () => {
+  const { user, logout } = useUser();
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedName, setUpdatedName] = useState(user?.user_metadata?.name || "");
+  const [updatedEmail, setUpdatedEmail] = useState(user?.email || "");
+  const [darkMode, setDarkMode] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(false);
+
+  useEffect(() => {
+    // Mock data fetching to simulate pulling user preferences from a database
+    // Replace this logic with an actual API call when the database is set up
+    const fetchUserSettings = async () => {
+      // Mock fetching data
+      const mockSettings = {
+        darkMode: true,
+        emailNotifications: true,
+        pushNotifications: false,
+      };
+
+      setDarkMode(mockSettings.darkMode);
+      setEmailNotifications(mockSettings.emailNotifications);
+      setPushNotifications(mockSettings.pushNotifications);
+    };
+
+    fetchUserSettings();
+  }, []);
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleSave = () => {
+    // Logic to save updated user information to the database
+    // This could be an API call to update user information
+    console.log("Saving user information", { updatedName, updatedEmail, darkMode, emailNotifications, pushNotifications });
+    setIsEditing(false);
+  };
 
   return (
-    <div>
-      {/* <Navbar /> */}
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
-        
-        <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">Open popover</Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-            <p>Here you can adjust your preferences.</p>
-            </PopoverContent>
-          </Popover>
-        
-      </div>
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
+      <section className="w-full max-w-4xl space-y-8">
+        {/* General Settings Section */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>General Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">Manage your account preferences and settings here.</p>
+          </CardContent>
+        </Card>
+
+        {/* Profile Information */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-gray-700">Name</label>
+              <Input
+                type="text"
+                value={updatedName}
+                onChange={(e) => setUpdatedName(e.target.value)}
+                placeholder="Your Name"
+                className="w-full mt-1"
+                readOnly={!isEditing}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700">Email</label>
+              <Input
+                type="email"
+                value={updatedEmail}
+                onChange={(e) => setUpdatedEmail(e.target.value)}
+                className="w-full mt-1 bg-gray-100"
+                readOnly={!isEditing}
+              />
+            </div>
+            <div className="flex space-x-4 mt-4">
+              {isEditing ? (
+                <>
+                  <Button onClick={handleSave} className="bg-green-500 text-white hover:bg-green-600">
+                    Save
+                  </Button>
+                  <Button onClick={handleEditToggle} className="bg-gray-500 text-white hover:bg-gray-600">
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={handleEditToggle} className="bg-blue-500 text-white hover:bg-blue-600">
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center space-x-4">
+            <label className="text-gray-700">Dark Mode</label>
+            <Switch checked={darkMode} onCheckedChange={(value) => setDarkMode(value)} />
+          </CardContent>
+        </Card>
+
+        {/* Notifications Settings */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <label className="text-gray-700">Email Notifications</label>
+              <Switch checked={emailNotifications} onCheckedChange={(value) => setEmailNotifications(value)} />
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="text-gray-700">Push Notifications</label>
+              <Switch checked={pushNotifications} onCheckedChange={(value) => setPushNotifications(value)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Security</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button className="bg-blue-500 text-white hover:bg-blue-600">Change Password</Button>
+          </CardContent>
+        </Card>
+
+        {/* Logout Button */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Log Out</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={logout}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              Log Out
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
-};
-
-export default withAuth(Settings);
+}
+ 
+export default withAuth(SettingsPage);

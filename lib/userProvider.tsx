@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supbaseClient";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
-import { NextPage } from "next";
 import { ComponentType } from "react";
 
 type UserContextType = {
