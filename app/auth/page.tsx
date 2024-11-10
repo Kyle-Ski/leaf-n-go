@@ -14,6 +14,16 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
 
+  // Helper function to generate the correct base URL dynamically
+  const getURL = () => {
+    let url =
+      process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+      process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+      "http://localhost:3000/";
+    url = url.startsWith("http") ? url : `https://${url}`;
+    return url.endsWith("/") ? url : `${url}/`;
+  };
+
   const validatePassword = (password: string) => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
@@ -35,7 +45,12 @@ export default function AuthPage() {
     }
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${getURL()}auth/callback` }, // Use dynamic URL for email redirect
+      });
+
       if (error) {
         setError(error.message);
       } else {
