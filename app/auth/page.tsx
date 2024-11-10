@@ -21,7 +21,6 @@ export default function AuthPage() {
       process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
       "http://localhost:3000/";
     url = url.startsWith("http") ? url : `https://${url}`;
-    console.log("Getting URL:", url.endsWith("/") ? url : `${url}/`)
     return url.endsWith("/") ? url : `${url}/`;
   };
 
@@ -55,7 +54,6 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        console.log("getURL()}auth/callback`",`${getURL()}auth/callback`)
         setConfirmationMessage(
           "A confirmation email has been sent. Please check your inbox to verify your account."
         );
