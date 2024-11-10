@@ -39,21 +39,9 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        // Create a profile for the new user using the RPC function
-        if (user.user) {
-          const { error: profileError } = await supabase.rpc("create_profile", {
-            user_id: user.user.id,
-          });
-
-          if (profileError) {
-            console.error("Error creating profile:", profileError.message);
-            setError("There was an issue creating your profile. Please contact support.");
-          } else {
-            setConfirmationMessage(
-              "A confirmation email has been sent. Please check your inbox to verify your account."
-            );
-          }
-        }
+        setConfirmationMessage(
+          "A confirmation email has been sent. Please check your inbox to verify your account."
+        );
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
