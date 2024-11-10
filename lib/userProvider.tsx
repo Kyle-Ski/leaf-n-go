@@ -37,7 +37,7 @@ const mockSession: Session = {
 };
 
 // Toggle this to simulate an authenticated or unauthenticated state in development
-const isAuthenticated = false; // Change to `false` to simulate an unauthenticated user
+const isAuthenticated = true; // Change to `false` to simulate an unauthenticated user
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -76,7 +76,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         listener.subscription.unsubscribe();
       };
     }
-  }, []);
+  }, [router]);
 
   // Redirect to /auth only if user is not authenticated, and they aren't on a public page
   useEffect(() => {
@@ -84,7 +84,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!loading && user === null && !publicPaths.includes(pathname ?? "")) {
       router.replace("/auth");
     }
-  }, [loading, user, pathname]);
+  }, [loading, user, pathname, router]);
 
   return (
     <UserContext.Provider value={{ user, session, loading }}>
