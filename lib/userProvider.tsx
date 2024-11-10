@@ -10,6 +10,7 @@ type UserContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  logout: () => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -86,8 +87,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [loading, user, pathname, router]);
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    router.replace("/auth");
+  };
+
   return (
-    <UserContext.Provider value={{ user, session, loading }}>
+    <UserContext.Provider value={{ user, session, loading, logout }}>
       {!loading ? children : null}
     </UserContext.Provider>
   );
