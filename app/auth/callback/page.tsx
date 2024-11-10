@@ -17,9 +17,9 @@ export default function AuthCallback() {
       if (error) {
         setStatus("Verification failed. Please try again or sign in.");
       } else {
-        setStatus("Email verified! Redirecting to dashboard...");
+        setStatus("Email verified! Redirecting to welcome...");
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push("/welcome");  
         }, 2000);
       }
     };
