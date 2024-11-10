@@ -46,48 +46,51 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const fetchUserProfile = async (userId: string) => {
-      const { data: userProfile, error } = await supabase
-        .from("profiles")
-        .select("onboarded")
-        .eq("id", userId)
-        .single();
+      try {
+        const { data: userProfile, error } = await supabase
+          .from("profiles")
+          .select("onboarded")
+          .eq("id", userId)
+          .single();
 
-      if (error) {
-        console.error("Error fetching user profile:", error);
-      } else {
-        setProfile(userProfile);
+        if (error) {
+          console.error("Error fetching user profile:", error.message);
+        } else if (userProfile) {
+          setProfile(userProfile);
+        }
+      } catch (error) {
+        console.error("Unexpected error fetching profile:", error);
       }
     };
-    console.log("process.env.NODE_ENV", process.env.NODE_ENV)
+
+    const handleSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setSession(session);
+      setLoading(false);
+
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+
+        // Redirect if user is not onboarded
+        if (profile && !profile.onboarded) {
+          router.push("/welcome");
+        }
+      }
+    };
+
     if (process.env.NODE_ENV === "development") {
-      
-      // In development, use mock user, session, and profile data
+      // In development, use mock data
       setUser(mockUser);
       setSession(mockSession);
       setProfile(mockProfile);
       setLoading(false);
 
-      // Redirect new users (who haven't completed onboarding) to /welcome
       if (!mockProfile.onboarded) {
         router.push("/welcome");
       }
     } else {
-      // Production: Use real session handling with Supabase auth
-      const getSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        setSession(session);
-        setLoading(false);
-
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-          if (profile && !profile.onboarded) {
-            router.push("/welcome");
-          }
-        }
-      };
-
-      getSession();
+      handleSession();
 
       const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
         setUser(session?.user ?? null);
