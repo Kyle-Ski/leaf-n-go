@@ -35,11 +35,25 @@ export default function AuthPage() {
     }
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data: user, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
       } else {
-        setConfirmationMessage("A confirmation email has been sent. Please check your inbox to verify your account.");
+        // Create a profile for the new user
+        if (user.user) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert([{ id: user.user.id, onboarded: false, created_at: new Date() }]);
+
+          if (profileError) {
+            console.error("Error creating profile:", profileError.message);
+            setError("There was an issue creating your profile. Please contact support.");
+          } else {
+            setConfirmationMessage(
+              "A confirmation email has been sent. Please check your inbox to verify your account."
+            );
+          }
+        }
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
