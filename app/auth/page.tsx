@@ -55,6 +55,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
+        console.log("getURL()}auth/callback`",`${getURL()}auth/callback`)
         setConfirmationMessage(
           "A confirmation email has been sent. Please check your inbox to verify your account."
         );
