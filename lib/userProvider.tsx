@@ -17,7 +17,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Mock data for development mode
 const mockUser: User = {
-  id: "mock-user-id",
+  id: "8e59f4e4-12c1-4a3a-9b36-df1e21e3d6bf",  // Updated UUID to match the database
   email: "devuser@example.com",
   email_confirmed_at: new Date().toISOString(),
   aud: "authenticated",
