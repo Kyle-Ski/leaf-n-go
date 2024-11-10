@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
+import { withAuth } from "@/lib/userProvider"
 
-export default function PlanningHub() {
+const PlanningHub = () => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
       {/* Current Trip Overview */}
@@ -89,4 +90,6 @@ export default function PlanningHub() {
       </section>
     </div>
   );
-}
+};
+
+export default withAuth(PlanningHub);

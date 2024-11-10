@@ -8,6 +8,7 @@ import {
     PopoverContent,
     PopoverTrigger,
   } from "@/components/ui/popover"
+import { withAuth } from "@/lib/userProvider";
 
 const Settings = () => {
 
@@ -31,4 +32,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default withAuth(Settings);

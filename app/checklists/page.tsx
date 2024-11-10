@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
+import { withAuth } from "@/lib/userProvider";
 
-export default function ChecklistsPage() {
+const ChecklistsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
@@ -172,3 +173,5 @@ export default function ChecklistsPage() {
     </div>
   );
 }
+
+export default withAuth(ChecklistsPage)
