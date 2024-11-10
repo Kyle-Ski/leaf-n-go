@@ -4,12 +4,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supbaseClient";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
+import { NextPage } from "next";
 import { ComponentType } from "react";
 
 type UserContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  logout: () => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -86,8 +88,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [loading, user, pathname, router]);
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    router.replace("/auth");
+  };
+
   return (
-    <UserContext.Provider value={{ user, session, loading }}>
+    <UserContext.Provider value={{ user, session, loading, logout }}>
       {!loading ? children : null}
     </UserContext.Provider>
   );
