@@ -39,11 +39,11 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        // Create a profile for the new user
+        // Create a profile for the new user using the RPC function
         if (user.user) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert([{ id: user.user.id, onboarded: false, created_at: new Date() }]);
+          const { error: profileError } = await supabase.rpc("create_profile", {
+            user_id: user.user.id,
+          });
 
           if (profileError) {
             console.error("Error creating profile:", profileError.message);
