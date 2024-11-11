@@ -15,35 +15,68 @@ const SettingsPage = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(false);
+  const [isDarkModeChanged, setIsDarkModeChanged] = useState(false);
+  const [isEmailNotificationsChanged, setIsEmailNotificationsChanged] = useState(false);
+  const [isPushNotificationsChanged, setIsPushNotificationsChanged] = useState(false);
 
+  // Fetch user settings from the database when the component mounts
   useEffect(() => {
-    // Mock data fetching to simulate pulling user preferences from a database
-    // Replace this logic with an actual API call when the database is set up
     const fetchUserSettings = async () => {
-      // Mock fetching data
-      const mockSettings = {
-        darkMode: true,
-        emailNotifications: true,
-        pushNotifications: false,
-      };
+      if (!user) return;
 
-      setDarkMode(mockSettings.darkMode);
-      setEmailNotifications(mockSettings.emailNotifications);
-      setPushNotifications(mockSettings.pushNotifications);
+      try {
+        const response = await fetch(`/api/user-settings?userId=${user.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user settings');
+        }
+        const data = await response.json();
+        setDarkMode(data.dark_mode);
+        setEmailNotifications(data.email_notifications);
+        setPushNotifications(data.push_notifications);
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+      }
     };
 
     fetchUserSettings();
-  }, []);
+  }, [user]);
+
+  // Save updated user settings to the database
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/user-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          darkMode,
+          emailNotifications,
+          pushNotifications,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save user settings');
+      }
+
+      const result = await response.json();
+      console.log(result.message);
+      
+      setIsEditing(false);
+      setIsDarkModeChanged(false);
+      setIsEmailNotificationsChanged(false);
+      setIsPushNotificationsChanged(false);
+    } catch (error) {
+      console.error("Error saving user settings:", error);
+    }
+  };
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
-  };
-
-  const handleSave = () => {
-    // Logic to save updated user information to the database
-    // This could be an API call to update user information
-    console.log("Saving user information", { updatedName, updatedEmail, darkMode, emailNotifications, pushNotifications });
-    setIsEditing(false);
   };
 
   return (
@@ -112,8 +145,15 @@ const SettingsPage = () => {
           </CardHeader>
           <CardContent className="flex items-center space-x-4">
             <label className="text-gray-700">Dark Mode</label>
-            <Switch checked={darkMode} onCheckedChange={(value) => setDarkMode(value)} />
+            <Switch checked={darkMode} onCheckedChange={(value) => { setDarkMode(value); setIsDarkModeChanged(true); }} />
           </CardContent>
+          {isDarkModeChanged && (
+            <CardContent className="flex space-x-4 mt-4">
+              <Button onClick={handleSave} className="bg-green-500 text-white hover:bg-green-600">
+                Save
+              </Button>
+            </CardContent>
+          )}
         </Card>
 
         {/* Notifications Settings */}
@@ -124,13 +164,20 @@ const SettingsPage = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
               <label className="text-gray-700">Email Notifications</label>
-              <Switch checked={emailNotifications} onCheckedChange={(value) => setEmailNotifications(value)} />
+              <Switch checked={emailNotifications} onCheckedChange={(value) => { setEmailNotifications(value); setIsEmailNotificationsChanged(true); }} />
             </div>
             <div className="flex items-center space-x-4">
               <label className="text-gray-700">Push Notifications</label>
-              <Switch checked={pushNotifications} onCheckedChange={(value) => setPushNotifications(value)} />
+              <Switch checked={pushNotifications} onCheckedChange={(value) => { setPushNotifications(value); setIsPushNotificationsChanged(true); }} />
             </div>
           </CardContent>
+          {(isEmailNotificationsChanged || isPushNotificationsChanged) && (
+            <CardContent className="flex space-x-4 mt-4">
+              <Button onClick={handleSave} className="bg-green-500 text-white hover:bg-green-600">
+                Save
+              </Button>
+            </CardContent>
+          )}
         </Card>
 
         {/* Security Settings */}
@@ -161,5 +208,5 @@ const SettingsPage = () => {
     </div>
   );
 }
- 
+
 export default withAuth(SettingsPage);

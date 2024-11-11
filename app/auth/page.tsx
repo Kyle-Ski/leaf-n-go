@@ -1,28 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supbaseClient";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Session } from "@supabase/supabase-js";
+import { useUser } from "@/lib/userProvider";
 
 export default function AuthPage() {
   const router = useRouter();
+  const { updateSession } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
-
-  // Helper function to generate the correct base URL dynamically
-  const getURL = () => {
-    let url =
-      process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
-      process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
-      "http://localhost:3000/";
-    url = url.startsWith("http") ? url : `https://${url}`;
-    return url.endsWith("/") ? url : `${url}/`;
-  };
 
   const validatePassword = (password: string) => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -44,27 +36,49 @@ export default function AuthPage() {
       return;
     }
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${getURL()}auth/callback` }, // Use dynamic URL for email redirect
-      });
+    try {
+      if (isSignUp) {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
 
-      if (error) {
-        setError(error.message);
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.error);
+        } else {
+          setConfirmationMessage(
+            "A confirmation email has been sent. Please check your inbox to verify your account."
+          );
+        }
       } else {
-        setConfirmationMessage(
-          "A confirmation email has been sent. Please check your inbox to verify your account."
-        );
+        const response = await fetch('/api/auth/signin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.error);
+        } else {
+          // Fetch the current session to update the user context.
+          const sessionResponse = await fetch('/api/auth/session');
+          if (sessionResponse.ok) {
+            const sessionData: Session = await sessionResponse.json();
+            updateSession(sessionData); // Update the session in the UserProvider context
+          }
+          router.push('/dashboard');
+        }
       }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(error.message);
-      } else {
-        router.push("/dashboard");
-      }
+    } catch (err) {
+      console.warn("error:", err);
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 
