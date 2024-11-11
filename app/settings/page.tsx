@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supbaseClient"; 
 
 const SettingsPage = () => {
   const { user, logout } = useUser();
@@ -25,21 +24,17 @@ const SettingsPage = () => {
     const fetchUserSettings = async () => {
       if (!user) return;
 
-      // Fetch settings for the logged-in user from Supabase
-      const { data, error } = await supabase
-        .from("user_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();  // Use maybeSingle to handle the case where no rows exist
-
-      if (error) {
-        console.error("Error fetching user settings:", error);
-      } else if (data) {
+      try {
+        const response = await fetch(`/api/user-settings?userId=${user.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user settings');
+        }
+        const data = await response.json();
         setDarkMode(data.dark_mode);
         setEmailNotifications(data.email_notifications);
         setPushNotifications(data.push_notifications);
-      } else {
-        console.log("No settings found for user, using defaults.");
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
       }
     };
 
@@ -49,66 +44,37 @@ const SettingsPage = () => {
   // Save updated user settings to the database
   const handleSave = async () => {
     if (!user) return;
-  
+
     try {
-      // Check if a settings row already exists for this user
-      const { data: existingData, error: fetchError } = await supabase
-        .from("user_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-  
-      if (fetchError && fetchError.code !== "PGRST116") {
-        // Only handle errors that are not "no rows found"
-        console.error("Error fetching user settings:", fetchError);
-        return;
+      const response = await fetch(`/api/user-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          darkMode,
+          emailNotifications,
+          pushNotifications,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save user settings');
       }
-  
-      if (existingData) {
-        // Update the existing settings row
-        const { error: updateError } = await supabase
-          .from("user_settings")
-          .update({
-            dark_mode: darkMode,
-            email_notifications: emailNotifications,
-            push_notifications: pushNotifications,
-          })
-          .eq("user_id", user.id);
-  
-        if (updateError) {
-          console.error("Error updating user settings:", updateError);
-        } else {
-          console.log("User settings updated successfully");
-        }
-      } else {
-        // Insert a new settings row
-        const { error: insertError } = await supabase
-          .from("user_settings")
-          .insert({
-            user_id: user.id,
-            dark_mode: darkMode,
-            email_notifications: emailNotifications,
-            push_notifications: pushNotifications,
-          });
-  
-        if (insertError) {
-          console.error("Error inserting user settings:", insertError);
-        } else {
-          console.log("User settings inserted successfully");
-        }
-      }
-  
-      // Reset flags after successful save
+
+      const result = await response.json();
+      console.log(result.message);
+      
       setIsEditing(false);
       setIsDarkModeChanged(false);
       setIsEmailNotificationsChanged(false);
       setIsPushNotificationsChanged(false);
     } catch (error) {
-      console.error("Unexpected error saving user settings:", error);
+      console.error("Error saving user settings:", error);
     }
   };
-  
-  
+
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
   };

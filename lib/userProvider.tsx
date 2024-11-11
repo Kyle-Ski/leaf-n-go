@@ -1,23 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supbaseClient";
+import { createContext, useContext, useEffect, useState, ComponentType } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
-import { ComponentType } from "react";
-
-type UserContextType = {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  logout: () => void;
-};
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Mock data for development mode
 const mockUser: User = {
-  id: "8e59f4e4-12c1-4a3a-9b36-df1e21e3d6bf",  // Updated UUID to match the database
+  id: "8e59f4e4-12c1-4a3a-9b36-df1e21e3d6bf",
   email: "devuser@example.com",
   email_confirmed_at: new Date().toISOString(),
   aud: "authenticated",
@@ -37,8 +26,16 @@ const mockSession: Session = {
   user: mockUser,
 };
 
-// Toggle this to simulate an authenticated or unauthenticated state in development
-const isAuthenticated = true; // Change to `false` to simulate an unauthenticated user
+const isAuthenticated = true; // Toggle this to simulate authenticated or unauthenticated state in development
+
+type UserContextType = {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  logout: () => void;
+};
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -55,29 +52,23 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(isAuthenticated ? mockSession : null);
         setLoading(false);
       } else {
-        // In production, use Supabase session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        setSession(session);
-        setLoading(false);
+        try {
+          const response = await fetch("/api/auth/session");
+          if (response.ok) {
+            const data: Session = await response.json();
+            setUser(data?.user ?? null);
+            setSession(data ?? null);
+          }
+        } catch (error) {
+          console.error("Error fetching session:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
     handleSession();
-
-    if (process.env.NODE_ENV !== "development") {
-      const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-        setUser(session?.user ?? null);
-        setSession(session);
-      });
-
-      return () => {
-        listener.subscription.unsubscribe();
-      };
-    }
-  }, [router]);
+  }, []);
 
   // Redirect to /auth only if user is not authenticated, and they aren't on a public page
   useEffect(() => {
@@ -88,10 +79,21 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, [loading, user, pathname, router]);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    router.replace("/auth");
+    try {
+      const response = await fetch("/api/auth/signout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setUser(null);
+        setSession(null);
+        router.replace("/auth");
+      } else {
+        throw new Error("Failed to log out");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
