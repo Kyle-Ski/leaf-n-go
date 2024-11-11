@@ -1,25 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { withAuth } from "@/lib/userProvider";
+import { withAuth, useUser } from "@/lib/userProvider";
+
+interface Checklist {
+  id: string;
+  created_at: string;
+  title: string;
+  category: string;
+  favorite?: boolean;
+  items?: any[];
+}
 
 const ChecklistsPage = () => {
+  const { user } = useUser();
+  const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
+  const [loading, setLoading] = useState(true);
 
-  // Placeholder data for checklists (could be fetched from an API)
-  const checklists = [
-    { title: "Weekend Hiking Trip", category: "Overnight", createdAt: "2024-11-01", progress: 80, favorite: true },
-    { title: "Two-Week Backpacking", category: "Multi-Day", createdAt: "2024-10-20", progress: 40, favorite: false },
-    { title: "Day Hike Essentials", category: "Day Trip", createdAt: "2024-11-05", progress: 100, favorite: false },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchChecklists();
+    }
+  }, [user]);
+
+  const fetchChecklists = async () => {
+    setLoading(true);
+    console.log("USER:", user)
+    try {
+      const response = await fetch("/api/checklists", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user?.id,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch checklists");
+      }
+
+      const data = await response.json();
+      setChecklists(data);
+    } catch (error) {
+      console.error("Error fetching checklists:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredChecklists = checklists
     .filter(
@@ -31,7 +67,7 @@ const ChecklistsPage = () => {
       if (sortOption === "Alphabetical") {
         return a.title.localeCompare(b.title);
       } else if (sortOption === "Recent") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
       return 0;
     });
@@ -81,97 +117,75 @@ const ChecklistsPage = () => {
         </Select>
       </section>
 
-      {/* Favorite Checklists Section */}
-      {favorites.length > 0 && (
-        <section className="w-full max-w-4xl">
-          <h2 className="text-xl font-semibold mb-4">Favorites</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {favorites.map((list, index) => (
-              <Card key={index} className="p-4 bg-white shadow-lg">
-                <CardHeader>
-                  <CardTitle>{list.title}</CardTitle>
-                  <p className="text-sm text-gray-500">Category: {list.category}</p>
-                </CardHeader>
-                <CardContent className="flex justify-between items-center mt-4">
-                  <div>
-                    <p className="text-gray-700">Completion</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div className="bg-green-500 h-2 rounded-full" style={{ width: `${list.progress}%` }}></div>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          {/* Favorite Checklists Section */}
+          {favorites.length > 0 && (
+            <section className="w-full max-w-4xl">
+              <h2 className="text-xl font-semibold mb-4">Favorites</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {favorites.map((list) => (
+                  <Card key={list.id} className="p-4 bg-white shadow-lg">
+                    <CardHeader>
+                      <CardTitle>{list.title}</CardTitle>
+                      <p className="text-sm text-gray-500">Category: {list.category}</p>
+                    </CardHeader>
+                    <CardContent className="flex justify-between items-center mt-4">
+                      <div>
+                        {/* You can add completion logic by fetching checklist_items */}
+                        <p className="text-gray-700">Completion</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `50%` }}></div>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          50% complete {/* Placeholder, implement completion calculation */}
+                        </span>
+                      </div>
+                      <Link href={`/checklists/${list.id}`}>
+                        <Button variant="outline" className="mt-2">View Checklist</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Checklist Cards */}
+          <section className="w-full max-w-4xl grid gap-4">
+            {filteredChecklists.length > 0 ? (
+              filteredChecklists.map((list) => (
+                <Card key={list.id} className="p-4 bg-white shadow-lg">
+                  <CardHeader>
+                    <CardTitle>{list.title}</CardTitle>
+                    <p className="text-sm text-gray-500">Category: {list.category}</p>
+                  </CardHeader>
+                  <CardContent className="flex justify-between items-center mt-4">
+                    <div>
+                      <p className="text-gray-700">Completion</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `50%` }}></div>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        50% complete {/* Placeholder, implement completion calculation */}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500 mt-2 block">
-                      {list.progress}% complete
-                    </span>
-                  </div>
-                  <Link href={`/checklists/${index}`}>
-                    <Button variant="outline" className="mt-2">View Checklist</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+                    <Link href={`/checklists/${list.id}`}>
+                      <Button variant="outline" className="mt-2">View Checklist</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-gray-600">No checklists found.</p>
+            )}
+          </section>
+        </>
       )}
-
-      {/* Checklist Cards */}
-      <section className="w-full max-w-4xl grid gap-4">
-        {filteredChecklists.length > 0 ? (
-          filteredChecklists.map((list, index) => (
-            <Card key={index} className="p-4 bg-white shadow-lg">
-              <CardHeader>
-                <CardTitle>{list.title}</CardTitle>
-                <p className="text-sm text-gray-500">Category: {list.category}</p>
-              </CardHeader>
-              <CardContent className="flex justify-between items-center mt-4">
-                <div>
-                  <p className="text-gray-700">Completion</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${list.progress}%` }}></div>
-                  </div>
-                  <span className="text-xs text-gray-500 mt-2 block">
-                    {list.progress}% complete
-                  </span>
-                </div>
-                <Link href={`/checklists/${index}`}>
-                  <Button variant="outline" className="mt-2">View Checklist</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p className="text-gray-600">No checklists found.</p>
-        )}
-      </section>
-
-      {/* Checklist Templates Section */}
-      <section className="w-full max-w-4xl mt-10">
-        <h2 className="text-xl font-semibold mb-4">Checklist Templates</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="p-4 bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle>Weekend Hike Template</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">A basic packing list for a two-day hike.</p>
-              <Link href="/checklists/new?template=weekend-hike">
-                <Button variant="outline">Use Template</Button>
-              </Link>
-            </CardContent>
-          </Card>
-          <Card className="p-4 bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle>Multi-Day Backpacking Template</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">A comprehensive list for a week-long trip.</p>
-              <Link href="/checklists/new?template=multi-day">
-                <Button variant="outline">Use Template</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
     </div>
   );
-}
+};
 
-export default withAuth(ChecklistsPage)
+export default withAuth(ChecklistsPage);
