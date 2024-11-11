@@ -33,6 +33,7 @@ type UserContextType = {
   session: Session | null;
   loading: boolean;
   logout: () => void;
+  updateSession: (session: Session | null) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -96,8 +97,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateSession = (session: Session | null) => {
+    setUser(session?.user ?? null);
+    setSession(session);
+  };
+
   return (
-    <UserContext.Provider value={{ user, session, loading, logout }}>
+    <UserContext.Provider value={{ user, session, loading, logout, updateSession }}>
       {!loading ? children : null}
     </UserContext.Provider>
   );

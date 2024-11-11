@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Session } from "@supabase/supabase-js";
+import { useUser } from "@/lib/userProvider";
 
 export default function AuthPage() {
   const router = useRouter();
+  const { updateSession } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -64,11 +67,17 @@ export default function AuthPage() {
           const errorData = await response.json();
           setError(errorData.error);
         } else {
+          // Fetch the current session to update the user context.
+          const sessionResponse = await fetch('/api/auth/session');
+          if (sessionResponse.ok) {
+            const sessionData: Session = await sessionResponse.json();
+            updateSession(sessionData); // Update the session in the UserProvider context
+          }
           router.push('/dashboard');
         }
       }
     } catch (err) {
-      console.warn("error:", err)
+      console.warn("error:", err);
       setError("An unexpected error occurred. Please try again.");
     }
   };
