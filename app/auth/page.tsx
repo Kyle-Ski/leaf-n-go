@@ -68,6 +68,7 @@ export default function AuthPage() {
         }
       }
     } catch (err) {
+      console.warn("error:", err)
       setError("An unexpected error occurred. Please try again.");
     }
   };
