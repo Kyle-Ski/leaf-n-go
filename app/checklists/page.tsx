@@ -8,23 +8,7 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { withAuth, useUser } from "@/lib/userProvider";
-
-interface Item {
-  id: string;
-  checklist_id: string;
-  item_id: string;
-  completed: boolean;
-  quantity: number;
-}
-
-interface Checklist {
-  id: string;
-  created_at: string;
-  title: string;
-  category: string;
-  favorite?: boolean;
-  items?: Item[];
-}
+import { Checklist } from '@/types/projectTypes';
 
 const ChecklistsPage = () => {
   const { user } = useUser();
