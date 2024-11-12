@@ -18,28 +18,16 @@ export interface Checklist {
     items?: Item[];
 }
 
-export interface User {
-    id: string;
-    email: string;
-    created_at: string;
-    updated_at: string;
-    user_metadata?: Record<string, any>;
-}
-
-export interface Session {
-    access_token: string;
-    token_type: string;
-    expires_in: number;
-    refresh_token: string;
-    user: User;
-}
-
 export interface ChecklistItem {
     id: string;
     checklist_id: string;
     item_id: string;
     completed: boolean;
     quantity: number;
+}
+
+export interface ChecklistWithItems extends Checklist {
+    items: Item[];
 }
 
 export interface UserSettings {

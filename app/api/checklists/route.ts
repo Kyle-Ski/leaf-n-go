@@ -15,9 +15,13 @@ export async function GET(req: NextRequest) {
       .select('*')
       .eq('user_id', userId);
       
-      console.log("checklists",checklists)
+      console.log("checklists", checklists);
     if (checklistError) {
       return NextResponse.json({ error: checklistError.message }, { status: 500 });
+    }
+
+    if (!checklists) {
+      return NextResponse.json([]);
     }
 
     // Fetch checklist items and join them with checklists
@@ -26,7 +30,7 @@ export async function GET(req: NextRequest) {
       .from('checklist_items')
       .select('*, items(*)')
       .in('checklist_id', checklistIds);
-    console.log("checklist items:", checklistItems)
+    console.log("checklist items:", checklistItems);
     if (itemsError) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
@@ -35,13 +39,13 @@ export async function GET(req: NextRequest) {
     const checklistsWithItems = checklists.map((checklist) => {
       return {
         ...checklist,
-        items: checklistItems.filter((item) => item.checklist_id === checklist.id),
+        items: checklistItems ? checklistItems.filter((item) => item.checklist_id === checklist.id) : [],
       };
     });
 
     return NextResponse.json(checklistsWithItems);
   } catch (error) {
-    console.warn("Checklists error:", error)
+    console.warn("Checklists error:", error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
