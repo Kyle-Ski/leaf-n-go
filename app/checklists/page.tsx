@@ -32,22 +32,27 @@ const ChecklistsPage = () => {
       return;
     }
 
+    console.log("Fetching checklists for user ID:", user.id);
+
     setLoading(true);
-    setError(null);
+    setError("");
     try {
       const response = await fetch("/api/checklists", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user.id, // user.id is guaranteed to be defined here
+          "x-user-id": user.id,
         },
       });
+
+      console.log("Response:", response);
 
       if (!response.ok) {
         throw new Error("Failed to fetch checklists");
       }
 
       const data: Checklist[] = await response.json();
+      console.log("Checklists data:", data);
       setChecklists(data);
     } catch (error) {
       console.error("Error fetching checklists:", error);

@@ -9,23 +9,28 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    console.log("Fetching checklists for user ID:", userId);
+
     // Fetch checklists for the user
     const { data: checklists, error: checklistError } = await supabase
       .from('checklists')
       .select('*')
       .eq('user_id', userId);
 
-    console.log("checklists", checklists);
+    console.log("Checklists fetched:", checklists);
     if (checklistError) {
+      console.error("Error fetching checklists:", checklistError);
       return NextResponse.json({ error: checklistError.message }, { status: 500 });
     }
 
     if (!checklists || checklists.length === 0) {
+      console.log("No checklists found for user.");
       return NextResponse.json([], { status: 200 });
     }
 
     // Fetch checklist items and join them with checklists
     const checklistIds = checklists.map((checklist) => checklist.id);
+    console.log("Checklist IDs:", checklistIds);
     if (checklistIds.length === 0) {
       return NextResponse.json(checklists, { status: 200 });
     }
@@ -35,8 +40,9 @@ export async function GET(req: NextRequest) {
       .select('*, items(*)')
       .in('checklist_id', checklistIds);
 
-    console.log("checklist items:", checklistItems);
+    console.log("Checklist items fetched:", checklistItems);
     if (itemsError) {
+      console.error("Error fetching checklist items:", itemsError);
       return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
 
