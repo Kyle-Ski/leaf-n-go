@@ -17,7 +17,7 @@ const ChecklistsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -33,7 +33,7 @@ const ChecklistsPage = () => {
     }
 
     setLoading(true);
-    setError("");
+    setError(null);
     try {
       const response = await fetch("/api/checklists", {
         method: "GET",
@@ -136,7 +136,6 @@ const ChecklistsPage = () => {
                     </CardHeader>
                     <CardContent className="flex justify-between items-center mt-4">
                       <div>
-                        {/* You can add completion logic by fetching checklist_items */}
                         <p className="text-gray-700">Completion</p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                           <div className="bg-green-500 h-2 rounded-full" style={{ width: `50%` }}></div>
