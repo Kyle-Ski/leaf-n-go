@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(checklistsWithItems);
   } catch (error) {
+    console.warn("Checklists error:", error)
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }

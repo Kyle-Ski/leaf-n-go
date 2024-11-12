@@ -9,13 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronDown } from "lucide-react";
 import { withAuth, useUser } from "@/lib/userProvider";
 
+interface Item {
+  id: string;
+  checklist_id: string;
+  item_id: string;
+  completed: boolean;
+  quantity: number;
+}
+
 interface Checklist {
   id: string;
   created_at: string;
   title: string;
   category: string;
   favorite?: boolean;
-  items?: any[];
+  items?: Item[];
 }
 
 const ChecklistsPage = () => {
@@ -25,6 +33,7 @@ const ChecklistsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -33,14 +42,20 @@ const ChecklistsPage = () => {
   }, [user]);
 
   const fetchChecklists = async () => {
+    if (!user?.id) {
+      console.error("User ID is undefined. Cannot fetch checklists.");
+      setError("Unable to fetch checklists. Please try again later.");
+      return;
+    }
+
     setLoading(true);
-    console.log("USER:", user)
+    setError("");
     try {
       const response = await fetch("/api/checklists", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user?.id,
+          "x-user-id": user.id, // user.id is guaranteed to be defined here
         },
       });
 
@@ -48,10 +63,11 @@ const ChecklistsPage = () => {
         throw new Error("Failed to fetch checklists");
       }
 
-      const data = await response.json();
+      const data: Checklist[] = await response.json();
       setChecklists(data);
     } catch (error) {
       console.error("Error fetching checklists:", error);
+      setError("Error fetching checklists. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -116,6 +132,8 @@ const ChecklistsPage = () => {
           </SelectContent>
         </Select>
       </section>
+
+      {error && <p className="text-red-500">{error}</p>}
 
       {loading ? (
         <p>Loading...</p>
