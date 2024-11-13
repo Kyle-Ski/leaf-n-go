@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supbaseClient';
-import { Params } from 'next/dist/server/request/params';
 
 interface Context {
-  params: Params;
+  params: { id: string };
 }
 
 export async function GET(req: NextRequest, context: Context) {
