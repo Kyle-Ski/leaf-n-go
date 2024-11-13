@@ -15,7 +15,7 @@ const ChecklistDetailsPage = () => {
 
   const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && id) {
@@ -25,11 +25,19 @@ const ChecklistDetailsPage = () => {
 
   const fetchChecklistDetails = async (checklistId: string) => {
     setLoading(true);
+    setError(null);
     try {
       // Fetch the checklist along with its items
-      const response = await fetch(`/api/checklists/${checklistId}`);
+      const response = await fetch(`/api/checklists/${checklistId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || '', // Make sure to pass the user ID to verify access
+        },
+      });
       if (!response.ok) {
-        setError('Failed to fetch checklist details');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to fetch checklist details');
         return;
       }
       const checklistData: ChecklistWithItems = await response.json();
@@ -44,7 +52,7 @@ const ChecklistDetailsPage = () => {
 
   const handleItemToggle = async (itemId: string, completed: boolean) => {
     try {
-      // Update the item status
+      // Update the item status in the database
       const { error } = await supabase
         .from('checklist_items')
         .update({ completed })
@@ -66,6 +74,7 @@ const ChecklistDetailsPage = () => {
       });
     } catch (err) {
       console.error('Error updating item status:', err);
+      setError('Failed to update item status. Please try again.');
     }
   };
 
@@ -96,7 +105,9 @@ const ChecklistDetailsPage = () => {
                   checked={item.completed}
                   onCheckedChange={(value) => handleItemToggle(item.id, value as boolean)}
                 />
-                <span className={item.completed ? 'line-through text-gray-500' : ''}>{item.name}</span>
+                <span className={item.completed ? 'line-through text-gray-500' : ''}>
+                  {item.name}
+                </span>
               </div>
             ))}
           </CardContent>
