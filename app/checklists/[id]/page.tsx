@@ -1,4 +1,5 @@
-import { useRouter } from 'next/router';
+"use client";
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChecklistWithItems } from '@/types/projectTypes';
 import { useUser, withAuth } from '@/lib/userProvider';
+import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supbaseClient';
 
 const ChecklistDetailsPage = () => {
-  const router = useRouter();
+  const params = useParams();
   const { user } = useUser();
-  const { id } = router.query;
+  const id = params?.id;
 
   const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
   const [loading, setLoading] = useState(true);
