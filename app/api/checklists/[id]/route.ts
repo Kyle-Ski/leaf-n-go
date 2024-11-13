@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supbaseClient';
+import { Params } from 'next/dist/server/request/params';
 
-export async function GET(req: NextRequest, context: any) {
+interface Context {
+  params: Params;
+}
+
+export async function GET(req: NextRequest, context: Context) {
   const { params } = context;
-  const checklistId = await params.id;
+  const checklistId = params.id;
   const userId = req.headers.get('x-user-id');
 
   if (!userId) {
