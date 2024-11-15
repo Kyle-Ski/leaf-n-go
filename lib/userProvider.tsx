@@ -3,30 +3,7 @@
 import { createContext, useContext, useEffect, useState, ComponentType } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
-
-// Mock data for development mode
-const mockUser: User = {
-  id: "8e59f4e4-12c1-4a3a-9b36-df1e21e3d6bf",
-  email: "devuser@example.com",
-  email_confirmed_at: new Date().toISOString(),
-  aud: "authenticated",
-  role: "authenticated",
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
-const mockSession: Session = {
-  access_token: "mock-access-token",
-  token_type: "bearer",
-  expires_in: 3600,
-  refresh_token: "mock-refresh-token",
-  user: mockUser,
-};
-
-const isAuthenticated = true; // Toggle this to simulate authenticated or unauthenticated state in development
+import { supabase } from "@/lib/supbaseClient";
 
 type UserContextType = {
   user: User | null;
@@ -47,51 +24,65 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const handleSession = async () => {
-      if (process.env.NODE_ENV === "development") {
-        // Use mock data in development based on the `isAuthenticated` flag
-        setUser(isAuthenticated ? mockUser : null);
-        setSession(isAuthenticated ? mockSession : null);
-        setLoading(false);
-      } else {
-        try {
-          const response = await fetch("/api/auth/session");
-          if (response.ok) {
-            const data: Session = await response.json();
-            setUser(data?.user ?? null);
-            setSession(data ?? null);
-          }
-        } catch (error) {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
           console.error("Error fetching session:", error);
-        } finally {
-          setLoading(false);
+          setUser(null);
+          setSession(null);
+        } else if (data.session) {
+          setUser(data.session.user);
+          setSession(data.session);
+        } else {
+          setUser(null);
+          setSession(null);
         }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+        setUser(null);
+        setSession(null);
       }
+      setLoading(false);
     };
 
     handleSession();
+
+    // Subscribe to session changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setUser(session.user);
+        setSession(session);
+      } else {
+        setUser(null);
+        setSession(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // Redirect to /auth only if user is not authenticated, and they aren't on a public page
   useEffect(() => {
     const publicPaths = ["/auth", "/about", "/404"];
     if (!loading && user === null && !publicPaths.includes(pathname ?? "")) {
+      console.log("Redirecting to /auth due to unauthorized access."); // Dev-only debug
       router.replace("/auth");
     }
   }, [loading, user, pathname, router]);
 
   const logout = async () => {
     try {
-      const response = await fetch("/api/auth/signout", {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        setUser(null);
-        setSession(null);
-        router.replace("/auth");
-      } else {
-        throw new Error("Failed to log out");
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
       }
+      setUser(null);
+      setSession(null);
+      router.replace("/auth");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -124,6 +115,7 @@ export function withAuth<T extends object>(Component: ComponentType<T>): Compone
 
     useEffect(() => {
       if (!loading && !user) {
+        console.log("User not authenticated, redirecting to /auth"); // Dev-only debug
         router.replace("/auth");
       }
     }, [loading, user, router]);

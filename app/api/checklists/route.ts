@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supbaseClient';
+import { getUserFromSession } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  const userId = req.headers.get('x-user-id');
+  const userId = await getUserFromSession(req);
 
   if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    console.error("Unauthorized access attempt.");
+    return NextResponse.json({ error: 'Unauthorized access' }, { status: 401 });
   }
 
   try {
@@ -58,7 +60,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(checklistsWithItems, { status: 200 });
   } catch (error) {
-    console.warn("Checklists error:", error);
+    const timestamp = new Date().toISOString();
+    console.warn(`[${timestamp}] Checklists fetching error:`, error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
