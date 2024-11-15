@@ -4,30 +4,6 @@ import { createContext, useContext, useEffect, useState, ComponentType } from "r
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
 
-// Mock data for development mode
-const mockUser: User = {
-  id: "8e59f4e4-12c1-4a3a-9b36-df1e21e3d6bf",
-  email: "devuser@example.com",
-  email_confirmed_at: new Date().toISOString(),
-  aud: "authenticated",
-  role: "authenticated",
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
-const mockSession: Session = {
-  access_token: "mock-access-token",
-  token_type: "bearer",
-  expires_in: 3600,
-  refresh_token: "mock-refresh-token",
-  user: mockUser,
-};
-
-const isAuthenticated = true; // Toggle this to simulate authenticated or unauthenticated state in development
-
 type UserContextType = {
   user: User | null;
   session: Session | null;
@@ -47,34 +23,52 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const handleSession = async () => {
-      if (process.env.NODE_ENV === "development") {
-        // Use mock data in development based on the `isAuthenticated` flag
-        setUser(isAuthenticated ? mockUser : null);
-        setSession(isAuthenticated ? mockSession : null);
-        setLoading(false);
-      } else {
-        try {
-          const response = await fetch("/api/auth/session");
-          if (response.ok) {
-            const data: Session = await response.json();
-            setUser(data?.user ?? null);
-            setSession(data ?? null);
+      console.log("handling user session...")
+      setLoading(true);
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const data: Session = await response.json();
+          if (data) {
+            setUser(data.user);
+            setSession(data);
+          } else {
+            setUser(null);
+            setSession(null);
           }
-        } catch (error) {
-          console.error("Error fetching session:", error);
-        } finally {
-          setLoading(false);
+        } else {
+          console.error("Failed to fetch session:", response.statusText);
+          setUser(null);
+          setSession(null);
         }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+        setUser(null);
+        setSession(null);
+      } finally {
+        setLoading(false);
       }
     };
 
     handleSession();
+
+    // Subscribe to session changes through an external event, e.g., another tab signs out
+    window.addEventListener("storage", (event) => {
+      if (event.key === "supabase.auth.token") {
+        handleSession(); // Refresh session if token changes
+      }
+    });
+
+    return () => {
+      window.removeEventListener("storage", handleSession);
+    };
   }, []);
 
   // Redirect to /auth only if user is not authenticated, and they aren't on a public page
   useEffect(() => {
     const publicPaths = ["/auth", "/about", "/404"];
     if (!loading && user === null && !publicPaths.includes(pathname ?? "")) {
+      console.log("Redirecting to /auth due to unauthorized access."); // Dev-only debug
       router.replace("/auth");
     }
   }, [loading, user, pathname, router]);
@@ -124,6 +118,7 @@ export function withAuth<T extends object>(Component: ComponentType<T>): Compone
 
     useEffect(() => {
       if (!loading && !user) {
+        console.log("User not authenticated, redirecting to /auth"); // Dev-only debug
         router.replace("/auth");
       }
     }, [loading, user, router]);
