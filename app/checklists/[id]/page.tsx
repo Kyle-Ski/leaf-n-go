@@ -8,9 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ChecklistWithItems } from '@/types/projectTypes';
 import { useUser, withAuth } from '@/lib/userProvider';
 import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supbaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 const ChecklistDetailsPage = () => {
+  const supabase = getSupabaseClient();
   const params = useParams();
   const { user } = useUser();
   const id = params?.id;

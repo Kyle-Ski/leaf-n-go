@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
 import { getUserFromSession } from '@/lib/auth';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseClient();
   const userId = await getUserFromSession(req);
 
   if (!userId) {

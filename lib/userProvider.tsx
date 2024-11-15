@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ComponentType } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supbaseClient";
+import { getSupabaseClient } from "./supabaseClientFactory";
 
 type UserContextType = {
   user: User | null;
@@ -16,6 +16,7 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const supabase = getSupabaseClient();
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +28,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       try {
         const { data, error } = await supabase.auth.getSession();
-
+        console.log("handling session:", supabase)
         if (error) {
           console.error("Error fetching session:", error);
           setUser(null);
@@ -63,7 +64,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   // Redirect to /auth only if user is not authenticated, and they aren't on a public page
   useEffect(() => {
@@ -114,6 +115,7 @@ export function withAuth<T extends object>(Component: ComponentType<T>): Compone
     const router = useRouter();
 
     useEffect(() => {
+      console.log("..........", user)
       if (!loading && !user) {
         console.log("User not authenticated, redirecting to /auth"); // Dev-only debug
         router.replace("/auth");

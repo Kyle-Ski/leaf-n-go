@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 // Session Route (GET /api/auth/session)
 export async function GET() {
+  const supabase = getSupabaseClient()
   const {
     data: { session },
     error,

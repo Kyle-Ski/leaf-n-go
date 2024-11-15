@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 export async function GET(request: Request) {
+  const supabase = getSupabaseClient();
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
 
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const supabase = getSupabaseClient();
   const body = await request.json();
   const { userId, darkMode, emailNotifications, pushNotifications } = body;
 

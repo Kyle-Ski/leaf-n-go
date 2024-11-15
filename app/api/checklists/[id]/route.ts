@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const supabase = getSupabaseClient();
   const checklistId = (await params).id;
   const userId = req.headers.get('x-user-id');
 

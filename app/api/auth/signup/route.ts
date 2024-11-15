@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClientFactory';
 
 export async function POST(request: Request) {
+  const supabase = getSupabaseClient();
   const body = await request.json();
   const { email, password } = body;
 
