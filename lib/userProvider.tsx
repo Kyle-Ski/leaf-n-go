@@ -28,7 +28,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       try {
         const { data, error } = await supabase.auth.getSession();
-        console.log("handling session:", supabase)
+        console.log("handling session:", data, "Error:", error)
         if (error) {
           console.error("Error fetching session:", error);
           setUser(null);
