@@ -52,10 +52,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Subscribe to session changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log(`Auth state change detected: ${event}`);
       if (session) {
+        console.log("Session found on auth state change:", session);
         setUser(session.user);
         setSession(session);
       } else {
+        console.warn("No session found during auth state change.");
         setUser(null);
         setSession(null);
       }
