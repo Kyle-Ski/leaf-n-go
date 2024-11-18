@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supbaseClient';
 
 export async function GET(req: NextRequest) {
   const userId = req.headers.get('x-user-id');
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     console.log("Fetching checklists for user ID:", userId);
 
     // Fetch checklists for the user
-    const { data: checklists, error: checklistError } = await supabase
+    const { data: checklists, error: checklistError } = await supabaseServer
       .from('checklists')
       .select('*')
       .eq('user_id', userId);
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(checklists, { status: 200 });
     }
 
-    const { data: checklistItems, error: itemsError } = await supabase
+    const { data: checklistItems, error: itemsError } = await supabaseServer
       .from('checklist_items')
       .select('*, items(*)')
       .in('checklist_id', checklistIds);

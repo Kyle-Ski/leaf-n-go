@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supbaseClient';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from('user_settings')
     .select('*')
     .eq('user_id', userId)
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from('user_settings')
     .upsert(
       {

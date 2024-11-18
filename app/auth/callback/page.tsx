@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supbaseClient";
+import { supabaseServer } from "@/lib/supbaseClient";
 import { Button } from "@/components/ui/button";
 
 export default function AuthCallback() {
@@ -12,7 +12,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthRedirect = async () => {
       // Exchange the code in the URL for a session
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      const { error } = await supabaseServer.auth.exchangeCodeForSession(window.location.href);
 
       if (error) {
         setStatus("Verification failed. Please try again or sign in.");
