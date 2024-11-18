@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   // Create a new response
   const response = NextResponse.json({ message: 'Signed out successfully' });
 
@@ -9,6 +9,6 @@ export async function POST(request: NextRequest) {
     name: 'sb-access-token',
     path: '/', // Include path if necessary
   });
-
+  
   return response;
 }
