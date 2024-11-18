@@ -1,13 +1,14 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Signout Route (POST /api/auth/signout)
-export async function POST() {
-  const { error } = await supabase.auth.signOut();
+export async function POST(request: NextRequest) {
+  // Create a new response
+  const response = NextResponse.json({ message: 'Signed out successfully' });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  // Delete the 'sb-access-token' cookie
+  response.cookies.delete({
+    name: 'sb-access-token',
+    path: '/', // Include path if necessary
+  });
 
-  return NextResponse.json({ message: 'Signed out successfully' }, { status: 200 });
+  return response;
 }

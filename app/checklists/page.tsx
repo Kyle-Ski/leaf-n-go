@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { withAuth, useUser } from "@/lib/userProvider";
+import { useAuth } from "@/lib/auth-Context";
+import { withAuth } from "@/lib/withAuth";
 import { Checklist } from '@/types/projectTypes';
 
 const ChecklistsPage = () => {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");

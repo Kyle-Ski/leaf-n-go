@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { UserProvider } from "@/lib/userProvider";
 import localFont from "next/font/local";
 import "./globals.css";
 import ClientLayout from "@/components/clientLayout"; // Import ClientLayout
+import { supabaseServer } from "@/lib/supbaseClient";
+import { AuthProvider } from "@/lib/auth-Context";
+import { cookies } from 'next/headers';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,17 +23,30 @@ export const metadata: Metadata = {
     "Packing tool designed to help outdoor adventurers prepare for their trips with efficiency, sustainability, and customization",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('sb-access-token')?.value;
+
+  let user = null;
+
+  if (accessToken) {
+    const { data, error } = await supabaseServer.auth.getUser(accessToken);
+    if (error) {
+      console.error('Error fetching user:', error.message);
+    } else {
+      user = data.user;
+    }
+  }
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="flex min-h-screen">
-        <UserProvider>
+        <AuthProvider initialUser={user}>
           <ClientLayout>{children}</ClientLayout>
-        </UserProvider>
+        </AuthProvider>
       </body>
     </html>
   );

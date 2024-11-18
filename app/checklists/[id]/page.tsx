@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChecklistWithItems } from '@/types/projectTypes';
-import { useUser, withAuth } from '@/lib/userProvider';
+import { withAuth } from '@/lib/withAuth';
+import { useAuth } from '@/lib/auth-Context';
 import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supbaseClient';
 
 const ChecklistDetailsPage = () => {
   const params = useParams();
-  const { user } = useUser();
+  const { user } = useAuth();
   const id = params?.id;
 
   const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
@@ -55,7 +56,7 @@ const ChecklistDetailsPage = () => {
   const handleItemToggle = async (itemId: string, completed: boolean) => {
     try {
       // Update the item status in the database
-      const { error } = await supabase
+      const { error } = await supabaseServer
         .from('checklist_items')
         .update({ completed })
         .eq('id', itemId);

@@ -1,13 +1,12 @@
 "use client";
-
-import { useUser } from "@/lib/userProvider";
+import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
 
 export default function Welcome() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
 
   const completeOnboarding = async () => {

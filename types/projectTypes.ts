@@ -73,3 +73,123 @@ export interface GeneralApiError {
     code: number;
     details?: string;
 }
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          dark_mode: boolean;
+          email_notifications: boolean;
+          push_notifications: boolean;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          dark_mode?: boolean;
+          email_notifications?: boolean;
+          push_notifications?: boolean;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          dark_mode?: boolean;
+          email_notifications?: boolean;
+          push_notifications?: boolean;
+          updated_at?: string;
+          created_at?: string;
+        };
+      };
+      checklists: {
+        Row: {
+          id: string;
+          created_at: string;
+          title: string;
+          category: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          title: string;
+          category: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          title?: string;
+          category?: string;
+          user_id?: string;
+        };
+      };
+      items: {
+        Row: {
+          id: string;
+          name: string;
+          quantity: number;
+          weight: number;
+          notes: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          quantity?: number;
+          weight?: number;
+          notes?: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          quantity?: number;
+          weight?: number;
+          notes?: string;
+          user_id?: string;
+        };
+      };
+      checklist_items: {
+        Row: {
+          id: string;
+          checklist_id: string;
+          item_id: string;
+          completed: boolean;
+          quantity: number;
+        };
+        Insert: {
+          id?: string;
+          checklist_id: string;
+          item_id: string;
+          completed?: boolean;
+          quantity?: number;
+        };
+        Update: {
+          id?: string;
+          checklist_id?: string;
+          item_id?: string;
+          completed?: boolean;
+          quantity?: number;
+        };
+      };
+    };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
+  };
+}
