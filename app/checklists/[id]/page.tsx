@@ -63,7 +63,7 @@ const ChecklistDetailsPage = () => {
           'Content-Type': 'application/json',
           'x-user-id': user?.id || '',
         },
-        body: JSON.stringify({ completed }),
+        body: JSON.stringify({ checklistId: id, itemId, completed }),
       });
 
       if (!response.ok) {

@@ -1,29 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
 
-// Define the expected structure of the context parameter
-interface Context {
-  params: {
-    id: string;
-    itemid: string;
-  };
-}
-
-export async function PUT(req: NextRequest, context: Context) {
-  const { id: checklistId, itemid: itemId } = await context.params;
-  const userId = req.headers.get('x-user-id');
-
-  // Validate user ID
-  if (!userId) {
-    return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
-  }
-
+export async function PUT(request: Request) {
   try {
-    const { completed } = await req.json();
+    // Parse the request body
+    const { checklistId, itemId, completed } = await request.json();
 
-    // Validate "completed" field
+    // Validate required fields
+    if (!checklistId || !itemId) {
+      return NextResponse.json({ success: false, error: 'Checklist ID and Item ID are required.' }, { status: 400 });
+    }
+
     if (completed === undefined) {
       return NextResponse.json({ success: false, error: '"completed" field is required.' }, { status: 400 });
+    }
+
+    // Extract the user ID from headers
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
     }
 
     // Validate checklist ownership

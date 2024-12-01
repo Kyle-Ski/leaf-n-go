@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
 
     // Fetch checklist items and join them with checklists
     const checklistIds = checklists.map((checklist) => checklist.id);
-    console.log("Checklist IDs:", checklistIds);
     if (checklistIds.length === 0) {
       return NextResponse.json(checklists, { status: 200 });
     }
@@ -40,7 +39,6 @@ export async function GET(req: NextRequest) {
       .select('*, items(*)')
       .in('checklist_id', checklistIds);
 
-    console.log("Checklist items fetched:", checklistItems);
     if (itemsError) {
       console.error("Error fetching checklist items:", itemsError);
       return NextResponse.json({ error: itemsError.message }, { status: 500 });
