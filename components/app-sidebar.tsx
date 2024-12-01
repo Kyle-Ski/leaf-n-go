@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut } from "lucide-react"
+import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon } from "lucide-react"
 import { useAuth } from "@/lib/auth-Context";
 const menuItems = [
   {
@@ -22,6 +22,11 @@ const menuItems = [
     title: "Checklists",
     url: "/checklists",
     icon: ListTodo
+  },
+  {
+    title: "Items",
+    url: "/items",
+    icon: AxeIcon
   },
   {
     title: "Settings",
