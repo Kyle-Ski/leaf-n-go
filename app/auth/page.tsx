@@ -128,7 +128,7 @@ export default function AuthPage() {
       )}
       {!isLoading && (
         <p className="mt-4 text-gray-600">
-          {isSignUp ? 'Already have an account?' : 'Don’t have an account?'}
+          {isSignUp ? 'Already have an account?' : `Don&apos;t have an account?`}
           <span
             onClick={() => {
               setError('');
