@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-Context";
 import { Loader } from "@/components/ui/loader";
+import { withAuth } from "@/lib/withAuth";
 
 interface Item {
     id: string;
@@ -15,7 +16,7 @@ interface Item {
     notes: string;
 }
 
-export default function ItemsPage() {
+const ItemsPage = () => {
     const { user } = useAuth();
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
@@ -194,3 +195,5 @@ export default function ItemsPage() {
         </div>
     );
 }
+
+export default withAuth(ItemsPage);
