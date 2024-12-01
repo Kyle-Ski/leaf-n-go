@@ -7,7 +7,7 @@ interface RouteParams {
 }
 
 export async function PUT(req: NextRequest, { params }: { params: RouteParams }) {
-  const { id: checklistId, itemid: itemId } = params;
+  const { id: checklistId, itemid: itemId } = await params;
   const userId = req.headers.get('x-user-id'); // Extract the user ID from headers
 
   // Validate user ID
