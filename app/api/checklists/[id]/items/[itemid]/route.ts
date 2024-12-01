@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
 
-// Correctly structure the PUT function's parameters
-export async function PUT(req: NextRequest, context: any) {
-  const { id: checklistId, itemid: itemId } = context.params; // Use context.params for dynamic routes
+interface RouteParams {
+  id: string; // Checklist ID
+  itemid: string; // Item ID
+}
+
+export async function PUT(req: NextRequest, { params }: { params: RouteParams }) {
+  const { id: checklistId, itemid: itemId } = params;
   const userId = req.headers.get('x-user-id'); // Extract the user ID from headers
 
   // Validate user ID
