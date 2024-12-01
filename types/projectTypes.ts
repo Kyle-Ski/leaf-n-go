@@ -9,25 +9,34 @@ export interface Item {
     notes?: string;
 }
 
+export interface ChecklistWithItems extends Checklist {
+  items: ChecklistItem[]; // Use a new type for items with the nested structure
+}
+
 export interface Checklist {
-    id: string;
-    created_at: string;
-    title: string;
-    category: string;
-    favorite?: boolean;
-    items?: Item[];
+  id: string;
+  created_at: string;
+  title: string;
+  category: string;
+  favorite?: boolean;
 }
 
 export interface ChecklistItem {
-    id: string;
-    checklist_id: string;
-    item_id: string;
-    completed: boolean;
-    quantity: number;
+  id: string;
+  checklist_id: string;
+  item_id: string;
+  completed: boolean;
+  quantity: number;
+  items: ItemDetails; // Refer to the nested "items" object in the response
 }
 
-export interface ChecklistWithItems extends Checklist {
-    items: Item[];
+export interface ItemDetails {
+  id: string;
+  name: string;
+  notes: string;
+  weight: number;
+  user_id: string;
+  quantity: number;
 }
 
 export interface UserSettings {
