@@ -11,7 +11,7 @@ export default function NotFoundPage() {
       
       {/* Links to navigate back */}
       <div className="space-x-4">
-        <Link href="/dashboard">
+        <Link href="/">
           <Button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
             Go to Dashboard
           </Button>

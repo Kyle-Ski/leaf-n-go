@@ -77,7 +77,7 @@ export default function AuthPage() {
           // Update user state in AuthContext
           setUser(user);
 
-          router.push('/dashboard');
+          router.push('/');
         }
       }
     } catch (err) {
