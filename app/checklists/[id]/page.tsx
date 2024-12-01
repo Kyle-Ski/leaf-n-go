@@ -18,6 +18,7 @@ const ChecklistDetailsPage = () => {
   const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [itemError, setItemError] = useState<string | null>(null); // Track errors for specific items
 
   useEffect(() => {
     if (user && id) {
@@ -29,12 +30,11 @@ const ChecklistDetailsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Use the API route to fetch checklist details
       const response = await fetch(`/api/checklists/${checklistId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user?.id || '', // Include user ID for validation
+          'x-user-id': user?.id || '',
         },
       });
 
@@ -56,21 +56,21 @@ const ChecklistDetailsPage = () => {
 
   const handleItemToggle = async (itemId: string, completed: boolean) => {
     try {
-      // Update item status via the API (you can extend the API route to handle this if needed)
+      setItemError(null); // Clear previous item errors
       const response = await fetch(`/api/checklists/${id}/items/${itemId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': user?.id || '',
         },
-        body: JSON.stringify({ completed }),
+        body: JSON.stringify({ checklistId: id, itemId, completed }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update item status');
       }
 
-      // Optimistically update UI
+      // Update the checklist state optimistically
       setChecklist((prev) => {
         if (!prev) return prev;
         return {
@@ -82,7 +82,7 @@ const ChecklistDetailsPage = () => {
       });
     } catch (err) {
       console.error('Error updating item status:', err);
-      setError('Failed to update item status. Please try again.');
+      setItemError(`Failed to update the status for item ID: ${itemId}`);
     }
   };
 
@@ -107,22 +107,44 @@ const ChecklistDetailsPage = () => {
             <p className="text-sm text-gray-500">Category: {checklist.category}</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {checklist.items?.map((item) => (
-              <div key={item.id} className="flex items-center space-x-4">
-                <Checkbox
-                  checked={item.completed}
-                  onCheckedChange={(value) => handleItemToggle(item.id, value as boolean)}
-                />
-                <span className={item.completed ? 'line-through text-gray-500' : ''}>
-                  {item.name}
-                </span>
-              </div>
-            ))}
+            {checklist.items && checklist.items.length > 0 ? (
+              checklist.items.map((item) => (
+                <div key={item.id} className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-4">
+                    <Checkbox
+                      checked={item.completed}
+                      onCheckedChange={(value) =>
+                        handleItemToggle(item.id, value as boolean)
+                      }
+                    />
+                    <div>
+                      <span
+                        className={`block ${
+                          item.completed ? 'line-through text-gray-500' : ''
+                        }`}
+                      >
+                        {item.items.name}
+                      </span>
+                      <span className="text-sm text-gray-500">{item.items.notes}</span>
+                    </div>
+                  </div>
+                  {itemError && itemError.includes(item.id) && (
+                    <p className="text-sm text-red-500">{itemError}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No items added to this checklist.</p>
+            )}
           </CardContent>
         </Card>
-        <Link href="/checklists">
-          <Button variant="outline">Back to Checklists</Button>
-        </Link>
+        <div className="flex justify-center">
+          <Link href="/checklists">
+            <Button variant="default" className="bg-blue-500 text-white hover:bg-blue-600">
+              Back to Checklists
+            </Button>
+          </Link>
+        </div>
       </section>
     </div>
   );
