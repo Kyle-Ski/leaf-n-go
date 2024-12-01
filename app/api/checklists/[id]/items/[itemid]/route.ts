@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string; itemid: string } }) {
-  const { id: checklistId, itemid: itemId } = params;
-  const userId = req.headers.get('x-user-id'); // Get user ID from headers
+export async function PUT(req: NextRequest, context: { params: { id: string; itemid: string } }) {
+  const { id: checklistId, itemid: itemId } = context.params;
+  const userId = req.headers.get('x-user-id'); // Extract the user ID from the headers
 
-  // Validate the presence of userId
+  // Validate user ID
   if (!userId) {
     return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
   }
 
   try {
-    // Parse the request body
     const { completed } = await req.json();
 
-    // Validate the "completed" field
+    // Validate "completed" field
     if (completed === undefined) {
       return NextResponse.json({ success: false, error: '"completed" field is required.' }, { status: 400 });
     }
 
-    // Validate that the checklist belongs to the user
+    // Validate checklist ownership
     const { data: checklist, error: checklistError } = await supabaseServer
       .from('checklists')
       .select('id')
