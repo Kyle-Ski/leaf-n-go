@@ -16,7 +16,7 @@ export function withAuth<T extends object>(
 
         useEffect(() => {
             if (user === null) {
-                router.replace('/signin');
+                router.replace('/auth');
             } else {
                 setIsLoading(false);
             }

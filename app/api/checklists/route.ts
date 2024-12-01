@@ -62,3 +62,48 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { userId, title, category, items } = body;
+
+  if (!userId || !title || !category) {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+
+  try {
+    // Create a new checklist
+    const { data: newChecklist, error: checklistError } = await supabaseServer
+      .from('checklists')
+      .insert([{ title, category, user_id: userId }])
+      .select()
+      .single();
+
+    if (checklistError) {
+      throw checklistError;
+    }
+
+    // Add items to the checklist (if provided)
+    if (items && items.length > 0) {
+      const checklistItems = items.map((item: { id: string; quantity: number }) => ({
+        checklist_id: newChecklist.id,
+        item_id: item.id,
+        completed: false,
+        quantity: item.quantity,
+      }));
+
+      const { error: itemsError } = await supabaseServer
+        .from('checklist_items')
+        .insert(checklistItems);
+
+      if (itemsError) {
+        throw itemsError;
+      }
+    }
+
+    return NextResponse.json(newChecklist, { status: 201 });
+  } catch (error) {
+    console.error('Error creating checklist:', error);
+    return NextResponse.json({ error: 'Failed to create checklist' }, { status: 500 });
+  }
+}
