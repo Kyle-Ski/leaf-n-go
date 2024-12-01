@@ -9,7 +9,6 @@ import { ChecklistWithItems } from '@/types/projectTypes';
 import { withAuth } from '@/lib/withAuth';
 import { useAuth } from '@/lib/auth-Context';
 import { useParams } from 'next/navigation';
-import { supabaseServer } from '@/lib/supbaseClient';
 
 const ChecklistDetailsPage = () => {
   const params = useParams();
@@ -30,19 +29,21 @@ const ChecklistDetailsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch the checklist along with its items
+      // Use the API route to fetch checklist details
       const response = await fetch(`/api/checklists/${checklistId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user?.id || '', // Make sure to pass the user ID to verify access
+          'x-user-id': user?.id || '', // Include user ID for validation
         },
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to fetch checklist details');
         return;
       }
+
       const checklistData: ChecklistWithItems = await response.json();
       setChecklist(checklistData);
     } catch (err) {
@@ -55,17 +56,21 @@ const ChecklistDetailsPage = () => {
 
   const handleItemToggle = async (itemId: string, completed: boolean) => {
     try {
-      // Update the item status in the database
-      const { error } = await supabaseServer
-        .from('checklist_items')
-        .update({ completed })
-        .eq('id', itemId);
+      // Update item status via the API (you can extend the API route to handle this if needed)
+      const response = await fetch(`/api/checklists/${id}/items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || '',
+        },
+        body: JSON.stringify({ completed }),
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to update item status');
       }
 
-      // Update the UI after a successful toggle
+      // Optimistically update UI
       setChecklist((prev) => {
         if (!prev) return prev;
         return {
