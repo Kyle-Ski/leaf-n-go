@@ -31,7 +31,7 @@ const AboutPage = () => {
             <section className="mb-10">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4">What is Leaf-N-Go?</h2>
                 <p className="text-gray-700 leading-relaxed">
-                    Leaf-N-Go is the ultimate tool for outdoor adventurers, designed to simplify trip planning while keeping the environment in mind. Whether you’re preparing for a weekend hike or a multi-day trek, we’ve got you covered with customizable checklists, AI-powered insights, and tools to ensure you're ready for your journey.
+                    Leaf-N-Go is the ultimate tool for outdoor adventurers, designed to simplify trip planning while keeping the environment in mind. Whether you&apos;re preparing for a weekend hike or a multi-day trek, we&apos;ve got you covered with customizable checklists, AI-powered insights, and tools to ensure you're ready for your journey.
                 </p>
             </section>
 
