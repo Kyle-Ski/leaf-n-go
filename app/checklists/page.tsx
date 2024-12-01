@@ -10,6 +10,7 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth-Context";
 import { withAuth } from "@/lib/withAuth";
 import { Checklist } from '@/types/projectTypes';
+import { Loader } from "@/components/ui/loader";
 
 const ChecklistsPage = () => {
   const { user } = useAuth();
@@ -126,7 +127,10 @@ const ChecklistsPage = () => {
       {error && <p className="text-red-500">{error}</p>}
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader className="h-12 w-12 mb-4 text-blue-500" />
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
       ) : (
         <>
           {/* Favorite Checklists Section */}

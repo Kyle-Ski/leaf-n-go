@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
       .select('*')
       .eq('user_id', userId);
 
-    console.log("Checklists fetched:", checklists);
     if (checklistError) {
       console.error("Error fetching checklists:", checklistError);
       return NextResponse.json({ error: checklistError.message }, { status: 500 });

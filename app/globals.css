@@ -25,6 +25,20 @@ a {
   text-decoration: none;
 }
 
+/* globals.css */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
