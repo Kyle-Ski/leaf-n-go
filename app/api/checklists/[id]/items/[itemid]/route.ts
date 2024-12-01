@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
 
-export async function PUT(req: NextRequest, context: { params: { id: string; itemid: string } }) {
-  const { id: checklistId, itemid: itemId } = await context.params; // Extract parameters
-  const userId = req.headers.get('x-user-id'); // Extract the user ID from headers
+// Define the expected structure of the context parameter
+interface Context {
+  params: {
+    id: string;
+    itemid: string;
+  };
+}
+
+export async function PUT(req: NextRequest, context: Context) {
+  const { id: checklistId, itemid: itemId } = await context.params;
+  const userId = req.headers.get('x-user-id');
 
   // Validate user ID
   if (!userId) {
