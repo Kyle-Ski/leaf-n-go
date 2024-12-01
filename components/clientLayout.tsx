@@ -16,9 +16,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <SidebarTrigger />
       </div>
 
-      {/* Main Content with precise padding adjustments */}
-      <main className="flex-grow p-4 md:p-6 lg:p-8 bg-gray-50">
-        <div className="max-w-screen-sm sm:max-w-screen-md lg:max-w-screen-lg w-full px-4 pb-20">
+      {/* Main Content with Spinner */}
+      <main className="flex-grow p-4 md:p-6 lg:p-8 bg-gray-50 relative">
+        <div className={`max-w-screen-sm sm:max-w-screen-md lg:max-w-screen-lg w-full px-4 pb-20 "opacity-100"`}>
           {children}
         </div>
       </main>

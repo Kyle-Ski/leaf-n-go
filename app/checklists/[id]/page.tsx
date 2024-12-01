@@ -9,6 +9,7 @@ import { ChecklistWithItems } from '@/types/projectTypes';
 import { withAuth } from '@/lib/withAuth';
 import { useAuth } from '@/lib/auth-Context';
 import { useParams } from 'next/navigation';
+import { Loader } from '@/components/ui/loader';
 
 const ChecklistDetailsPage = () => {
   const params = useParams();
@@ -87,7 +88,12 @@ const ChecklistDetailsPage = () => {
   };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader className="h-12 w-12 mb-4 text-blue-500" />
+        <p className="text-gray-600 text-lg">Loading...</p>
+      </div>
+    )
   }
 
   if (error) {
@@ -119,9 +125,8 @@ const ChecklistDetailsPage = () => {
                     />
                     <div>
                       <span
-                        className={`block ${
-                          item.completed ? 'line-through text-gray-500' : ''
-                        }`}
+                        className={`block ${item.completed ? 'line-through text-gray-500' : ''
+                          }`}
                       >
                         {item.items.name}
                       </span>
