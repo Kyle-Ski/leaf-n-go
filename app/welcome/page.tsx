@@ -1,13 +1,12 @@
 "use client";
-
-import { useUser } from "@/lib/userProvider";
+import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
 
 export default function Welcome() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
 
   const completeOnboarding = async () => {
@@ -15,7 +14,7 @@ export default function Welcome() {
 
     // Directly navigate to dashboard after completing onboarding
     if (user) {
-      router.push("/dashboard");
+      router.push("/");
     }
   };
 
@@ -45,7 +44,7 @@ export default function Welcome() {
           <CardContent>
             The dashboard is your central hub for planning and tracking your adventures. You’ll find recent checklists, eco-insights, and other resources to keep you organized and prepared for any trip. Customize it to show what’s most important to you, from essential gear reminders to personalized packing suggestions.
           </CardContent>
-          <Link href="/dashboard">
+          <Link href="/">
             <Button className="bg-blue-500 text-white px-4 py-2 mt-4 rounded-md font-semibold hover:bg-blue-600">
               Go to Dashboard
             </Button>

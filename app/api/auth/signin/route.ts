@@ -1,16 +1,34 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supbaseClient';
 
-// Signin Route (POST /api/auth/signin)
-export async function POST(request: Request) {
-  const body = await request.json();
-  const { email, password } = body;
+export async function POST(request: NextRequest) {
+  const { email, password } = await request.json();
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseServer.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error || !data.session) {
+    return NextResponse.json(
+      { error: error?.message || 'Invalid login' },
+      { status: 400 }
+    );
   }
 
-  return NextResponse.json({ message: 'Successfully signed in.' }, { status: 200 });
+  const { access_token, expires_in, user } = data.session;
+
+  // Set a secure, HTTP-only cookie with the access token
+  const response = NextResponse.json({ message: 'Signed in successfully', user });
+  response.cookies.set({
+    name: 'sb-access-token',
+    value: access_token,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: expires_in,
+    path: '/',
+  });
+
+  return response;
 }

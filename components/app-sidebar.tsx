@@ -11,12 +11,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut } from "lucide-react"
-import { useUser } from "@/lib/userProvider";
-
+import { useAuth } from "@/lib/auth-Context";
 const menuItems = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/",
     icon: LayoutDashboard,
   },
   {
@@ -37,7 +36,7 @@ const menuItems = [
 ]
 
 export function AppSidebar() {
-  const { logout } = useUser();
+  const { logout } = useAuth();
 
   return (
     <Sidebar>

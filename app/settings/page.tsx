@@ -1,6 +1,6 @@
 "use client";
-
-import { useUser, withAuth } from "@/lib/userProvider";
+import { withAuth } from "@/lib/withAuth";
+import { useAuth } from "@/lib/auth-Context";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 
 const SettingsPage = () => {
-  const { user, logout } = useUser();
+  const { user, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [updatedName, setUpdatedName] = useState(user?.user_metadata?.name || "");
   const [updatedEmail, setUpdatedEmail] = useState(user?.email || "");

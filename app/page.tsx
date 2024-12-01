@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
-import { withAuth } from "@/lib/userProvider"
+import { withAuth } from "@/lib/withAuth";
 
 const PlanningHub = () => {
   return (

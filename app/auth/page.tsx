@@ -1,37 +1,42 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Session } from "@supabase/supabase-js";
-import { useUser } from "@/lib/userProvider";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-Context';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { updateSession } = useUser();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { setUser } = useAuth(); // Use setUser from AuthContext
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState("");
-  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [error, setError] = useState('');
+  const [confirmationMessage, setConfirmationMessage] = useState('');
 
   const validatePassword = (password: string) => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    return password.length >= 8 && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+    return (
+      password.length >= 8 &&
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumber &&
+      hasSpecialChar
+    );
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setConfirmationMessage("");
+    setError('');
+    setConfirmationMessage('');
 
     if (isSignUp && !validatePassword(password)) {
       setError(
-        "Password must be at least 8 characters long, include uppercase and lowercase letters, numbers, and symbols."
+        'Password must be at least 8 characters long, include uppercase and lowercase letters, numbers, and symbols.'
       );
       return;
     }
@@ -51,7 +56,7 @@ export default function AuthPage() {
           setError(errorData.error);
         } else {
           setConfirmationMessage(
-            "A confirmation email has been sent. Please check your inbox to verify your account."
+            'A confirmation email has been sent. Please check your inbox to verify your account.'
           );
         }
       } else {
@@ -67,30 +72,32 @@ export default function AuthPage() {
           const errorData = await response.json();
           setError(errorData.error);
         } else {
-          // Fetch the current session to update the user context.
-          const sessionResponse = await fetch('/api/auth/session');
-          if (sessionResponse.ok) {
-            const sessionData: Session = await sessionResponse.json();
-            updateSession(sessionData); // Update the session in the UserProvider context
-          }
-          router.push('/dashboard');
+          const { user } = await response.json();
+
+          // Update user state in AuthContext
+          setUser(user);
+
+          router.push('/');
         }
       }
     } catch (err) {
-      console.warn("error:", err);
-      setError("An unexpected error occurred. Please try again.");
+      console.warn('error:', err);
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 
   return (
     <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
       <h1 className="text-2xl font-semibold mb-6">
-        {isSignUp ? "Sign Up" : "Sign In"}
+        {isSignUp ? 'Sign Up' : 'Sign In'}
       </h1>
       {confirmationMessage ? (
         <p className="text-green-600 text-center">{confirmationMessage}</p>
       ) : (
-        <form onSubmit={handleAuth} className="flex flex-col space-y-4 w-full max-w-md">
+        <form
+          onSubmit={handleAuth}
+          className="flex flex-col space-y-4 w-full max-w-md"
+        >
           <Input
             type="email"
             placeholder="Email"
@@ -107,21 +114,21 @@ export default function AuthPage() {
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button type="submit" className="bg-blue-500 text-white">
-            {isSignUp ? "Sign Up" : "Sign In"}
+            {isSignUp ? 'Sign Up' : 'Sign In'}
           </Button>
         </form>
       )}
       <p className="mt-4 text-gray-600">
-        {isSignUp ? "Already have an account?" : "Don’t have an account?"}
+        {isSignUp ? 'Already have an account?' : 'Don’t have an account?'}
         <span
           onClick={() => {
-            setError("");
-            setConfirmationMessage("");
+            setError('');
+            setConfirmationMessage('');
             setIsSignUp(!isSignUp);
           }}
           className="text-blue-500 cursor-pointer ml-1"
         >
-          {isSignUp ? "Sign In" : "Sign Up"}
+          {isSignUp ? 'Sign In' : 'Sign Up'}
         </span>
       </p>
     </div>

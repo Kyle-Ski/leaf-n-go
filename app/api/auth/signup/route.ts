@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supbaseClient';
 
 export async function POST(request: Request) {
   const body = await request.json();
   const { email, password } = body;
 
-  const { error } = await supabase.auth.signUp({
+  const { error } = await supabaseServer.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
