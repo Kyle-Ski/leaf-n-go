@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const checklistId = (await params).id;
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const checklistId = await params.id;
   const userId = req.headers.get('x-user-id');
 
   if (!userId) {
@@ -16,8 +17,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   try {
-    console.log("Fetching checklist for checklist ID:", checklistId, "and user ID:", userId);
-
     // Fetch the checklist with its items for the user
     const { data: checklist, error: checklistError } = await supabaseServer
       .from('checklists')
@@ -65,6 +64,78 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   } catch (error) {
     const timestamp = new Date().toISOString();
     console.error(`[${timestamp}] Checklist fetching error:`, error);
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const checklistId = await params.id;
+  const userId = req.headers.get('x-user-id');
+
+  if (!userId) {
+    console.error("Missing x-user-id header in request.");
+    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+  }
+
+  const body = await req.json();
+  const { item_id, quantity, completed } = body;
+
+  if (!item_id) {
+    return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
+  }
+
+  try {
+    // Insert the item into the checklist_items table
+    const { data: insertedData, error: insertError } = await supabaseServer
+      .from('checklist_items')
+      .insert({ checklist_id: checklistId, item_id, quantity, completed })
+      .select('id, checklist_id, item_id, completed, quantity, items(*)')
+      .single();
+
+    if (insertError) {
+      console.error("Error adding item to checklist:", insertError);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    // Return the full inserted item with details
+    return NextResponse.json(insertedData, { status: 201 });
+  } catch (error) {
+    console.error("Unexpected error adding item:", error);
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const checklistId = await params.id; // No need for `await` here
+  const userId = req.headers.get('x-user-id');
+  const { item_id } = await req.json();
+
+  if (!userId) {
+    console.error("Missing x-user-id header in request.");
+    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+  }
+
+  if (!item_id) {
+    return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
+  }
+
+  try {
+    const { error } = await supabaseServer
+      .from('checklist_items')
+      .delete()
+      .eq('checklist_id', checklistId)
+      .eq('id', item_id);
+
+    if (error) {
+      console.error("Error removing item from checklist:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error("Unexpected error removing item:", error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }

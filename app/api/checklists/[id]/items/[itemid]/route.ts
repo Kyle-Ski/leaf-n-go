@@ -4,10 +4,10 @@ import { supabaseServer } from '@/lib/supbaseClient';
 export async function PUT(request: Request) {
   try {
     // Parse the request body
-    const { checklistId, itemId, completed } = await request.json();
-
+    const { checklistId, itemId, completed, id } = await request.json();
+    console.log("UPDATING:", checklistId, itemId, completed, id)
     // Validate required fields
-    if (!checklistId || !itemId) {
+    if (!checklistId || !itemId || !id) {
       return NextResponse.json({ success: false, error: 'Checklist ID and Item ID are required.' }, { status: 400 });
     }
 
@@ -40,12 +40,14 @@ export async function PUT(request: Request) {
     const { data: updatedItem, error: itemError } = await supabaseServer
       .from('checklist_items')
       .update({ completed })
-      .eq('id', itemId)
+      .eq('id', id) // Use 'item_id' if that's the correct column
       .eq('checklist_id', checklistId)
       .select('*')
       .single();
 
+
     if (itemError || !updatedItem) {
+      console.log("ERROR UPDATING:", itemError, updatedItem)
       return NextResponse.json(
         { success: false, error: 'Failed to update item status.' },
         { status: 500 }
