@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar"
 import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon } from "lucide-react"
 import { useAuth } from "@/lib/auth-Context";
+import Link from "next/link";
 const menuItems = [
   {
     title: "Dashboard",
@@ -48,7 +49,7 @@ export function AppSidebar() {
       <SidebarHeader />
       <SidebarContent>
         <SidebarGroup />
-        <SidebarGroupLabel>🌿 Leaf-N-Go</SidebarGroupLabel>
+        <SidebarGroupLabel><Link href="/">🌿 Leaf-N-Go</Link></SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {menuItems.map((item) => (
