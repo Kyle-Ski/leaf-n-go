@@ -43,13 +43,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
 
-    // Map checklist items to their corresponding checklists
+    // Map checklist items to their corresponding checklists and calculate completion
     const checklistsWithItems = checklists.map((checklist) => {
+      const itemsForChecklist = checklistItems
+        ? checklistItems.filter((item) => item.checklist_id === checklist.id)
+        : [];
+
+      // Calculate completed and total items
+      const totalItems = itemsForChecklist.length;
+      const completedItems = itemsForChecklist.filter((item) => item.completed).length;
+
       return {
         ...checklist,
-        items: checklistItems
-          ? checklistItems.filter((item) => item.checklist_id === checklist.id)
-          : [],
+        items: itemsForChecklist,
+        completion: {
+          completed: completedItems,
+          total: totalItems,
+        },
       };
     });
 
