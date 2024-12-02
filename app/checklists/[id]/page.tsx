@@ -36,6 +36,28 @@ function ChecklistDetailsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("alphabetical-asc");
   const [checklistSearchQuery, setChecklistSearchQuery] = useState<string>("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const deleteChecklist = async () => {
+    if (!id || !user) return;
+
+    try {
+      const response = await fetch(`/api/checklists/${id}/delete`, {
+        method: "DELETE",
+        headers: { "x-user-id": user.id },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete checklist.");
+      }
+
+      // Redirect to the checklists page after deletion
+      window.location.href = "/checklists";
+    } catch (err) {
+      console.error("Error deleting checklist:", err);
+      alert("Failed to delete checklist. Please try again.");
+    }
+  };
 
   const calculateCompletion = () => {
     if (!checklist || !checklist.items.length) return { completed: 0, total: 0 };
@@ -160,6 +182,16 @@ function ChecklistDetailsPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
+
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={() => setIsDeleteDialogOpen(true)}
+          className="bg-red-500 text-white"
+        >
+          Delete Checklist
+        </Button>
+      </div>
+
       <div className="mb-4">
         <p className="text-gray-700">Completion</p>
         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -374,6 +406,27 @@ function ChecklistDetailsPage() {
               Remove
             </Button>
             <Button onClick={() => setIsRemoveModalOpen(false)}>Cancel</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/*Delete Dialog*/}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this checklist? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-4">
+            <Button
+              onClick={deleteChecklist}
+              className="bg-red-500 text-white"
+            >
+              Delete
+            </Button>
+            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
           </div>
         </DialogContent>
       </Dialog>

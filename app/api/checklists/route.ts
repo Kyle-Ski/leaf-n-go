@@ -75,13 +75,13 @@ export async function POST(req: NextRequest) {
   const { userId, title, category, items } = body;
 
   if (!userId || !title || !category) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   try {
     // Create a new checklist
     const { data: newChecklist, error: checklistError } = await supabaseServer
-      .from('checklists')
+      .from("checklists")
       .insert([{ title, category, user_id: userId }])
       .select()
       .single();
@@ -90,17 +90,56 @@ export async function POST(req: NextRequest) {
       throw checklistError;
     }
 
-    // Add items to the checklist (if provided)
+    // Validate and process items
     if (items && items.length > 0) {
-      const checklistItems = items.map((item: { id: string; quantity: number }) => ({
-        checklist_id: newChecklist.id,
-        item_id: item.id,
-        completed: false,
-        quantity: item.quantity,
-      }));
+      // Fetch user's inventory to validate quantities
+      const itemIds = items.map((item: { id: string }) => item.id);
+      const { data: inventoryItems, error: inventoryError } = await supabaseServer
+        .from("items")
+        .select("id, quantity")
+        .in("id", itemIds)
+        .eq("user_id", userId);
+
+      if (inventoryError) {
+        throw inventoryError;
+      }
+
+      if (!inventoryItems || inventoryItems.length === 0) {
+        return NextResponse.json(
+          { error: "No items found in user inventory" },
+          { status: 400 }
+        );
+      }
+
+      // Map inventory items by ID for quick lookup
+      const inventoryMap = new Map(
+        inventoryItems.map((item) => [item.id, item.quantity])
+      );
+
+      // Prepare checklist items
+      const checklistItems = [];
+      for (const { id: itemId, quantity } of items) {
+        const availableQuantity = inventoryMap.get(itemId) || 0;
+        if (quantity > availableQuantity) {
+          return NextResponse.json(
+            { error: `Insufficient quantity for item ${itemId}` },
+            { status: 400 }
+          );
+        }
+
+        // Add multiple entries for the same item based on the requested quantity
+        for (let i = 0; i < quantity; i++) {
+          checklistItems.push({
+            checklist_id: newChecklist.id,
+            item_id: itemId,
+            completed: false,
+            quantity: 1, // Each entry represents a single unit
+          });
+        }
+      }
 
       const { error: itemsError } = await supabaseServer
-        .from('checklist_items')
+        .from("checklist_items")
         .insert(checklistItems);
 
       if (itemsError) {
@@ -110,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newChecklist, { status: 201 });
   } catch (error) {
-    console.error('Error creating checklist:', error);
-    return NextResponse.json({ error: 'Failed to create checklist' }, { status: 500 });
+    console.error("Error creating checklist:", error);
+    return NextResponse.json({ error: "Failed to create checklist" }, { status: 500 });
   }
 }
