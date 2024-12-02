@@ -19,6 +19,7 @@ import {
   ChecklistItem,
   ItemDetails,
 } from "@/types/projectTypes";
+import NewItemForm from "@/components/newItemForm";
 
 function ChecklistDetailsPage() {
   const { id } = useParams();
@@ -30,6 +31,7 @@ function ChecklistDetailsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
+  const [ isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false)
 
   useEffect(() => {
     if (!user || !id) return;
@@ -202,11 +204,33 @@ function ChecklistDetailsPage() {
         ))}
       </ul>
 
-      <div className="mt-6">
-        <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white">
-          Add Item
-        </Button>
-      </div>
+      <div className="mt-6 space-x-4">
+  <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white">
+    Add Existing Item
+  </Button>
+  <Button
+    onClick={() => setIsCreateItemModalOpen(true)}
+    className="bg-green-500 text-white"
+  >
+    Create New Item
+  </Button>
+</div>
+
+{/* Create New Item Modal */}
+<Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Create New Item</DialogTitle>
+    </DialogHeader>
+    <NewItemForm
+  userId={user?.id || ""}
+  onItemAdded={(newItem) => {
+    setItems((prev) => [...prev, newItem]);
+  }}
+/>
+
+  </DialogContent>
+</Dialog>
 
       {/* Add Item Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
