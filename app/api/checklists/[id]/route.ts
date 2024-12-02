@@ -17,8 +17,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   }
 
   try {
-    console.log("Fetching checklist for checklist ID:", checklistId, "and user ID:", userId);
-
     // Fetch the checklist with its items for the user
     const { data: checklist, error: checklistError } = await supabaseServer
       .from('checklists')
@@ -124,13 +122,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   }
 
   try {
-    // Log inputs for debugging
-    console.log("Attempting to delete item:", {
-      checklist_id: checklistId,
-      item_id,
-      user_id: userId,
-    });
-
     const { data, error } = await supabaseServer
       .from('checklist_items')
       .delete()
@@ -141,9 +132,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
       console.error("Error removing item from checklist:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    // Log affected rows for debugging
-    console.log("Delete operation successful. Affected rows:", data);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
