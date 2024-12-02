@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supbaseClient";
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const userId = req.headers.get("x-user-id");
-  const { id: checklistId } = params;
+  const { id: checklistId } = await props.params;
 
   if (!userId) {
     return NextResponse.json({ error: "User ID is required" }, { status: 400 });
