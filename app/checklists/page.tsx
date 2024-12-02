@@ -34,8 +34,6 @@ const ChecklistsPage = () => {
       return;
     }
 
-    console.log("Fetching checklists for user ID:", user.id);
-
     setLoading(true);
     setError("");
     try {
@@ -47,14 +45,11 @@ const ChecklistsPage = () => {
         },
       });
 
-      console.log("Response:", response);
-
       if (!response.ok) {
         throw new Error("Failed to fetch checklists");
       }
 
       const data: Checklist[] = await response.json();
-      console.log("Checklists data:", data);
       setChecklists(data);
     } catch (error) {
       console.error("Error fetching checklists:", error);
@@ -148,14 +143,26 @@ const ChecklistsPage = () => {
                       <div>
                         <p className="text-gray-700">Completion</p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `50%` }}></div>
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
+                            style={{
+                              width: `${list.completion?.total
+                                ? (list.completion.completed / list.completion.total) * 100
+                                : 0
+                                }%`,
+                            }}
+                          ></div>
                         </div>
                         <span className="text-xs text-gray-500 mt-2 block">
-                          50% complete {/* Placeholder, implement completion calculation */}
+                          {list.completion?.total
+                            ? `${list.completion.completed}/${list.completion.total} items added`
+                            : "No items"}
                         </span>
                       </div>
                       <Link href={`/checklists/${list.id}`}>
-                        <Button variant="outline" className="mt-2">View Checklist</Button>
+                        <Button variant="outline" className="mt-2">
+                          View Checklist
+                        </Button>
                       </Link>
                     </CardContent>
                   </Card>
@@ -177,14 +184,26 @@ const ChecklistsPage = () => {
                     <div>
                       <p className="text-gray-700">Completion</p>
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `50%` }}></div>
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{
+                            width: `${list.completion?.total
+                                ? (list.completion.completed / list.completion.total) * 100
+                                : 0
+                              }%`,
+                          }}
+                        ></div>
                       </div>
                       <span className="text-xs text-gray-500 mt-2 block">
-                        50% complete {/* Placeholder, implement completion calculation */}
+                        {list.completion?.total
+                          ? `${list.completion.completed}/${list.completion.total} items added`
+                          : "No items"}
                       </span>
                     </div>
                     <Link href={`/checklists/${list.id}`}>
-                      <Button variant="outline" className="mt-2">View Checklist</Button>
+                      <Button variant="outline" className="mt-2">
+                        View Checklist
+                      </Button>
                     </Link>
                   </CardContent>
                 </Card>

@@ -19,6 +19,10 @@ export interface Checklist {
   title: string;
   category: string;
   favorite?: boolean;
+  completion?: {
+    completed: number,
+    total: number
+  }
 }
 
 export interface ChecklistItem {
