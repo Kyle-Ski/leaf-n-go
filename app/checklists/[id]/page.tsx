@@ -1,158 +1,244 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ChecklistWithItems } from '@/types/projectTypes';
-import { withAuth } from '@/lib/withAuth';
-import { useAuth } from '@/lib/auth-Context';
-import { useParams } from 'next/navigation';
-import { Loader } from '@/components/ui/loader';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { withAuth } from "@/lib/withAuth";
+import { useAuth } from "@/lib/auth-Context";
+import { Loader } from "@/components/ui/loader";
+import {
+    ChecklistWithItems,
+    ChecklistItem,
+    ItemDetails,
+} from "@/types/projectTypes";
 
-const ChecklistDetailsPage = () => {
-  const params = useParams();
-  const { user } = useAuth();
-  const id = params?.id;
+function ChecklistDetailsPage() {
+    const { id } = useParams();
+    const { user } = useAuth();
+    const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
+    const [items, setItems] = useState<ItemDetails[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
 
-  const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [itemError, setItemError] = useState<string | null>(null); // Track errors for specific items
+    useEffect(() => {
+        if (!user || !id) return;
 
-  useEffect(() => {
-    if (user && id) {
-      fetchChecklistDetails(id as string);
-    }
-  }, [user, id]);
+        const fetchChecklistDetails = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`/api/checklists/${id}`, {
+                    headers: { "x-user-id": user.id },
+                });
+                if (!response.ok) throw new Error("Failed to fetch checklist details.");
 
-  const fetchChecklistDetails = async (checklistId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/checklists/${checklistId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.id || '',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to fetch checklist details');
-        return;
-      }
-
-      const checklistData: ChecklistWithItems = await response.json();
-      setChecklist(checklistData);
-    } catch (err) {
-      console.error('Error fetching checklist details:', err);
-      setError('An unexpected error occurred. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleItemToggle = async (itemId: string, completed: boolean) => {
-    try {
-      setItemError(null); // Clear previous item errors
-      const response = await fetch(`/api/checklists/${id}/items/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.id || '',
-        },
-        body: JSON.stringify({ checklistId: id, itemId, completed }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update item status');
-      }
-
-      // Update the checklist state optimistically
-      setChecklist((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          items: prev.items.map((item) =>
-            item.id === itemId ? { ...item, completed } : item
-          ),
+                const data: ChecklistWithItems = await response.json();
+                setChecklist(data);
+            } catch (err) {
+                console.error(err);
+                setError("Unable to load checklist. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
         };
-      });
-    } catch (err) {
-      console.error('Error updating item status:', err);
-      setItemError(`Failed to update the status for item ID: ${itemId}`);
-    }
-  };
 
-  if (loading) {
+        const fetchItems = async () => {
+            try {
+                const response = await fetch(`/api/items`, {
+                    headers: { "x-user-id": user?.id },
+                });
+                if (!response.ok) throw new Error("Failed to fetch items.");
+                const data: ItemDetails[] = await response.json();
+                setItems(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchChecklistDetails();
+        fetchItems();
+    }, [user, id]);
+
+    const calculateRemainingQuantity = (itemId: string): number => {
+        if (!checklist) return 0;
+        const checklistItems = checklist.items.filter((item) => item.item_id === itemId);
+        const totalInChecklist = checklistItems.reduce((sum, item) => sum + item.quantity, 0);
+        const item = items.find((i) => i.id === itemId);
+        return item ? item.quantity - totalInChecklist : 0;
+    };
+
+    const handleAddItem = async (item: ItemDetails) => {
+        try {
+            const remainingQuantity = calculateRemainingQuantity(item.id);
+            if (remainingQuantity <= 0) return;
+
+            const response = await fetch(`/api/checklists/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || "",
+                },
+                body: JSON.stringify({
+                    checklist_id: id,
+                    item_id: item.id,
+                    quantity: 1,
+                    completed: false,
+                }),
+            });
+
+            if (!response.ok) throw new Error("Failed to add item to checklist.");
+            const addedItem: ChecklistItem = await response.json();
+            setChecklist((prev) =>
+                prev
+                    ? { ...prev, items: [...prev.items, addedItem] }
+                    : prev
+            );
+        } catch (err) {
+            console.error("Error adding item:", err);
+        } finally {
+            setIsAddModalOpen(false);
+        }
+    };
+
+    const handleRemoveItem = async (itemId: string) => {
+        try {
+            const response = await fetch(`/api/checklists/${id}`, {
+                method: "DELETE",
+                headers: { "x-user-id": user?.id || "" },
+                body: JSON.stringify({ item_id: itemId }),
+            });
+
+            if (!response.ok) throw new Error("Failed to remove item from checklist.");
+            setChecklist((prev) =>
+                prev
+                    ? { ...prev, items: prev.items.filter((item) => item.id !== itemId) }
+                    : prev
+            );
+        } catch (err) {
+            console.error("Error removing item:", err);
+        } finally {
+            setIsRemoveModalOpen(false);
+        }
+    };
+
+    if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
+    if (error) return <p className="text-red-500">{error}</p>;
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader className="h-12 w-12 mb-4 text-blue-500" />
-        <p className="text-gray-600 text-lg">Loading...</p>
-      </div>
-    )
-  }
+        <div className="p-4 max-w-4xl mx-auto">
+            <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
+            <p className="text-gray-600 mb-4">Category: {checklist?.category}</p>
 
-  if (error) {
-    return <p className="text-red-500">{error}</p>;
-  }
+            <ul className="space-y-4">
+                {checklist?.items.map((item) => (
+                    <li
+                        key={item.id}
+                        className="p-4 bg-white rounded-lg shadow-md flex justify-between items-center"
+                    >
+                        <div>
+                            <Checkbox
+                                checked={item.completed}
+                                onCheckedChange={(value) =>
+                                    fetch(`/api/checklists/${id}/items/${item.id}`, {
+                                        method: "PUT",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            "x-user-id": user?.id || "",
+                                        },
+                                        body: JSON.stringify({ completed: value }),
+                                    })
+                                }
+                            />
+                            <span
+                                className={`ml-2 ${
+                                    item.completed ? "line-through text-gray-500" : ""
+                                }`}
+                            >
+                                {item.items.name}
+                            </span>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setSelectedItem(item);
+                                setIsRemoveModalOpen(true);
+                            }}
+                        >
+                            Remove
+                        </Button>
+                    </li>
+                ))}
+            </ul>
 
-  if (!checklist) {
-    return <p>No checklist found.</p>;
-  }
+            <div className="mt-6">
+                <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white">
+                    Add Item
+                </Button>
+            </div>
 
-  return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
-      <section className="w-full max-w-4xl space-y-8">
-        <Card className="p-6 bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle>{checklist.title}</CardTitle>
-            <p className="text-sm text-gray-500">Category: {checklist.category}</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {checklist.items && checklist.items.length > 0 ? (
-              checklist.items.map((item) => (
-                <div key={item.id} className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-4">
-                    <Checkbox
-                      checked={item.completed}
-                      onCheckedChange={(value) =>
-                        handleItemToggle(item.id, value as boolean)
-                      }
-                    />
-                    <div>
-                      <span
-                        className={`block ${item.completed ? 'line-through text-gray-500' : ''
-                          }`}
-                      >
-                        {item.items.name}
-                      </span>
-                      <span className="text-sm text-gray-500">{item.items.notes}</span>
+            {/* Add Item Modal */}
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Item to Checklist</DialogTitle>
+                        <DialogDescription>Select an item to add.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {items.map((item) => {
+                            const remainingQuantity = calculateRemainingQuantity(item.id);
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`p-2 rounded-md cursor-pointer ${
+                                        remainingQuantity <= 0
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-gray-100 hover:bg-gray-200"
+                                    }`}
+                                    onClick={() =>
+                                        remainingQuantity > 0 && handleAddItem(item)
+                                    }
+                                >
+                                    {item.name} (Remaining: {remainingQuantity})
+                                </div>
+                            );
+                        })}
                     </div>
-                  </div>
-                  {itemError && itemError.includes(item.id) && (
-                    <p className="text-sm text-red-500">{itemError}</p>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No items added to this checklist.</p>
-            )}
-          </CardContent>
-        </Card>
-        <div className="flex justify-center">
-          <Link href="/checklists">
-            <Button variant="default" className="bg-blue-500 text-white hover:bg-blue-600">
-              Back to Checklists
-            </Button>
-          </Link>
+                </DialogContent>
+            </Dialog>
+
+            {/* Remove Item Modal */}
+            <Dialog open={isRemoveModalOpen} onOpenChange={setIsRemoveModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove Item</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to remove {selectedItem?.items.name} from the checklist?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            onClick={() => handleRemoveItem(selectedItem?.id || "")}
+                            className="bg-red-500 text-white"
+                        >
+                            Remove
+                        </Button>
+                        <Button onClick={() => setIsRemoveModalOpen(false)}>Cancel</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
-      </section>
-    </div>
-  );
-};
+    );
+}
 
 export default withAuth(ChecklistDetailsPage);
