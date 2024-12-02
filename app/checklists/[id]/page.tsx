@@ -35,6 +35,18 @@ function ChecklistDetailsPage() {
   const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const calculateCompletion = () => {
+    if (!checklist || !checklist.items.length) return { completed: 0, total: 0 };
+  
+    const totalItems = checklist.items.length;
+    const completedItems = checklist.items.filter((item) => item.completed).length;
+  
+    return { completed: completedItems, total: totalItems };
+  };
+  
+  const { completed, total } = calculateCompletion();
+  const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
+  
   // Filter items based on the search query
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -146,6 +158,19 @@ function ChecklistDetailsPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
+      <div className="mb-4">
+  <p className="text-gray-700">Completion</p>
+  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+    <div
+      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+      style={{ width: `${completionPercentage}%` }}
+    ></div>
+  </div>
+  <span className="text-xs text-gray-500 mt-2 block">
+    {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
+  </span>
+</div>
+
       <p className="text-gray-600 mb-4">Category: {checklist?.category}</p>
 
       <ul className="space-y-4">
