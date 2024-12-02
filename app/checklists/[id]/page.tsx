@@ -34,19 +34,36 @@ function ChecklistDetailsPage() {
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortOption, setSortOption] = useState<string>("alphabetical-asc");
+
+  const sortedItems = checklist?.items.slice().sort((a, b) => {
+    if (sortOption === "alphabetical-asc") {
+      return a.items.name.localeCompare(b.items.name);
+    }
+    if (sortOption === "alphabetical-desc") {
+      return b.items.name.localeCompare(a.items.name);
+    }
+    if (sortOption === "completed-first") {
+      return Number(b.completed) - Number(a.completed);
+    }
+    if (sortOption === "not-completed-first") {
+      return Number(a.completed) - Number(b.completed);
+    }
+    return 0;
+  });
 
   const calculateCompletion = () => {
     if (!checklist || !checklist.items.length) return { completed: 0, total: 0 };
-  
+
     const totalItems = checklist.items.length;
     const completedItems = checklist.items.filter((item) => item.completed).length;
-  
+
     return { completed: completedItems, total: totalItems };
   };
-  
+
   const { completed, total } = calculateCompletion();
   const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
-  
+
   // Filter items based on the search query
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -159,22 +176,41 @@ function ChecklistDetailsPage() {
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
       <div className="mb-4">
-  <p className="text-gray-700">Completion</p>
-  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-    <div
-      className="bg-green-500 h-2 rounded-full transition-all duration-300"
-      style={{ width: `${completionPercentage}%` }}
-    ></div>
-  </div>
-  <span className="text-xs text-gray-500 mt-2 block">
-    {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
-  </span>
-</div>
+        <p className="text-gray-700">Completion</p>
+        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div
+            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${completionPercentage}%` }}
+          ></div>
+        </div>
+        <span className="text-xs text-gray-500 mt-2 block">
+          {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
+        </span>
+      </div>
+      <div className="mb-4 flex flex-col items-end space-y-2">
+        <label
+          htmlFor="sort-options"
+          className="text-sm font-medium text-gray-700"
+        >
+          Sort Items
+        </label>
+        <select
+          id="sort-options"
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="alphabetical-asc">Alphabetical (A-Z)</option>
+          <option value="alphabetical-desc">Alphabetical (Z-A)</option>
+          <option value="completed-first">Completed First</option>
+          <option value="not-completed-first">Not Completed First</option>
+        </select>
+      </div>
 
       <p className="text-gray-600 mb-4">Category: {checklist?.category}</p>
 
       <ul className="space-y-4">
-        {checklist?.items.map((item) => (
+        {sortedItems?.map((item) => (
           <li
             key={item.id}
             className="p-4 bg-white rounded-lg shadow-md flex justify-between items-center"
@@ -286,8 +322,8 @@ function ChecklistDetailsPage() {
                   <div
                     key={item.id}
                     className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
-                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        : "bg-gray-100 hover:bg-gray-200"
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 hover:bg-gray-200"
                       }`}
                     onClick={() => remainingQuantity > 0 && handleAddItem(item)}
                   >
