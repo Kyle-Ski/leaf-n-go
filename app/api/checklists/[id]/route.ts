@@ -122,7 +122,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   }
 
   try {
-    const { data, error } = await supabaseServer
+    const { error } = await supabaseServer
       .from('checklist_items')
       .delete()
       .eq('checklist_id', checklistId)
