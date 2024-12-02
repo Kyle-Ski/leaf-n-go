@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-Context";
 import { Loader } from "@/components/ui/loader";
 import { withAuth } from "@/lib/withAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import NewItemForm from "@/components/newItemForm";
+import { Input } from "@/components/ui/input";
 
 interface Item {
     id: string;
@@ -21,13 +23,13 @@ const ItemsPage = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState<string>("")
 
-    const [newItem, setNewItem] = useState({
-        name: "",
-        quantity: 1,
-        weight: 0,
-        notes: "",
-    });
+    // Filter items based on the search query
+    const filteredItems = items.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         if (!user) return;
@@ -58,50 +60,23 @@ const ItemsPage = () => {
         fetchItems();
     }, [user]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setNewItem((prev) => ({
-            ...prev,
-            [name]: name === "quantity" || name === "weight" ? parseFloat(value) : value,
-        }));
-    };
-
-    const handleAddItem = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-
-        if (!user) {
-            setError("User is not authenticated.");
-            return;
-        }
-
-        try {
-            const response = await fetch("/api/items", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user.id,
-                },
-                body: JSON.stringify(newItem),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to add new item.");
-            }
-
-            const addedItem = await response.json();
-            setItems((prev) => [...prev, addedItem]);
-            setNewItem({ name: "", quantity: 1, weight: 0, notes: "" });
-        } catch (err) {
-            console.error("Error adding item:", err);
-            setError("Unable to add item. Please try again later.");
-        }
-    };
 
     return (
         <div className="p-4 max-w-4xl mx-auto space-y-8">
             <h1 className="text-2xl font-semibold">Your Items</h1>
-
+            <Button
+                onClick={() => setIsCreateItemModalOpen(true)}
+                className="bg-green-500 text-white"
+            >
+                Create New Item
+            </Button>
+            <Input
+                type="text"
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 border rounded-md"
+            />
             {loading ? (
                 <div className="flex flex-col items-center justify-center min-h-screen">
                     <Loader className="h-12 w-12 mb-4 text-blue-500" />
@@ -131,67 +106,22 @@ const ItemsPage = () => {
                 </ul>
             )}
 
-            <h2 className="text-xl font-semibold">Add a New Item</h2>
-            <form
-                onSubmit={handleAddItem}
-                className="space-y-4 p-4 bg-gray-100 rounded-lg shadow-md"
-            >
-                <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Name
-                    </label>
-                    <Input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={newItem.name}
-                        onChange={handleInputChange}
-                        required
+            {/* Create New Item Modal */}
+            <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create New Item</DialogTitle>
+                    </DialogHeader>
+                    <NewItemForm
+                        userId={user?.id || ""}
+                        onItemAdded={(newItem) => {
+                            setItems((prev) => [...prev, newItem]);
+                        }}
                     />
-                </div>
-                <div>
-                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
-                        Quantity
-                    </label>
-                    <Input
-                        type="number"
-                        id="quantity"
-                        name="quantity"
-                        value={newItem.quantity}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-                <div>
-                    <label htmlFor="weight" className="block text-sm font-medium text-gray-700">
-                        Weight (kg)
-                    </label>
-                    <Input
-                        type="number"
-                        id="weight"
-                        name="weight"
-                        value={newItem.weight}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-                <div>
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                        Notes
-                    </label>
-                    <textarea
-                        id="notes"
-                        name="notes"
-                        value={newItem.notes}
-                        onChange={handleInputChange}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                        placeholder="Enter any additional notes..."
-                    />
-                </div>
-                <Button type="submit" className="bg-blue-500 text-white">
-                    Add Item
-                </Button>
-            </form>
+
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 }
