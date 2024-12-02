@@ -19,6 +19,8 @@ import {
   ChecklistItem,
   ItemDetails,
 } from "@/types/projectTypes";
+import NewItemForm from "@/components/newItemForm";
+import { Input } from "@/components/ui/input";
 
 function ChecklistDetailsPage() {
   const { id } = useParams();
@@ -30,6 +32,13 @@ function ChecklistDetailsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
+  const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Filter items based on the search query
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (!user || !id) return;
@@ -170,14 +179,14 @@ function ChecklistDetailsPage() {
                   // Optimistically update the checklist UI
                   setChecklist((prev) => {
                     if (!prev || !prev.items) return prev; // Handle null or undefined state
-                  
+
                     return {
                       ...prev,
                       items: prev.items.map((i) =>
                         i.id === item.id ? { ...i, completed: Boolean(value) } : i
                       ),
                     };
-                  });                  
+                  });
                 }
                 }
               />
@@ -202,11 +211,33 @@ function ChecklistDetailsPage() {
         ))}
       </ul>
 
-      <div className="mt-6">
+      <div className="mt-6 space-x-4">
         <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white">
-          Add Item
+          Add Existing Item
+        </Button>
+        <Button
+          onClick={() => setIsCreateItemModalOpen(true)}
+          className="bg-green-500 text-white"
+        >
+          Create New Item
         </Button>
       </div>
+
+      {/* Create New Item Modal */}
+      <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Item</DialogTitle>
+          </DialogHeader>
+          <NewItemForm
+            userId={user?.id || ""}
+            onItemAdded={(newItem) => {
+              setItems((prev) => [...prev, newItem]);
+            }}
+          />
+
+        </DialogContent>
+      </Dialog>
 
       {/* Add Item Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -216,23 +247,30 @@ function ChecklistDetailsPage() {
             <DialogDescription>Select an item to add.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {items.map((item) => {
-              const remainingQuantity = calculateRemainingQuantity(item.id);
-              return (
-                <div
-                  key={item.id}
-                  className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 hover:bg-gray-200"
-                    }`}
-                  onClick={() =>
-                    remainingQuantity > 0 && handleAddItem(item)
-                  }
-                >
-                  {item.name} (Remaining: {remainingQuantity})
-                </div>
-              );
-            })}
+            <Input
+              type="text"
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+            <div className="max-h-80 overflow-y-auto space-y-2">
+              {filteredItems.map((item) => {
+                const remainingQuantity = calculateRemainingQuantity(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-100 hover:bg-gray-200"
+                      }`}
+                    onClick={() => remainingQuantity > 0 && handleAddItem(item)}
+                  >
+                    {item.name} (Remaining: {remainingQuantity})
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
