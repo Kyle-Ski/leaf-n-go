@@ -112,6 +112,7 @@ const TripPage = () => {
             }
 
             const updatedData = await response.json();
+            console.log("UPDATED DATA:", updatedData)
             setTrip(updatedData);
             setIsUpdateOpen(false);
         } catch (err) {

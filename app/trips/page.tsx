@@ -48,27 +48,35 @@ const TripsPage = () => {
 
   const handleCreateTrip = async (tripData: CreateTripPayload) => {
     try {
+      // Add the current user as the owner and the only participant
+      const participants = [
+        {
+          user_id: user?.id || "",
+          role: "owner", // Set the role as 'owner'
+        },
+      ];
+  
       const response = await fetch("/api/trips", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-id": user?.id || "",
         },
-        body: JSON.stringify(tripData),
+        body: JSON.stringify({ ...tripData, participants }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create trip.");
       }
-
+  
       fetchTrips();
     } catch (err) {
       console.error(err);
       setError("Failed to create trip. Please try again.");
     }
   };
-
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">

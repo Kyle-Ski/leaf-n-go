@@ -31,25 +31,26 @@ const EditTripModal = ({ isOpen, onClose, trip, allChecklists, onUpdate }: EditT
   const [endDate, setEndDate] = useState<Date | null>(trip.end_date ? new Date(trip.end_date) : null);
   const [location, setLocation] = useState(trip.location || "");
   const [notes, setNotes] = useState(trip.notes || "");
-  const [selectedChecklists, setSelectedChecklists] = useState<string[]>(trip.trip_checklists.map((c) => c.checklist_id));
+  const [selectedChecklists, setSelectedChecklists] = useState<string[]>(
+    trip?.trip_checklists?.map((c) => c.checklist_id) || []
+);
   const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      resetForm();
+    if (isOpen && trip) {
+        resetForm();
     }
-  }, [isOpen]);
+}, [isOpen, trip]);
 
-  const resetForm = () => {
+const resetForm = () => {
     setTitle(trip.title || "");
     setStartDate(trip.start_date ? new Date(trip.start_date) : null);
     setEndDate(trip.end_date ? new Date(trip.end_date) : null);
     setLocation(trip.location || "");
     setNotes(trip.notes || "");
-    setSelectedChecklists(trip.trip_checklists.map((c) => c.checklist_id));
+    setSelectedChecklists(trip.trip_checklists?.map((c) => c.checklist_id) || []);
     setModalError(null);
-  };
-
+};
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
       prev.includes(checklistId)

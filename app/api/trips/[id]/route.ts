@@ -180,7 +180,31 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       if (insertError) throw insertError;
     }
 
-    return NextResponse.json(updatedTrip, { status: 200 });
+    // Fetch the updated trip with its related data
+    const { data: fullTrip, error: fetchError } = await supabaseServer
+      .from("trips")
+      .select(`
+        id,
+        title,
+        start_date,
+        end_date,
+        location,
+        notes,
+        created_at,
+        updated_at,
+        trip_checklists (
+          checklist_id,
+          checklists (
+            title
+          )
+        )
+      `)
+      .eq("id", tripId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    return NextResponse.json(fullTrip, { status: 200 });
   } catch (err) {
     console.error("Error updating trip:", err);
     return NextResponse.json({ error: "Failed to update trip" }, { status: 500 });
