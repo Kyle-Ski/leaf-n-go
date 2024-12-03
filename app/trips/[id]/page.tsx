@@ -6,47 +6,53 @@ import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
-import { Checklist } from "@/types/projectTypes";
+import { FrontendTrip, Checklist } from "@/types/projectTypes";
 import { useAuth } from "@/lib/auth-Context";
-
-interface Trip {
-    id: string;
-    title: string;
-    start_date: string | null;
-    end_date: string | null;
-    location: string | null;
-    notes: string | null;
-    created_at: string;
-    updated_at: string;
-    trip_checklists: Array<{ checklist_id: string; title: string }>;
-    trip_participants: Array<{ user_id: string; role: string }>;
-}
-
+import Link from "next/link";
 
 const TripPage = () => {
     const { user } = useAuth();
     const { id } = useParams();
-    const [trip, setTrip] = useState<Trip | null>(null);
+    const [trip, setTrip] = useState<FrontendTrip | null>(null);
+    const [allChecklists, setAllChecklists] = useState<Checklist[]>([]);
+    const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-    const [allChecklists, setAllChecklists] = useState<Checklist[]>([]);
 
     useEffect(() => {
-        if (user) {
+        if (user && id) {
+            fetchTripDetails();
             fetchAllChecklists();
         }
-    }, []);
+    }, [user, id]);
+
+    const fetchTripDetails = async () => {
+        try {
+            const response = await fetch(`/api/trips/${id}`, {
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch trip details.");
+            }
+
+            const data: FrontendTrip = await response.json();
+            setTrip(data);
+        } catch (err) {
+            console.error(err);
+            setError("Unable to load trip details. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchAllChecklists = async () => {
-        if (!user?.id) {
-            console.error("User ID is undefined. Cannot fetch checklists.");
-            setError("Unable to fetch checklists. Please try again later.");
-            return;
-          }
         try {
             const response = await fetch(`/api/checklists`, {
-                headers: { "Content-Type": "application/json", "x-user-id": user.id, },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || "",
+                },
             });
 
             if (!response.ok) {
@@ -60,49 +66,13 @@ const TripPage = () => {
         }
     };
 
-    useEffect(() => {
-        if (id) {
-            fetchTripDetails();
-        }
-    }, [id]);
-
-    const fetchTripDetails = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetch(`/api/trips/${id}`, {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch trip details.");
-            }
-
-            const data: Trip = await response.json();
-            setTrip(data);
-        } catch (err) {
-            console.error(err);
-            setError("Unable to load trip details. Please try again later.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleUpdateTrip = async (updatedTrip: UpdateTripPayload) => {
-        if (!user?.id) {
-            console.error("User ID is undefined. Cannot fetch checklists.");
-            setError("Unable to fetch checklists. Please try again later.");
-            return;
-          }
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-user-id": user.id,
+                    "x-user-id": user?.id || "",
                 },
                 body: JSON.stringify(updatedTrip),
             });
@@ -111,8 +81,33 @@ const TripPage = () => {
                 throw new Error("Failed to update trip.");
             }
 
-            const updatedData = await response.json();
-            console.log("UPDATED DATA:", updatedData)
+            const updatedData: FrontendTrip = await response.json();
+
+            if (updatedData.trip_checklists) {
+                // Normalize trip_checklists to ensure consistent structure
+                updatedData.trip_checklists = updatedData.trip_checklists.map((tripChecklist) => {
+                    const checklist = Array.isArray(tripChecklist.checklists)
+                        ? tripChecklist.checklists[0]
+                        : tripChecklist.checklists;
+
+                    const totalItems = checklist?.checklist_items?.length || 0;
+                    const completedItems =
+                        checklist?.checklist_items?.filter((item) => item.completed).length || 0;
+
+                    return {
+                        checklist_id: tripChecklist.checklist_id,
+                        checklists: [
+                            {
+                                title: checklist?.title || "Untitled Checklist",
+                                checklist_items: checklist?.checklist_items || [],
+                            },
+                        ],
+                        totalItems,
+                        completedItems,
+                    };
+                });
+            }
+
             setTrip(updatedData);
             setIsUpdateOpen(false);
         } catch (err) {
@@ -169,37 +164,48 @@ const TripPage = () => {
             {/* Checklists */}
             <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
                 <h2 className="text-xl font-semibold mb-4">Checklists</h2>
-                <p className="text-gray-600">Placeholder for trip checklists.</p>
+                {trip.trip_checklists.length === 0 ? (
+                    <p className="text-gray-600">No checklists linked to this trip.</p>
+                ) : (
+                    <ul className="space-y-4">
+                        {trip.trip_checklists.map((checklist) => (
+                            <li
+                                key={checklist.checklist_id}
+                                className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
+                            >
+                                <div>
+                                    <h3 className="font-semibold">
+                                        {checklist.checklists[0]?.title || "Untitled Checklist"}
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        {checklist.completedItems} of {checklist.totalItems} items completed
+                                    </p>
+                                    <div className="relative h-2 bg-gray-200 rounded-full mt-2">
+                                        <div
+                                            className="absolute top-0 left-0 h-2 bg-green-500 rounded-full"
+                                            style={{
+                                                width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0}%`,
+                                            }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <Link
+                                    href={`/checklists/${checklist.checklist_id}`}
+                                    className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
+                                >
+                                    View Checklist
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </section>
 
-            {/* Packing Insights */}
+
+            {/* Other Sections */}
             <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
                 <h2 className="text-xl font-semibold mb-4">Packing Insights</h2>
                 <p className="text-gray-600">Placeholder for AI-assisted packing suggestions.</p>
-            </section>
-
-            {/* Weather Overview */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
-                <h2 className="text-xl font-semibold mb-4">Weather Overview</h2>
-                <p className="text-gray-600">Placeholder for AI-assisted weather forecast.</p>
-            </section>
-
-            {/* Itinerary */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
-                <h2 className="text-xl font-semibold mb-4">Itinerary</h2>
-                <p className="text-gray-600">Placeholder for day-by-day itinerary.</p>
-            </section>
-
-            {/* People and Shared Resources */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
-                <h2 className="text-xl font-semibold mb-4">People and Shared Resources</h2>
-                <p className="text-gray-600">Placeholder for trip participants and shared resources.</p>
-            </section>
-
-            {/* Gear and Equipment */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
-                <h2 className="text-xl font-semibold mb-4">Gear and Equipment</h2>
-                <p className="text-gray-600">Placeholder for linked gear and equipment tracking.</p>
             </section>
 
             {/* Edit Trip Modal */}

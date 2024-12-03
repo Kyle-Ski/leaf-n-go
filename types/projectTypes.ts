@@ -17,6 +17,32 @@ export interface CreateTripPayload {
   notes: string | null;
 }
 
+export interface FrontendTrip {
+  id: string;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  trip_checklists: {
+    checklist_id: string;
+    checklists: {
+      title: string;
+      checklist_items: {
+        id: string;
+        completed: boolean;
+      }[];
+    }[];
+    totalItems: number;
+    completedItems: number;
+  }[];
+  trip_participants: {
+    user_id: string;
+    role: string;
+  }[];
+}
 export interface Trip {
   id: string;
   title: string;

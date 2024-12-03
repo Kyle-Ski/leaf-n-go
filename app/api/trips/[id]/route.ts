@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supbaseClient";
+import { FrontendTrip } from "@/types/projectTypes";
 
 // GET: Fetch details for a specific trip
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -25,7 +26,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         trip_checklists (
           checklist_id,
           checklists (
-            title
+            title,
+            checklist_items (
+              id,
+              completed
+            )
           )
         ),
         trip_participants (
@@ -40,12 +45,38 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       throw error;
     }
 
-    return NextResponse.json(trip, { status: 200 });
+    // Transform the trip_checklists to include totalItems and completedItems
+    if (trip.trip_checklists) {
+      trip.trip_checklists = trip.trip_checklists.map((tripChecklist: any) => {
+        const checklist = tripChecklist.checklists; // Not an array based on the log
+        const totalItems = checklist?.checklist_items?.length || 0;
+        const completedItems =
+          checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
+    
+        return {
+          checklist_id: tripChecklist.checklist_id,
+          checklists: [
+            {
+              title: checklist?.title || "Untitled Checklist",
+              checklist_items: checklist?.checklist_items || [],
+            },
+          ],
+          totalItems,
+          completedItems,
+        };
+      }) as FrontendTrip["trip_checklists"];
+    }
+        
+    // Cast the trip to the new type
+    const frontendTrip = trip as FrontendTrip;
+
+    return NextResponse.json(frontendTrip, { status: 200 });
   } catch (err) {
     console.error("Error fetching trip:", err);
     return NextResponse.json({ error: "Failed to fetch trip details." }, { status: 500 });
   }
 }
+
 
 // DELETE: Delete a trip by ID
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -79,47 +110,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   } catch (err) {
     console.error("Error deleting trip:", err);
     return NextResponse.json({ error: "Failed to delete trip" }, { status: 500 });
-  }
-}
-
-// PATCH: Update a trip by ID
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const tripId = params.id;
-  const userId = req.headers.get("x-user-id");
-  const { title, start_date, end_date } = await req.json();
-
-  if (!tripId || !userId) {
-    return NextResponse.json({ error: "Trip ID and User ID are required" }, { status: 400 });
-  }
-
-  try {
-    // Verify the user is the owner of the trip
-    const { data: ownerCheck, error: ownerError } = await supabaseServer
-      .from("trip_participants")
-      .select("role")
-      .eq("trip_id", tripId)
-      .eq("user_id", userId)
-      .single();
-
-    if (ownerError || ownerCheck?.role !== "owner") {
-      return NextResponse.json({ error: "You do not have permission to update this trip" }, { status: 403 });
-    }
-
-    // Update the trip details
-    const { data: updatedTrip, error: updateError } = await supabaseServer
-      .from("trips")
-      .update({ title, start_date, end_date })
-      .eq("id", tripId)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return NextResponse.json(updatedTrip, { status: 200 });
-  } catch (err) {
-    console.error("Error updating trip:", err);
-    return NextResponse.json({ error: "Failed to update trip" }, { status: 500 });
   }
 }
 
@@ -180,7 +170,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       if (insertError) throw insertError;
     }
 
-    // Fetch the updated trip with its related data
+    // Fetch the updated trip with its related data, including totalItems and completedItems
     const { data: fullTrip, error: fetchError } = await supabaseServer
       .from("trips")
       .select(`
@@ -195,7 +185,11 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         trip_checklists (
           checklist_id,
           checklists (
-            title
+            title,
+            checklist_items (
+              id,
+              completed
+            )
           )
         )
       `)
@@ -203,6 +197,22 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       .single();
 
     if (fetchError) throw fetchError;
+
+    // Add totalItems and completedItems to the checklists
+    if (fullTrip.trip_checklists) {
+      fullTrip.trip_checklists = fullTrip.trip_checklists.map((tripChecklist: any) => {
+        const checklist = tripChecklist.checklists?.[0];
+        const totalItems = checklist?.checklist_items?.length || 0;
+        const completedItems =
+          checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
+
+        return {
+          ...tripChecklist,
+          totalItems,
+          completedItems,
+        };
+      });
+    }
 
     return NextResponse.json(fullTrip, { status: 200 });
   } catch (err) {

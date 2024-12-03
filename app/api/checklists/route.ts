@@ -9,8 +9,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    console.log("Fetching checklists for user ID:", userId);
-
     // Fetch checklists for the user
     const { data: checklists, error: checklistError } = await supabaseServer
       .from('checklists')

@@ -64,7 +64,6 @@ const SettingsPage = () => {
       }
 
       const result = await response.json();
-      console.log(result.message);
       
       setIsEditing(false);
       setIsDarkModeChanged(false);

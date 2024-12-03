@@ -6,12 +6,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Trip, Checklist } from "@/types/projectTypes";
+import { Trip, Checklist, FrontendTrip } from "@/types/projectTypes";
 
 interface EditTripModalProps {
   isOpen: boolean;
   onClose: () => void;
-  trip: Trip;
+  trip: FrontendTrip;
   allChecklists: Checklist[];
   onUpdate: (updatedTrip: UpdateTripPayload) => void;
 }
@@ -148,7 +148,7 @@ const resetForm = () => {
 
             <label className="block text-sm font-medium text-gray-700">Checklists</label>
             <div className="space-y-2">
-              {allChecklists.map((checklist) => (
+              {allChecklists?.map((checklist) => (
                 <div key={checklist.id} className="flex items-center space-x-2">
                   <input
                     type="checkbox"

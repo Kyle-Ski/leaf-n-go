@@ -10,8 +10,6 @@ export default function Welcome() {
   const router = useRouter();
 
   const completeOnboarding = async () => {
-    console.log("user", user, "process.env.NODE_ENV", process.env.NODE_ENV === "development");
-
     // Directly navigate to dashboard after completing onboarding
     if (user) {
       router.push("/");

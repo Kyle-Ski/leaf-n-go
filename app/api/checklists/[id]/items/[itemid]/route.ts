@@ -5,7 +5,6 @@ export async function PUT(request: Request) {
   try {
     // Parse the request body
     const { checklistId, itemId, completed, id } = await request.json();
-    console.log("UPDATING:", checklistId, itemId, completed, id)
     // Validate required fields
     if (!checklistId || !itemId || !id) {
       return NextResponse.json({ success: false, error: 'Checklist ID and Item ID are required.' }, { status: 400 });
@@ -47,7 +46,6 @@ export async function PUT(request: Request) {
 
 
     if (itemError || !updatedItem) {
-      console.log("ERROR UPDATING:", itemError, updatedItem)
       return NextResponse.json(
         { success: false, error: 'Failed to update item status.' },
         { status: 500 }
