@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
-import NewItemForm from "@/components/newItemForm";
+import NewItemModal from "@/components/newItemModal";
 import { ItemDetails } from "@/types/projectTypes";
 
 const NewChecklistPage = () => {
@@ -15,7 +15,7 @@ const NewChecklistPage = () => {
     const [items, setItems] = useState<ItemDetails[]>([]);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
     const [error, setError] = useState<string | null>(null);
-    const newItemFormRef = useRef<HTMLDivElement>(null); // Reference for scrolling to the form
+    const newItemModalRef = useRef<HTMLDivElement>(null); // Reference for scrolling to the form
 
     const categories = ["Day Trip", "Overnight", "Weekend Trip"];
 
@@ -102,8 +102,8 @@ const NewChecklistPage = () => {
         }
     };
 
-    const scrollToNewItemForm = () => {
-        newItemFormRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollTonewItemModal = () => {
+        newItemModalRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     if (!user) {
@@ -117,7 +117,7 @@ const NewChecklistPage = () => {
                 <h1 className="text-3xl font-bold text-gray-800 text-center">Create New Checklist</h1>
                 {/* Add New Item Button */}
                 <button
-                    onClick={scrollToNewItemForm}
+                    onClick={scrollTonewItemModal}
                     className="bg-green-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-600 transition"
                 >
                     Add New Item
@@ -224,9 +224,9 @@ const NewChecklistPage = () => {
             </div>
 
             {/* New Item Form */}
-            <div ref={newItemFormRef} className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
+            <div ref={newItemModalRef} className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Add a New Item</h2>
-                <NewItemForm
+                <NewItemModal
                     userId={user?.id || ""}
                     onItemAdded={(newItem) => {
                         setItems((prev) => [...prev, newItem]);

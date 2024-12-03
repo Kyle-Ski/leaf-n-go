@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, ListTodo, Cog, BookOpenText, AxeIcon } from "lucide-react";
+import { LayoutDashboard, ListTodo, Cog, AxeIcon, TicketsPlaneIcon } from "lucide-react";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Checklists", url: "/checklists", icon: ListTodo },
   { title: "Items", url: "/items", icon: AxeIcon },
+  { title: "Trips", url: "/trips", icon: TicketsPlaneIcon },
   { title: "Settings", url: "/settings", icon: Cog },
-  { title: "About", url: "/about", icon: BookOpenText },
 ];
 
 interface BottomNavProps {

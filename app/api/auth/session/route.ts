@@ -16,7 +16,6 @@ export async function GET() {
     error,
   } = await supabase.auth.getSession();
 
-  console.log("api/auth/session DATA:", session);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

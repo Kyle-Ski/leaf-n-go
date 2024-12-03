@@ -9,6 +9,59 @@ export interface Item {
     notes?: string;
 }
 
+export interface CreateTripPayload {
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+}
+
+export interface FrontendTrip {
+  id: string;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  trip_checklists: {
+    checklist_id: string;
+    checklists: {
+      title: string;
+      checklist_items: {
+        id: string;
+        completed: boolean;
+      }[];
+    }[];
+    totalItems: number;
+    completedItems: number;
+  }[];
+  trip_participants: {
+    user_id: string;
+    role: string;
+  }[];
+}
+export interface Trip {
+  id: string;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  trip_checklists: Array<{
+    checklist_id: string;
+    title: string;
+  }>;
+  trip_participants: Array<{
+    user_id: string;
+    role: string;
+  }>;
+}
+
 export interface ChecklistWithItems extends Checklist {
   items: ChecklistItem[]; // Use a new type for items with the nested structure
 }

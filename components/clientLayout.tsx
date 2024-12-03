@@ -24,7 +24,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </div>)
       }
       {/* Main Content with Spinner */}
-      <main className="flex-grow p-4 md:p-6 lg:p-8 bg-gray-50 relative">
+      <main className="flex-grow p-2 sm:p-4 md:p-6 lg:p-8 bg-gray-50 relative">
         <div className={alignmentClasses}>
           {children}
         </div>
