@@ -9,6 +9,23 @@ export interface Item {
     notes?: string;
 }
 
+export interface AppState {
+  trips: FrontendTrip[];
+  checklists: Checklist[];
+  items: (Item | ItemDetails)[]; // Allow both Item and ItemDetails
+  userSettings: UserSettings | null;
+}
+
+export type Action =
+| { type: 'SET_TRIPS'; payload: FrontendTrip[] }
+| { type: 'ADD_TRIP'; payload: FrontendTrip }
+| { type: 'UPDATE_TRIP'; payload: FrontendTrip }
+| { type: 'SET_CHECKLISTS'; payload: Checklist[] }
+| { type: 'ADD_CHECKLIST'; payload: Checklist }
+| { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
+| { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+| { type: 'SET_USER_SETTINGS'; payload: UserSettings };
+
 export interface CreateTripPayload {
   title: string;
   start_date: string | null;
