@@ -36,9 +36,21 @@ const PlanningHub = () => {
 
       // Split trips into upcoming and recent
       const now = new Date();
-      const sortedTrips = data.sort((a, b) => new Date(b.start_date || "").getTime() - new Date(a.start_date || "").getTime());
-      const upcoming = sortedTrips.find((trip) => new Date(trip.end_date || "").getTime() >= now.getTime());
-      const recent = sortedTrips.filter((trip) => new Date(trip.end_date || "").getTime() < now.getTime());
+      
+      // Sort trips by start date (earliest first)
+      const sortedTrips = data.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
+      
+      // Find the upcoming trip (closest to now and not in the past)
+      const upcoming = sortedTrips.find((trip) => {
+        const tripStartDate = new Date(trip.start_date || "").getTime();
+        return tripStartDate >= now.getTime();
+      });
+
+      // Find all recent trips (already passed)
+      const recent = sortedTrips.filter((trip) => {
+        const tripStartDate = new Date(trip.start_date || "").getTime();
+        return tripStartDate < now.getTime();
+      });
 
       setUpcomingTrip(upcoming || null);
       setRecentTrips(recent);
@@ -62,7 +74,6 @@ const PlanningHub = () => {
     return <p className="text-red-500 text-center">{error}</p>;
   }
 
-  console.log("upcomming:", upcomingTrip)
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
       {/* Current Trip Overview */}
@@ -123,13 +134,9 @@ const PlanningHub = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700">
-                  Completed Checklist: {trip.trip_checklists[0]?.completedItems || 0}/
-                  {trip.trip_checklists[0]?.totalItems || 0} items packed
-                </p>
-                <Link href={`/checklists/${trip.trip_checklists[0]?.checklist_id || ""}`}>
+                <Link href={`/trips/${trip.id || ""}`}>
                   <Button variant="outline" className="mt-2">
-                    Copy Checklist
+                    View Trip
                   </Button>
                 </Link>
               </CardContent>
