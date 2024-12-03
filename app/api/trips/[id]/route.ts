@@ -1,6 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supbaseClient";
 
+// GET: Fetch details for a specific trip
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const tripId = await params.id;
+
+  if (!tripId) {
+    return NextResponse.json({ error: "Trip ID is required." }, { status: 400 });
+  }
+
+  try {
+    const { data: trip, error } = await supabaseServer
+      .from("trips")
+      .select(`
+        id,
+        title,
+        start_date,
+        end_date,
+        location,
+        notes,
+        created_at,
+        updated_at,
+        trip_checklists (
+          checklist_id,
+          checklists (
+            title
+          )
+        ),
+        trip_participants (
+          user_id,
+          role
+        )
+      `)
+      .eq("id", tripId)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json(trip, { status: 200 });
+  } catch (err) {
+    console.error("Error fetching trip:", err);
+    return NextResponse.json({ error: "Failed to fetch trip details." }, { status: 500 });
+  }
+}
+
 // DELETE: Delete a trip by ID
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
