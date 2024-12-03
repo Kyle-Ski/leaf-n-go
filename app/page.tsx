@@ -70,12 +70,21 @@ const PlanningHub = () => {
     );
   }
 
-  if (error) {
-    return <p className="text-red-500 text-center">{error}</p>;
-  }
-
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
+      {error && (
+        <div className="w-full max-w-md sm:max-w-lg md:max-w-4xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <strong className="font-bold">Error:</strong>
+          <span className="block sm:inline ml-2">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <span className="text-xl font-bold">&times;</span>
+          </button>
+        </div>
+      )}
+
       {/* Current Trip Overview */}
       {upcomingTrip && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
