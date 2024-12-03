@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-Context";
 import { Loader } from "@/components/ui/loader";
 import { withAuth } from "@/lib/withAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import NewItemForm from "@/components/newItemForm";
+import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 
 interface Item {
@@ -160,7 +160,7 @@ const ItemsPage = () => {
                     <DialogHeader>
                         <DialogTitle>Create New Item</DialogTitle>
                     </DialogHeader>
-                    <NewItemForm
+                    <NewItemModal
                         userId={user?.id || ""}
                         onItemAdded={(newItem) => {
                             setItems((prev) => [...prev, newItem]);

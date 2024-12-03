@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { ItemDetails } from "@/types/projectTypes";
 
-interface NewItemFormProps {
+interface NewItemModalProps {
   userId: string;
   onItemAdded: (newItem: ItemDetails) => void;
 }
 
-const NewItemForm: React.FC<NewItemFormProps> = ({ userId, onItemAdded }) => {
+const NewItemModal: React.FC<NewItemModalProps> = ({ userId, onItemAdded }) => {
   const [name, setName] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [weight, setWeight] = useState<number>(0);
@@ -143,4 +143,4 @@ const NewItemForm: React.FC<NewItemFormProps> = ({ userId, onItemAdded }) => {
   );
 };
 
-export default NewItemForm;
+export default NewItemModal;

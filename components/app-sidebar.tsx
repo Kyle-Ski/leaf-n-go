@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon } from "lucide-react"
+import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon, TicketsPlaneIcon } from "lucide-react"
 import { useAuth } from "@/lib/auth-Context";
 import Link from "next/link";
 const menuItems = [
@@ -28,6 +28,11 @@ const menuItems = [
     title: "Items",
     url: "/items",
     icon: AxeIcon
+  },
+  {
+    title: "Trips",
+    url: "/trips",
+    icon: TicketsPlaneIcon
   },
   {
     title: "Settings",

@@ -19,7 +19,7 @@ import {
   ChecklistItem,
   ItemDetails,
 } from "@/types/projectTypes";
-import NewItemForm from "@/components/newItemForm";
+import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 
 function ChecklistDetailsPage() {
@@ -343,7 +343,7 @@ function ChecklistDetailsPage() {
           <DialogHeader>
             <DialogTitle>Create New Item</DialogTitle>
           </DialogHeader>
-          <NewItemForm
+          <NewItemModal
             userId={user?.id || ""}
             onItemAdded={(newItem) => {
               setItems((prev) => [...prev, newItem]);
