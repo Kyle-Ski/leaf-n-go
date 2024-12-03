@@ -1,12 +1,10 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Trip, Checklist, FrontendTrip } from "@/types/projectTypes";
+import { Checklist, FrontendTrip } from "@/types/projectTypes";
 
 interface EditTripModalProps {
   isOpen: boolean;
@@ -17,13 +15,13 @@ interface EditTripModalProps {
 }
 
 export interface UpdateTripPayload {
-    title?: string;
-    start_date?: string | null;
-    end_date?: string | null;
-    location?: string | null;
-    notes?: string | null;
-    trip_checklists?: { checklist_id: string }[]; // Only `checklist_id` is required for updates
-  }  
+  title?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  location?: string | null;
+  notes?: string | null;
+  trip_checklists?: { checklist_id: string }[]; // Only `checklist_id` is required for updates
+}
 
 const EditTripModal = ({ isOpen, onClose, trip, allChecklists, onUpdate }: EditTripModalProps) => {
   const [title, setTitle] = useState(trip.title || "");
@@ -33,16 +31,16 @@ const EditTripModal = ({ isOpen, onClose, trip, allChecklists, onUpdate }: EditT
   const [notes, setNotes] = useState(trip.notes || "");
   const [selectedChecklists, setSelectedChecklists] = useState<string[]>(
     trip?.trip_checklists?.map((c) => c.checklist_id) || []
-);
+  );
   const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && trip) {
-        resetForm();
+      resetForm();
     }
-}, [isOpen, trip]);
+  }, [isOpen, trip]);
 
-const resetForm = () => {
+  const resetForm = () => {
     setTitle(trip.title || "");
     setStartDate(trip.start_date ? new Date(trip.start_date) : null);
     setEndDate(trip.end_date ? new Date(trip.end_date) : null);
@@ -50,12 +48,11 @@ const resetForm = () => {
     setNotes(trip.notes || "");
     setSelectedChecklists(trip.trip_checklists?.map((c) => c.checklist_id) || []);
     setModalError(null);
-};
+  };
+
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
-      prev.includes(checklistId)
-        ? prev.filter((id) => id !== checklistId)
-        : [...prev, checklistId]
+      prev.includes(checklistId) ? prev.filter((id) => id !== checklistId) : [...prev, checklistId]
     );
   };
 
@@ -64,7 +61,7 @@ const resetForm = () => {
       setModalError("Title is required.");
       return;
     }
-  
+
     const updatedTrip: UpdateTripPayload = {
       title,
       start_date: startDate ? startDate.toISOString() : null,
@@ -73,14 +70,14 @@ const resetForm = () => {
       notes,
       trip_checklists: selectedChecklists.map((id) => ({ checklist_id: id })), // Only checklist_id
     };
-  
+
     onUpdate(updatedTrip);
     onClose();
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Trip</DialogTitle>
         </DialogHeader>
@@ -149,7 +146,7 @@ const resetForm = () => {
             <label className="block text-sm font-medium text-gray-700">Checklists</label>
             <div className="space-y-2">
               {allChecklists?.map((checklist) => (
-                <div key={checklist.id} className="flex items-center space-x-2">
+                <div key={checklist.id} className="flex items-center space-x-3">
                   <input
                     type="checkbox"
                     id={`checklist-${checklist.id}`}

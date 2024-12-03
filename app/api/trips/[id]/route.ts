@@ -81,7 +81,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 // DELETE: Delete a trip by ID
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const tripId = params.id;
+  const tripId = await params.id;
   const userId = req.headers.get("x-user-id");
 
   if (!tripId || !userId) {

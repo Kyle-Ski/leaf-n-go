@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
@@ -9,8 +9,10 @@ import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
 import { FrontendTrip, Checklist } from "@/types/projectTypes";
 import { useAuth } from "@/lib/auth-Context";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const TripPage = () => {
+    const router = useRouter();
     const { user } = useAuth();
     const { id } = useParams();
     const [trip, setTrip] = useState<FrontendTrip | null>(null);
@@ -18,6 +20,7 @@ const TripPage = () => {
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
     useEffect(() => {
         if (user && id) {
@@ -116,6 +119,33 @@ const TripPage = () => {
         }
     };
 
+    const handleDelete = async () => {
+        setError(null);
+    
+        if (!user?.id) {
+            setError("User is not authenticated.");
+            return;
+        }
+    
+        try {
+            const response = await fetch(`/api/trips/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "x-user-id": user.id, // Include the required user ID header
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to delete trip.");
+            }
+    
+            router.push("/trips");
+        } catch (err) {
+            console.error(err);
+            setError("Failed to delete trip. Please try again.");
+        }
+    };
+    
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -193,7 +223,7 @@ const TripPage = () => {
                                     href={`/checklists/${checklist.checklist_id}`}
                                     className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
                                 >
-                                    View Checklist
+                                    View
                                 </Link>
                             </li>
                         ))}
@@ -201,12 +231,18 @@ const TripPage = () => {
                 )}
             </section>
 
-
             {/* Other Sections */}
             <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
                 <h2 className="text-xl font-semibold mb-4">Packing Insights</h2>
                 <p className="text-gray-600">Placeholder for AI-assisted packing suggestions.</p>
             </section>
+
+            <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="bg-red-500 text-white shadow-md"
+                >
+                    Delete Trip
+                </Button>
 
             {/* Edit Trip Modal */}
             <EditTripModal
@@ -216,6 +252,33 @@ const TripPage = () => {
                 trip={trip}
                 onUpdate={handleUpdateTrip}
             />
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Delete</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this trip? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex space-x-4 mt-4">
+                        <Button
+                            onClick={handleDelete}
+                            className="bg-red-500 text-white"
+                        >
+                            Delete
+                        </Button>
+                        <Button
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="bg-gray-300 text-black"
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 };
