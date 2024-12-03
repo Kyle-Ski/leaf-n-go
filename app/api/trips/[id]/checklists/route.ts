@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supbaseClient";
 
-interface TripChecklist {
-    checklist_id: string;
-    checklists: {
-      title: string;
-      checklist_items: {
-        id: string;
-        completed: boolean;
-      }[];
-    }[];
-  }
-  
   export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     const tripId = await params.id;

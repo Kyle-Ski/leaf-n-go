@@ -47,6 +47,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
     // Transform the trip_checklists to include totalItems and completedItems
     if (trip.trip_checklists) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       trip.trip_checklists = trip.trip_checklists.map((tripChecklist: any) => {
         const checklist = tripChecklist.checklists; // Not an array based on the log
         const totalItems = checklist?.checklist_items?.length || 0;
@@ -138,7 +139,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     // Update the trip details
-    const { data: updatedTrip, error: updateError } = await supabaseServer
+    const { error: updateError } = await supabaseServer
       .from("trips")
       .update({ title, start_date, end_date, location, notes })
       .eq("id", tripId)
@@ -200,6 +201,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
     // Add totalItems and completedItems to the checklists
     if (fullTrip.trip_checklists) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fullTrip.trip_checklists = fullTrip.trip_checklists.map((tripChecklist: any) => {
         const checklist = tripChecklist.checklists?.[0];
         const totalItems = checklist?.checklist_items?.length || 0;
