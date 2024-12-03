@@ -122,3 +122,67 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     return NextResponse.json({ error: "Failed to update trip" }, { status: 500 });
   }
 }
+
+// PUT: Update a trip by ID
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const tripId = await params.id;
+  const userId = req.headers.get("x-user-id");
+  const { title, start_date, end_date, location, notes, trip_checklists } = await req.json();
+
+  if (!tripId || !userId) {
+    return NextResponse.json({ error: "Trip ID and User ID are required" }, { status: 400 });
+  }
+
+  try {
+    // Verify the user is the owner of the trip
+    const { data: ownerCheck, error: ownerError } = await supabaseServer
+      .from("trip_participants")
+      .select("role")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (ownerError || ownerCheck?.role !== "owner") {
+      return NextResponse.json({ error: "You do not have permission to update this trip" }, { status: 403 });
+    }
+
+    // Update the trip details
+    const { data: updatedTrip, error: updateError } = await supabaseServer
+      .from("trips")
+      .update({ title, start_date, end_date, location, notes })
+      .eq("id", tripId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update trip checklists
+    if (trip_checklists) {
+      // Remove existing trip checklists
+      const { error: deleteError } = await supabaseServer
+        .from("trip_checklists")
+        .delete()
+        .eq("trip_id", tripId);
+
+      if (deleteError) throw deleteError;
+
+      // Add updated trip checklists
+      const newTripChecklists = trip_checklists.map((checklist: { checklist_id: string }) => ({
+        trip_id: tripId,
+        checklist_id: checklist.checklist_id,
+      }));
+
+      const { error: insertError } = await supabaseServer
+        .from("trip_checklists")
+        .insert(newTripChecklists);
+
+      if (insertError) throw insertError;
+    }
+
+    return NextResponse.json(updatedTrip, { status: 200 });
+  } catch (err) {
+    console.error("Error updating trip:", err);
+    return NextResponse.json({ error: "Failed to update trip" }, { status: 500 });
+  }
+}
