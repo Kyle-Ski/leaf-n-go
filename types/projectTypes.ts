@@ -24,6 +24,10 @@ export type Action =
 | { type: 'ADD_CHECKLIST'; payload: Checklist }
 | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
 | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+| { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
+| { type: 'REMOVE_CHECKLIST'; payload: (string | string[])}
+// | { type: 'UPDATE_CHECKLIST_ITEMS'; payload: { checklistId: string | string[] | undefined, newItem: ChecklistItem }}
+// | { type: 'REMOVE_CHECKLIST_ITEM'; payload: { checklistId: string | string[] | undefined, itemId: string | string[] | undefined }}
 | { type: 'SET_USER_SETTINGS'; payload: UserSettings };
 
 export interface CreateTripPayload {

@@ -18,15 +18,17 @@ import {
   ChecklistWithItems,
   ChecklistItem,
   ItemDetails,
+  Item,
 } from "@/types/projectTypes";
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
+import { useAppContext } from "@/lib/appContext";
 
 function ChecklistDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { state, dispatch } = useAppContext();
   const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
-  const [items, setItems] = useState<ItemDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -50,7 +52,10 @@ function ChecklistDetailsPage() {
       if (!response.ok) {
         throw new Error("Failed to delete checklist.");
       }
-
+      dispatch({
+        type: "REMOVE_CHECKLIST",
+        payload: id,
+      });
       // Redirect to the checklists page after deletion
       window.location.href = "/checklists";
     } catch (err) {
@@ -72,7 +77,7 @@ function ChecklistDetailsPage() {
   const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
   // Filter items based on the search query
-  const filteredItems = items.filter((item) =>
+  const filteredItems = state.items.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -81,6 +86,22 @@ function ChecklistDetailsPage() {
 
     const fetchChecklistDetails = async () => {
       setLoading(true);
+      if (state.items.length === 0) {
+        const fetchItems = async () => {
+          try {
+            const response = await fetch(`/api/items`, {
+              headers: { "x-user-id": user?.id },
+            });
+            if (!response.ok) throw new Error("Failed to fetch items.");
+            const data: ItemDetails[] = await response.json();
+            dispatch({ type: "SET_ITEMS", payload: data });
+          } catch (err) {
+            console.error("Failed to fetch items:", err);
+          }
+        };
+        fetchItems();
+      }
+
       try {
         const response = await fetch(`/api/checklists/${id}`, {
           headers: { "x-user-id": user.id },
@@ -96,33 +117,18 @@ function ChecklistDetailsPage() {
         setLoading(false);
       }
     };
-
-    const fetchItems = async () => {
-      try {
-        const response = await fetch(`/api/items`, {
-          headers: { "x-user-id": user?.id },
-        });
-        if (!response.ok) throw new Error("Failed to fetch items.");
-        const data: ItemDetails[] = await response.json();
-        setItems(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     fetchChecklistDetails();
-    fetchItems();
-  }, [user, id]);
+  }, [user, id, state.items, dispatch]);
 
   const calculateRemainingQuantity = (itemId: string): number => {
     if (!checklist) return 0;
     const checklistItems = checklist.items.filter((item) => item.item_id === itemId);
     const totalInChecklist = checklistItems.reduce((sum, item) => sum + item.quantity, 0);
-    const item = items.find((i) => i.id === itemId);
+    const item = state.items.find((i) => i.id === itemId) as ItemDetails;
     return item ? item.quantity - totalInChecklist : 0;
   };
 
-  const handleAddItem = async (item: ItemDetails) => {
+  const handleAddItem = async (item: ItemDetails | Item ) => {
     try {
       const remainingQuantity = calculateRemainingQuantity(item.id);
       if (remainingQuantity <= 0) return;
@@ -346,7 +352,7 @@ function ChecklistDetailsPage() {
           <NewItemModal
             userId={user?.id || ""}
             onItemAdded={(newItem) => {
-              setItems((prev) => [...prev, newItem]);
+              dispatch({ type: "ADD_ITEM", payload: newItem });
             }}
           />
 
