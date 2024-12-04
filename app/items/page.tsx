@@ -144,7 +144,7 @@ const ItemsPage = () => {
                         <DialogTitle>Create New Item</DialogTitle>
                     </DialogHeader>
                     <NewItemModal
-                        userId={""} // User ID is no longer needed here
+                        userId={user?.id || ""} // User ID is no longer needed here
                         onItemAdded={(newItem) => {
                             dispatch({ type: "ADD_ITEM", payload: newItem });
                         }}

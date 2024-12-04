@@ -1,48 +1,59 @@
 import React, { createContext, useReducer, useContext, useEffect } from "react";
-import { AppState, Action } from "@/types/projectTypes"; // Adjust imports as needed
+import { AppState, Action } from "@/types/projectTypes";
 
 const initialState: AppState = {
-  trips: [],
-  checklists: [],
-  items: [],
-  userSettings: null,
+    trips: [],
+    checklists: [],
+    items: [],
+    userSettings: null,
 };
 
 const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
 
 const appReducer = (state: AppState, action: Action): AppState => {
-  switch (action.type) {
-    case "SET_ITEMS":
-      return { ...state, items: action.payload };
-    case "ADD_ITEM":
-      return { ...state, items: [...state.items, action.payload] };
-    // Add other cases as needed
-    default:
-      return state;
-  }
+    switch (action.type) {
+        case "SET_ITEMS":
+            return { ...state, items: action.payload };
+        case "ADD_ITEM":
+            return { ...state, items: [...state.items, action.payload] };
+        case "SET_TRIPS":
+            return { ...state, trips: action.payload };
+        default:
+            // Add other cases..
+            return state;
+    }
 };
 
-export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Rehydrate state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem("appState");
-    if (savedState) {
-      dispatch({ type: "SET_ITEMS", payload: JSON.parse(savedState).items });
-    }
-  }, []);
+    // Load state from local storage on mount
+    useEffect(() => {
+        const storedState = localStorage.getItem("appState");
+        if (storedState) {
+            try {
+                const parsedState = JSON.parse(storedState) as AppState;
+                dispatch({ type: "SET_ITEMS", payload: parsedState.items });
+                dispatch({ type: "SET_TRIPS", payload: parsedState.trips });
+                // Add other state restoration as needed
+            } catch (error) {
+                console.error("Failed to parse stored app state:", error);
+            }
+        }
+    }, []);
 
-  // Persist state to localStorage
-  useEffect(() => {
-    localStorage.setItem("appState", JSON.stringify(state));
-  }, [state]);
+    // Save state to local storage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("appState", JSON.stringify(state));
+    }, [state]);
 
-  return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
+    return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = () => {
-  const context = useContext(AppContext);
-  if (!context) throw new Error("useAppContext must be used within an AppProvider");
-  return context;
+    const context = useContext(AppContext);
+    if (!context) {
+        throw new Error("useAppContext must be used within an AppProvider");
+    }
+    return context;
 };
