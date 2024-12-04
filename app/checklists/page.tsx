@@ -8,13 +8,13 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth-Context";
+import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
-import { Checklist } from '@/types/projectTypes';
 import { Loader } from "@/components/ui/loader";
 
 const ChecklistsPage = () => {
   const { user } = useAuth();
-  const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const { state, dispatch } = useAppContext(); // Use AppState for global checklists
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
@@ -23,14 +23,21 @@ const ChecklistsPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchChecklists();
+      // Use existing checklists from AppState if available
+      if (state.checklists.length > 0) {
+        setLoading(false);
+      } else {
+        console.log("FETCHING CHECKLISTS", state)
+        fetchChecklists();
+      }
     }
-  }, [user]);
+  }, [user, state.checklists]);
 
   const fetchChecklists = async () => {
     if (!user?.id) {
       console.error("User ID is undefined. Cannot fetch checklists.");
       setError("Unable to fetch checklists. Please try again later.");
+      setLoading(false);
       return;
     }
 
@@ -49,8 +56,8 @@ const ChecklistsPage = () => {
         throw new Error("Failed to fetch checklists");
       }
 
-      const data: Checklist[] = await response.json();
-      setChecklists(data);
+      const data = await response.json();
+      dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
     } catch (error) {
       console.error("Error fetching checklists:", error);
       setError("Error fetching checklists. Please try again later.");
@@ -59,7 +66,7 @@ const ChecklistsPage = () => {
     }
   };
 
-  const filteredChecklists = checklists
+  const filteredChecklists = state.checklists // Use AppState for checklists
     .filter(
       (list) =>
         (categoryFilter === "All" || list.category === categoryFilter) &&
@@ -140,25 +147,6 @@ const ChecklistsPage = () => {
                       <p className="text-sm text-gray-500">Category: {list.category}</p>
                     </CardHeader>
                     <CardContent className="flex justify-between items-center mt-4">
-                      <div>
-                        <p className="text-gray-700">Completion</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div
-                            className="bg-green-500 h-2 rounded-full"
-                            style={{
-                              width: `${list.completion?.total
-                                ? (list.completion.completed / list.completion.total) * 100
-                                : 0
-                                }%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-2 block">
-                          {list.completion?.total
-                            ? `${list.completion.completed}/${list.completion.total} items added`
-                            : "No items"}
-                        </span>
-                      </div>
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
                           View Checklist
@@ -181,25 +169,6 @@ const ChecklistsPage = () => {
                     <p className="text-sm text-gray-500">Category: {list.category}</p>
                   </CardHeader>
                   <CardContent className="flex justify-between items-center mt-4">
-                    <div>
-                      <p className="text-gray-700">Completion</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{
-                            width: `${list.completion?.total
-                                ? (list.completion.completed / list.completion.total) * 100
-                                : 0
-                              }%`,
-                          }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-gray-500 mt-2 block">
-                        {list.completion?.total
-                          ? `${list.completion.completed}/${list.completion.total} items added`
-                          : "No items"}
-                      </span>
-                    </div>
                     <Link href={`/checklists/${list.id}`}>
                       <Button variant="outline" className="mt-2">
                         View Checklist

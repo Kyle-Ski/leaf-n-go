@@ -40,6 +40,27 @@ export default function AuthPage() {
     );
   };
 
+  const fetchChecklists = async (userId: string) => {
+    try {
+      const response = await fetch("/api/checklists", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch checklists");
+      }
+
+      const data = await response.json();
+      dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+    } catch (error) {
+      console.error("Error fetching checklists:", error);
+    }
+  };
+
   const fetchItems = async (userId: string) => {
     try {
       const response = await fetch("/api/items", {
@@ -94,9 +115,9 @@ export default function AuthPage() {
         const { user } = await response.json();
         setUser(user); // Update user state in AuthContext
 
-        // Fetch items after logging in
+        // Fetch items and checklists after logging in
         await fetchItems(user.id);
-
+        await fetchChecklists(user.id)
         router.push("/"); // Redirect to homepage
       }
     } catch (err) {
@@ -127,9 +148,8 @@ export default function AuthPage() {
       ) : (
         <form
           onSubmit={handleAuth}
-          className={`flex flex-col space-y-4 w-full max-w-md transition-opacity ${
-            isLoading ? "opacity-50" : "opacity-100"
-          }`}
+          className={`flex flex-col space-y-4 w-full max-w-md transition-opacity ${isLoading ? "opacity-50" : "opacity-100"
+            }`}
         >
           <Input
             type="email"

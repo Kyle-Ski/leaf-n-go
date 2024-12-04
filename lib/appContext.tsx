@@ -18,6 +18,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, items: [...state.items, action.payload] };
         case "SET_TRIPS":
             return { ...state, trips: action.payload };
+        case "SET_CHECKLISTS":
+            return { ...state, checklists: action.payload };
         default:
             // Add other cases..
             return state;
@@ -35,6 +37,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 const parsedState = JSON.parse(storedState) as AppState;
                 dispatch({ type: "SET_ITEMS", payload: parsedState.items });
                 dispatch({ type: "SET_TRIPS", payload: parsedState.trips });
+                dispatch({ type: "SET_CHECKLISTS", payload: parsedState.checklists});
                 // Add other state restoration as needed
             } catch (error) {
                 console.error("Failed to parse stored app state:", error);
