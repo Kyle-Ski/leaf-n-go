@@ -10,8 +10,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon, TicketsPlaneIcon } from "lucide-react"
+import { LayoutDashboard, ListTodo, Cog, BookOpenText, LogOut, AxeIcon, TicketsPlaneIcon, LogsIcon } from "lucide-react"
 import { useAuth } from "@/lib/auth-Context";
+import { useAppContext } from "@/lib/appContext";
 import Link from "next/link";
 const menuItems = [
   {
@@ -48,7 +49,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const { logout } = useAuth();
-
+  const { state } = useAppContext();
   return (
     <Sidebar>
       <SidebarHeader />
@@ -73,6 +74,12 @@ export function AppSidebar() {
                 <span>Sign Out</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {process.env.NODE_ENV !== "production" && (<SidebarMenuItem>
+              <SidebarMenuButton onClick={() => console.log("STATE:", state)}>
+                <LogsIcon />
+                <span>Show State</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>)}
           </SidebarMenu>
         </SidebarGroupContent>
         <SidebarGroup />

@@ -69,15 +69,32 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  interface ItemInput {
+    id: string;
+    quantity: number;
+  }
+
+  interface InventoryItem {
+    id: string;
+    quantity: number;
+  }
+
+  interface ChecklistItem {
+    checklist_id: string;
+    item_id: string;
+    completed: boolean;
+    quantity: number;
+  }
+
   const body = await req.json();
-  const { userId, title, category, items } = body;
+  const { userId, title, category, items }: { userId: string; title: string; category: string; items: ItemInput[] } = body;
 
   if (!userId || !title || !category) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   try {
-    // Create a new checklist
+    // Create a new checklist and return it directly
     const { data: newChecklist, error: checklistError } = await supabaseServer
       .from("checklists")
       .insert([{ title, category, user_id: userId }])
@@ -88,11 +105,13 @@ export async function POST(req: NextRequest) {
       throw checklistError;
     }
 
-    // Validate and process items
+    let checklistItems: ChecklistItem[] = [];
+    let inventoryItems: InventoryItem[] = []; // Declare inventoryItems in a broader scope
+
     if (items && items.length > 0) {
-      // Fetch user's inventory to validate quantities
-      const itemIds = items.map((item: { id: string }) => item.id);
-      const { data: inventoryItems, error: inventoryError } = await supabaseServer
+      // Fetch user's inventory in one query
+      const itemIds = items.map((item: ItemInput) => item.id);
+      const { data, error: inventoryError } = await supabaseServer
         .from("items")
         .select("id, quantity")
         .in("id", itemIds)
@@ -102,40 +121,36 @@ export async function POST(req: NextRequest) {
         throw inventoryError;
       }
 
-      if (!inventoryItems || inventoryItems.length === 0) {
+      if (!data || data.length === 0) {
         return NextResponse.json(
           { error: "No items found in user inventory" },
           { status: 400 }
         );
       }
 
+      inventoryItems = data; // Assign fetched inventory data to inventoryItems
+
       // Map inventory items by ID for quick lookup
-      const inventoryMap = new Map(
-        inventoryItems.map((item) => [item.id, item.quantity])
+      const inventoryMap = new Map<string, number>(
+        inventoryItems.map((item: InventoryItem) => [item.id, item.quantity])
       );
 
       // Prepare checklist items
-      const checklistItems = [];
-      for (const { id: itemId, quantity } of items) {
+      checklistItems = items.map(({ id: itemId, quantity }: ItemInput) => {
         const availableQuantity = inventoryMap.get(itemId) || 0;
         if (quantity > availableQuantity) {
-          return NextResponse.json(
-            { error: `Insufficient quantity for item ${itemId}` },
-            { status: 400 }
-          );
+          throw new Error(`Insufficient quantity for item ${itemId}`);
         }
 
-        // Add multiple entries for the same item based on the requested quantity
-        for (let i = 0; i < quantity; i++) {
-          checklistItems.push({
-            checklist_id: newChecklist.id,
-            item_id: itemId,
-            completed: false,
-            quantity: 1, // Each entry represents a single unit
-          });
-        }
-      }
+        return {
+          checklist_id: newChecklist.id,
+          item_id: itemId,
+          completed: false,
+          quantity,
+        };
+      });
 
+      // Batch insert checklist items
       const { error: itemsError } = await supabaseServer
         .from("checklist_items")
         .insert(checklistItems);
@@ -145,7 +160,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(newChecklist, { status: 201 });
+    // Calculate completion stats directly
+    const totalItems = checklistItems.length;
+    const completedItems = checklistItems.filter((item: ChecklistItem) => item.completed).length;
+
+    // Build the checklistWithItems object
+    const checklistWithItems = {
+      ...newChecklist,
+      items: checklistItems.map((item: ChecklistItem) => ({
+        ...item,
+        items: inventoryItems.find((invItem: InventoryItem) => invItem.id === item.item_id),
+      })),
+      completion: {
+        completed: completedItems,
+        total: totalItems,
+      },
+    };
+
+    return NextResponse.json(checklistWithItems, { status: 201 });
   } catch (error) {
     console.error("Error creating checklist:", error);
     return NextResponse.json({ error: "Failed to create checklist" }, { status: 500 });

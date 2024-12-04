@@ -147,6 +147,25 @@ const ChecklistsPage = () => {
                       <p className="text-sm text-gray-500">Category: {list.category}</p>
                     </CardHeader>
                     <CardContent className="flex justify-between items-center mt-4">
+                    <div>
+                      <p className="text-gray-700">Completion</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{
+                            width: `${list.completion?.total
+                                ? (list.completion.completed / list.completion.total) * 100
+                                : 0
+                              }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        {list.completion?.total
+                          ? `${list.completion.completed}/${list.completion.total} items added`
+                          : "No items"}
+                      </span>
+                    </div>
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
                           View Checklist
@@ -169,6 +188,25 @@ const ChecklistsPage = () => {
                     <p className="text-sm text-gray-500">Category: {list.category}</p>
                   </CardHeader>
                   <CardContent className="flex justify-between items-center mt-4">
+                  <div>
+                      <p className="text-gray-700">Completion</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{
+                            width: `${list.completion?.total
+                                ? (list.completion.completed / list.completion.total) * 100
+                                : 0
+                              }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        {list.completion?.total
+                          ? `${list.completion.completed}/${list.completion.total} items added`
+                          : "No items"}
+                      </span>
+                    </div>
                     <Link href={`/checklists/${list.id}`}>
                       <Button variant="outline" className="mt-2">
                         View Checklist

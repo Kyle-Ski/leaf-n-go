@@ -5,14 +5,15 @@ import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
-import { ItemDetails } from "@/types/projectTypes";
+import { Checklist, ItemDetails } from "@/types/projectTypes";
+import { useAppContext } from "@/lib/appContext";
 
 const NewChecklistPage = () => {
     const { user } = useAuth();
+    const { state, dispatch } = useAppContext();
     const router = useRouter();
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
-    const [items, setItems] = useState<ItemDetails[]>([]);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
     const [error, setError] = useState<string | null>(null);
     const newItemModalRef = useRef<HTMLDivElement>(null); // Reference for scrolling to the form
@@ -20,10 +21,10 @@ const NewChecklistPage = () => {
     const categories = ["Day Trip", "Overnight", "Weekend Trip"];
 
     useEffect(() => {
-        if (user) {
+        if (user && state.items.length === 0) {
             fetchItems();
         }
-    }, [user]);
+    }, [user, state.items, dispatch]);
 
     const fetchItems = async () => {
         setError(null); // Reset error before fetching
@@ -42,7 +43,7 @@ const NewChecklistPage = () => {
             }
 
             const fetchedItems: ItemDetails[] = await response.json();
-            setItems(fetchedItems);
+            dispatch({ type: "SET_ITEMS", payload: fetchedItems });
         } catch (err) {
             console.error("Network error while fetching items:", err);
             setError("Unable to load items. Please check your network connection.");
@@ -94,7 +95,8 @@ const NewChecklistPage = () => {
                 setError(errorData.error || "Failed to create checklist.");
                 return;
             }
-
+            const data = await response.json()
+            dispatch({ type: 'ADD_CHECKLIST', payload: data})
             router.push("/checklists");
         } catch (err) {
             console.error("Error creating checklist:", err);
@@ -164,10 +166,10 @@ const NewChecklistPage = () => {
                         <div className="space-y-4">
                             {error ? (
                                 <p className="text-red-500">{error}</p>
-                            ) : items.length === 0 ? (
+                            ) : state.items.length === 0 ? (
                                 <p className="text-gray-500">No items found. Add items to your inventory first.</p>
                             ) : (
-                                items.map((item) => (
+                                state.items.map((item) => (
                                     <div key={item.id} className="flex items-center justify-between space-x-4">
                                         <label htmlFor={`item-${item.id}`} className="text-gray-700 flex-grow">
                                             {item.name} (Available: {item.quantity})
@@ -229,7 +231,7 @@ const NewChecklistPage = () => {
                 <NewItemModal
                     userId={user?.id || ""}
                     onItemAdded={(newItem) => {
-                        setItems((prev) => [...prev, newItem]);
+                        dispatch({ type: "ADD_ITEM", payload: newItem });
                     }}
                 />
             </div>
