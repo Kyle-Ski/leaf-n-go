@@ -83,7 +83,6 @@ export async function POST(req: NextRequest) {
     checklist_id: string;
     item_id: string;
     completed: boolean;
-    quantity: number;
   }
 
   const body = await req.json();
@@ -105,8 +104,7 @@ export async function POST(req: NextRequest) {
       throw checklistError;
     }
 
-    let checklistItems: ChecklistItem[] = [];
-    let inventoryItems: InventoryItem[] = []; // Declare inventoryItems in a broader scope
+    let inventoryItems: InventoryItem[] = [];
 
     if (items && items.length > 0) {
       // Fetch user's inventory in one query
@@ -128,32 +126,31 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      inventoryItems = data; // Assign fetched inventory data to inventoryItems
+      inventoryItems = data;
 
       // Map inventory items by ID for quick lookup
       const inventoryMap = new Map<string, number>(
         inventoryItems.map((item: InventoryItem) => [item.id, item.quantity])
       );
 
-      // Prepare checklist items
-      checklistItems = items.map(({ id: itemId, quantity }: ItemInput) => {
+      // Expand the items array based on the quantity
+      const expandedChecklistItems: ChecklistItem[] = items.flatMap(({ id: itemId, quantity }: ItemInput) => {
         const availableQuantity = inventoryMap.get(itemId) || 0;
         if (quantity > availableQuantity) {
           throw new Error(`Insufficient quantity for item ${itemId}`);
         }
 
-        return {
+        return Array.from({ length: quantity }, () => ({
           checklist_id: newChecklist.id,
           item_id: itemId,
           completed: false,
-          quantity,
-        };
+        }));
       });
 
       // Batch insert checklist items
       const { error: itemsError } = await supabaseServer
         .from("checklist_items")
-        .insert(checklistItems);
+        .insert(expandedChecklistItems);
 
       if (itemsError) {
         throw itemsError;
@@ -161,18 +158,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate completion stats directly
-    const totalItems = checklistItems.length;
-    const completedItems = checklistItems.filter((item: ChecklistItem) => item.completed).length;
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
-    // Build the checklistWithItems object
     const checklistWithItems = {
       ...newChecklist,
-      items: checklistItems.map((item: ChecklistItem) => ({
+      items: items.map((item) => ({
         ...item,
-        items: inventoryItems.find((invItem: InventoryItem) => invItem.id === item.item_id),
+        inventory: inventoryItems.find((invItem) => invItem.id === item.id),
       })),
       completion: {
-        completed: completedItems,
+        completed: 0,
         total: totalItems,
       },
     };
