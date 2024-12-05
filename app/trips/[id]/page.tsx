@@ -75,7 +75,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "x-user-id": user?.id || "", },
                 body: JSON.stringify(updatedTrip),
             });
 

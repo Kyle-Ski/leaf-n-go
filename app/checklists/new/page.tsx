@@ -21,34 +21,39 @@ const NewChecklistPage = () => {
     const categories = ["Day Trip", "Overnight", "Weekend Trip"];
 
     useEffect(() => {
-        if (user && state.items.length === 0) {
+        if (!state.noItems && state.items.length === 0) {
+            // Fetch items only if noItems is false and items array is empty
+            const fetchItems = async () => {
+                try {
+                    const response = await fetch("/api/items", {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-user-id": user?.id || "",
+                        },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        if (Array.isArray(data) && data.length === 0) {
+                            // No items found; set the noItems flag to true
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true });
+                        } else {
+                            // Items found; update the AppState with fetched items
+                            dispatch({ type: "SET_ITEMS", payload: data });
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false }); // Reset noItems if items exist
+                        }
+                    } else {
+                        console.error("Failed to fetch items:", response.statusText);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch items:", err);
+                }
+            };
+
             fetchItems();
         }
-    }, [user, state.items, dispatch]);
-
-    const fetchItems = async () => {
-        setError(null); // Reset error before fetching
-        try {
-            const response = await fetch("/api/items", {
-                method: "GET",
-                headers: {
-                    "x-user-id": user?.id || "",
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                setError(errorData.error || "Failed to fetch items.");
-                return;
-            }
-
-            const fetchedItems: ItemDetails[] = await response.json();
-            dispatch({ type: "SET_ITEMS", payload: fetchedItems });
-        } catch (err) {
-            console.error("Network error while fetching items:", err);
-            setError("Unable to load items. Please check your network connection.");
-        }
-    };
+    }, [dispatch, state.items, state.noItems, user?.id]);
 
     const handleItemQuantityChange = (itemId: string, quantity: number) => {
         setSelectedItems((prev) => {
