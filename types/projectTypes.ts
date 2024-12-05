@@ -29,14 +29,12 @@ export type Action =
 | { type: 'SET_CHECKLISTS'; payload: Checklist[] }
 | { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
 | { type: 'ADD_CHECKLIST'; payload: Checklist }
+| { type: 'REMOVE_CHECKLIST'; payload: (string | string[])}
 | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
 | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
 | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
 | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
 | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
-| { type: 'REMOVE_CHECKLIST'; payload: (string | string[])}
-// | { type: 'UPDATE_CHECKLIST_ITEMS'; payload: { checklistId: string | string[] | undefined, newItem: ChecklistItem }}
-// | { type: 'REMOVE_CHECKLIST_ITEM'; payload: { checklistId: string | string[] | undefined, itemId: string | string[] | undefined }}
 | { type: 'SET_USER_SETTINGS'; payload: UserSettings }
 | { type: 'SET_IS_NEW'; payload: boolean };
 

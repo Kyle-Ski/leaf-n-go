@@ -278,6 +278,10 @@ function ChecklistDetailsPage() {
                 <Checkbox
                   checked={item.completed}
                   onCheckedChange={async (value) => {
+                    if (!id) {
+                      setError("Error updating checklist, try again later.")
+                      return
+                    }
                     const response = await fetch(`/api/checklists/${id}/items/${item.id}`, {
                       method: "PUT",
                       headers: {
@@ -295,7 +299,7 @@ function ChecklistDetailsPage() {
                       const errorMessage = await response.text(); // Capture detailed API error
                       throw new Error(`Failed to update item status: ${errorMessage}`);
                     }
-
+                    dispatch({ type: 'CHECK_ITEM_IN_CHECKLIST', payload: { checkedState: value, checklistId: id} })
                     // Optimistically update the checklist UI
                     setChecklist((prev) => {
                       if (!prev || !prev.items) return prev; // Handle null or undefined state
