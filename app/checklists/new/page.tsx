@@ -5,13 +5,13 @@ import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
-import { Checklist, ItemDetails } from "@/types/projectTypes";
+import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 
 const NewChecklistPage = () => {
+    const router = useRouter();
     const { user } = useAuth();
     const { state, dispatch } = useAppContext();
-    const router = useRouter();
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});

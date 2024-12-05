@@ -3,30 +3,26 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/ui/loader";
 import { useAuth } from "@/lib/auth-Context";
 import { withAuth } from "@/lib/withAuth";
 import CreateTripModal from "@/components/createNewTripModal";
-import { CreateTripPayload, Trip } from "@/types/projectTypes";
+import { CreateTripPayload } from "@/types/projectTypes";
+import { useAppContext } from "@/lib/appContext";
 
 const TripsPage = () => {
   const { user } = useAuth();
+  const { state, dispatch } = useAppContext();
   const router = useRouter();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !state.noTrips && state.trips.length === 0) {
       fetchTrips();
     }
-  }, [user]);
+  }, [user, state.noTrips, state.trips]);
 
   const fetchTrips = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
       const response = await fetch("/api/trips", {
         headers: { "x-user-id": user?.id || "" },
@@ -37,25 +33,28 @@ const TripsPage = () => {
       }
 
       const data = await response.json();
-      setTrips(data);
+
+      if (Array.isArray(data) && data.length === 0) {
+        dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: true });
+      } else {
+        dispatch({ type: "SET_TRIPS", payload: data });
+        dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: false });
+      }
     } catch (err) {
       console.error(err);
       setError("Unable to load trips. Please try again later.");
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleCreateTrip = async (tripData: CreateTripPayload) => {
     try {
-      // Add the current user as the owner and the only participant
       const participants = [
         {
           user_id: user?.id || "",
-          role: "owner", // Set the role as 'owner'
+          role: "owner",
         },
       ];
-  
+
       const response = await fetch("/api/trips", {
         method: "POST",
         headers: {
@@ -64,29 +63,42 @@ const TripsPage = () => {
         },
         body: JSON.stringify({ ...tripData, participants }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create trip.");
       }
-  
-      fetchTrips();
+
+      fetchTrips(); // Refresh trips after creating a new one
     } catch (err) {
       console.error(err);
       setError("Failed to create trip. Please try again.");
     }
   };
-  
-  if (loading) {
+
+  if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader className="h-12 w-12 text-blue-500" />
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-red-500 text-center mb-4">{error}</p>
+        <Button onClick={() => fetchTrips()} className="bg-blue-500 text-white">
+          Retry
+        </Button>
       </div>
     );
   }
 
-  if (error) {
-    return <p className="text-red-500 text-center">{error}</p>;
+  if (state.noTrips) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg mb-4">No trips found. Start by creating your first trip!</p>
+        <Button
+          className="bg-green-500 text-white"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          Create New Trip
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -99,29 +111,24 @@ const TripsPage = () => {
       </header>
 
       {/* Trip List */}
-      {trips.length === 0 ? (
-        <p className="text-gray-600 text-center">No trips found. Start by creating a new trip!</p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {trips.map((trip) => (
-            <div key={trip.id} className="bg-white shadow-md rounded-lg p-4">
-              <h2 className="text-xl font-semibold">{trip.title}</h2>
-              <p className="text-gray-600 text-sm">
-                {trip.start_date ? `Starts: ${trip.start_date}` : "No start date"}{" "}
-                - {trip.end_date ? `Ends: ${trip.end_date}` : "No end date"}
-              </p>
-              {/* Add other trip details */}
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => router.push(`/trips/${trip.id}`)}
-              >
-                View Trip
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {state.trips.map((trip) => (
+          <div key={trip.id} className="bg-white shadow-md rounded-lg p-4">
+            <h2 className="text-xl font-semibold">{trip.title}</h2>
+            <p className="text-gray-600 text-sm">
+              {trip.start_date ? `Starts: ${trip.start_date}` : "No start date"}{" "}
+              - {trip.end_date ? `Ends: ${trip.end_date}` : "No end date"}
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => router.push(`/trips/${trip.id}`)}
+            >
+              View Trip
+            </Button>
+          </div>
+        ))}
+      </div>
 
       {/* Create Trip Modal */}
       <CreateTripModal

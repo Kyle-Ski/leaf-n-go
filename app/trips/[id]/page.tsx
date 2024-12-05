@@ -2,70 +2,72 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
-import { FrontendTrip, Checklist } from "@/types/projectTypes";
-import { useAuth } from "@/lib/auth-Context";
+import { Checklist } from "@/types/projectTypes";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAppContext } from "@/lib/appContext";
+import { useAuth } from "@/lib/auth-Context";
 
 const TripPage = () => {
     const router = useRouter();
     const { user } = useAuth();
     const { id } = useParams();
-    const [trip, setTrip] = useState<FrontendTrip | null>(null);
+    const { state, dispatch } = useAppContext();
     const [allChecklists, setAllChecklists] = useState<Checklist[]>([]);
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // Find the trip in the app state
+    const trip = state.trips.find((trip) => trip.id === id);
 
     useEffect(() => {
-        if (user && id) {
-            fetchTripDetails();
+        if (!trip) {
+            setError("Trip not found.");
+            return;
+        }
+
+        // If no checklists flag is set, don't fetch again
+        if (state.noChecklists) {
+            setAllChecklists([]);
+            return;
+        }
+
+        // If checklists exist in state, use them
+        if (state.checklists.length > 0) {
+            setAllChecklists(state.checklists);
+        } else {
             fetchAllChecklists();
         }
-    }, [user, id]);
-
-    const fetchTripDetails = async () => {
-        try {
-            const response = await fetch(`/api/trips/${id}`, {
-                headers: { "Content-Type": "application/json" },
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch trip details.");
-            }
-
-            const data: FrontendTrip = await response.json();
-            setTrip(data);
-        } catch (err) {
-            console.error(err);
-            setError("Unable to load trip details. Please try again later.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [trip, state.checklists, state.noChecklists]);
 
     const fetchAllChecklists = async () => {
         try {
             const response = await fetch(`/api/checklists`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
-                },
+                headers: { "x-user-id": user?.id || "" },
             });
 
             if (!response.ok) {
                 throw new Error("Failed to fetch all checklists.");
             }
 
-            const data = await response.json();
-            setAllChecklists(data);
+            const data: Checklist[] = await response.json();
+
+            if (Array.isArray(data) && data.length === 0) {
+                // If no checklists found, set the noChecklists flag
+                dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true });
+                setAllChecklists([]);
+            } else {
+                // If checklists exist, update the state
+                dispatch({ type: "SET_CHECKLISTS", payload: data });
+                setAllChecklists(data);
+            }
         } catch (err) {
             console.error("Error fetching all checklists:", err);
+            setError("Unable to load checklists. Please try again later.");
         }
     };
 
@@ -73,10 +75,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedTrip),
             });
 
@@ -84,34 +83,8 @@ const TripPage = () => {
                 throw new Error("Failed to update trip.");
             }
 
-            const updatedData: FrontendTrip = await response.json();
-
-            if (updatedData.trip_checklists) {
-                // Normalize trip_checklists to ensure consistent structure
-                updatedData.trip_checklists = updatedData.trip_checklists.map((tripChecklist) => {
-                    const checklist = Array.isArray(tripChecklist.checklists)
-                        ? tripChecklist.checklists[0]
-                        : tripChecklist.checklists;
-
-                    const totalItems = checklist?.checklist_items?.length || 0;
-                    const completedItems =
-                        checklist?.checklist_items?.filter((item) => item.completed).length || 0;
-
-                    return {
-                        checklist_id: tripChecklist.checklist_id,
-                        checklists: [
-                            {
-                                title: checklist?.title || "Untitled Checklist",
-                                checklist_items: checklist?.checklist_items || [],
-                            },
-                        ],
-                        totalItems,
-                        completedItems,
-                    };
-                });
-            }
-
-            setTrip(updatedData);
+            const updatedData = await response.json();
+            dispatch({ type: "UPDATE_TRIP", payload: updatedData });
             setIsUpdateOpen(false);
         } catch (err) {
             console.error(err);
@@ -120,62 +93,54 @@ const TripPage = () => {
     };
 
     const handleDelete = async () => {
-        setError(null);
-    
-        if (!user?.id) {
-            setError("User is not authenticated.");
-            return;
+        if (!id) {
+            setError("Error Deleting Trip, try again later")
+            return
         }
-    
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "DELETE",
-                headers: {
-                    "x-user-id": user.id, // Include the required user ID header
-                },
             });
-    
+
             if (!response.ok) {
                 throw new Error("Failed to delete trip.");
             }
-    
+
+            dispatch({ type: "REMOVE_TRIP", payload: id });
             router.push("/trips");
         } catch (err) {
             console.error(err);
             setError("Failed to delete trip. Please try again.");
         }
     };
-    
-    if (loading) {
+
+    if (!trip) {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <Loader className="h-12 w-12 text-blue-500" />
+                <p className="text-gray-600 text-lg">No trip found. Please select a valid trip.</p>
             </div>
         );
     }
 
     if (error) {
-        return <p className="text-red-500 text-center">{error}</p>;
-    }
-
-    if (!trip) {
-        return <p className="text-gray-600 text-center">No trip found.</p>;
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <p className="text-red-500 text-center">{error}</p>
+            </div>
+        );
     }
 
     return (
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{trip.title}</h1>
-                <Button
-                    onClick={() => setIsUpdateOpen(true)}
-                    className="bg-blue-500 text-white"
-                >
+                <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
                     Edit Trip
                 </Button>
             </header>
 
             {/* Trip Details */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
+            <section className="w-full bg-white shadow-md rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Trip Details</h2>
                 <p>
                     <strong>Start Date:</strong> {trip.start_date || "N/A"}
@@ -192,9 +157,21 @@ const TripPage = () => {
             </section>
 
             {/* Checklists */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
+            <section className="w-full bg-white shadow-md rounded-lg p-6">
                 <h2 className="text-xl font-semibold mb-4">Checklists</h2>
-                {trip.trip_checklists.length === 0 ? (
+                {state.checklists.length === 0 ? (
+                    <div className="text-center">
+                        <p className="text-gray-600 mb-4">
+                            You don't have any checklists created yet. You can make one by going here:
+                        </p>
+                        <Link
+                            href="/checklists/new"
+                            className="text-blue-500 underline hover:text-blue-700"
+                        >
+                            Create a New Checklist
+                        </Link>
+                    </div>
+                ) : trip.trip_checklists.length === 0 ? (
                     <p className="text-gray-600">No checklists linked to this trip.</p>
                 ) : (
                     <ul className="space-y-4">
@@ -214,7 +191,8 @@ const TripPage = () => {
                                         <div
                                             className="absolute top-0 left-0 h-2 bg-green-500 rounded-full"
                                             style={{
-                                                width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0}%`,
+                                                width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0
+                                                    }%`,
                                             }}
                                         ></div>
                                     </div>
@@ -229,24 +207,18 @@ const TripPage = () => {
                         ))}
                     </ul>
                 )}
-            </section>
 
-            {/* Other Sections */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6 sm:max-w-full md:max-w-xl mx-auto">
-                <h2 className="text-xl font-semibold mb-4">Packing Insights</h2>
-                <p className="text-gray-600">Placeholder for AI-assisted packing suggestions.</p>
             </section>
 
             <Button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-red-500 text-white shadow-md"
-                >
-                    Delete Trip
-                </Button>
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="bg-red-500 text-white shadow-md"
+            >
+                Delete Trip
+            </Button>
 
             {/* Edit Trip Modal */}
             <EditTripModal
-                allChecklists={allChecklists}
                 isOpen={isUpdateOpen}
                 onClose={() => setIsUpdateOpen(false)}
                 trip={trip}
@@ -263,22 +235,15 @@ const TripPage = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex space-x-4 mt-4">
-                        <Button
-                            onClick={handleDelete}
-                            className="bg-red-500 text-white"
-                        >
+                        <Button onClick={handleDelete} className="bg-red-500 text-white">
                             Delete
                         </Button>
-                        <Button
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            className="bg-gray-300 text-black"
-                        >
+                        <Button onClick={() => setIsDeleteModalOpen(false)} className="bg-gray-300 text-black">
                             Cancel
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
-
         </div>
     );
 };

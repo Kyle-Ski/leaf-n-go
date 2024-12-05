@@ -6,6 +6,10 @@ const initialState: AppState = {
     checklists: [],
     items: [],
     userSettings: null,
+    isNew: false,
+    noTrips: false,
+    noChecklists: false,
+    noItems: false,
 };
 
 const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
@@ -25,6 +29,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         : item
                 ),
             };
+        case "SET_NO_ITEMS_FOR_USER":
+            return { ...state, noItems: action.payload };
         case "SET_TRIPS":
             return { ...state, trips: action.payload };
         case "ADD_TRIP":
@@ -38,12 +44,20 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         : trip
                 ),
             };
+        case "REMOVE_TRIP":
+            return { ...state, trips: state.trips.filter((t) => t.id !== action.payload) };
+        case "SET_NO_TRIPS_FOR_USER": 
+            return { ...state, noTrips: action.payload };
         case "SET_CHECKLISTS":
             return { ...state, checklists: action.payload };
         case "ADD_CHECKLIST":
             return { ...state, checklists: [...state.checklists, action.payload] };
         case "REMOVE_CHECKLIST":
             return { ...state, checklists: state.checklists.filter((c) => c.id !== action.payload) };
+        case "SET_NO_CHECKLISTS_FOR_USER":
+            return { ...state, noChecklists: action.payload };
+        case "SET_IS_NEW": 
+            return { ...state, isNew: action.payload };
         default:
             // Add other cases..
             return state;

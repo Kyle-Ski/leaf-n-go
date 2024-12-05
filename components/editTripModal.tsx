@@ -4,13 +4,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Checklist, FrontendTrip } from "@/types/projectTypes";
+import { FrontendTrip } from "@/types/projectTypes";
+import Link from "next/link";
+import { useAppContext } from "@/lib/appContext";
 
 interface EditTripModalProps {
   isOpen: boolean;
   onClose: () => void;
   trip: FrontendTrip;
-  allChecklists: Checklist[];
   onUpdate: (updatedTrip: UpdateTripPayload) => void;
 }
 
@@ -23,7 +24,8 @@ export interface UpdateTripPayload {
   trip_checklists?: { checklist_id: string }[]; // Only `checklist_id` is required for updates
 }
 
-const EditTripModal = ({ isOpen, onClose, trip, allChecklists, onUpdate }: EditTripModalProps) => {
+const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) => {
+  const { state } = useAppContext();
   const [title, setTitle] = useState(trip.title || "");
   const [startDate, setStartDate] = useState<Date | null>(trip.start_date ? new Date(trip.start_date) : null);
   const [endDate, setEndDate] = useState<Date | null>(trip.end_date ? new Date(trip.end_date) : null);
@@ -145,24 +147,35 @@ const EditTripModal = ({ isOpen, onClose, trip, allChecklists, onUpdate }: EditT
 
             <label className="block text-sm font-medium text-gray-700">Checklists</label>
             <div className="space-y-2">
-              {allChecklists?.map((checklist) => (
-                <div key={checklist.id} className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    id={`checklist-${checklist.id}`}
-                    checked={selectedChecklists.includes(checklist.id)}
-                    onChange={() => handleChecklistToggle(checklist.id)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor={`checklist-${checklist.id}`} className="text-sm text-gray-700">
-                    {checklist.title}
-                  </label>
+              {state.noChecklists ? (
+                <div className="flex flex-col items-center">
+                  <p className="text-gray-600 text-sm mb-2">You have no checklists created yet.</p>
+                  <Link href="/checklists/new">
+                    <Button className="bg-blue-500 text-white">
+                      Create a New Checklist
+                    </Button>
+                  </Link>
+                  <p className="text-red-500 text-xs mt-2">
+                    Note: All unsaved changes will be lost.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                state.checklists.map((checklist) => (
+                  <div key={checklist.id} className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id={`checklist-${checklist.id}`}
+                      checked={selectedChecklists.includes(checklist.id)}
+                      onChange={() => handleChecklistToggle(checklist.id)}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor={`checklist-${checklist.id}`} className="text-sm text-gray-700">
+                      {checklist.title}
+                    </label>
+                  </div>
+                ))
+              )}
             </div>
-
-            <label className="block text-sm font-medium text-gray-700">Participants</label>
-            <p className="text-gray-500 text-sm">Placeholder for trip participants management.</p>
           </div>
         </DialogDescription>
         <div className="mt-4 flex justify-end space-x-4">

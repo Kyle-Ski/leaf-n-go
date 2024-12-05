@@ -14,22 +14,31 @@ export interface AppState {
   checklists: Checklist[];
   items: (Item | ItemDetails)[]; // Allow both Item and ItemDetails
   userSettings: UserSettings | null;
+  isNew: boolean;
+  noTrips: boolean;
+  noChecklists: boolean;
+  noItems: boolean;
 }
 
 export type Action =
 | { type: 'SET_TRIPS'; payload: FrontendTrip[] }
 | { type: 'ADD_TRIP'; payload: FrontendTrip }
 | { type: 'UPDATE_TRIP'; payload: FrontendTrip }
+| { type: 'REMOVE_TRIP'; payload: (string | string[]) }
+| { type: 'SET_NO_TRIPS_FOR_USER'; payload: boolean }
 | { type: 'SET_CHECKLISTS'; payload: Checklist[] }
+| { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
 | { type: 'ADD_CHECKLIST'; payload: Checklist }
 | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
 | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
 | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
+| { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
 | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
 | { type: 'REMOVE_CHECKLIST'; payload: (string | string[])}
 // | { type: 'UPDATE_CHECKLIST_ITEMS'; payload: { checklistId: string | string[] | undefined, newItem: ChecklistItem }}
 // | { type: 'REMOVE_CHECKLIST_ITEM'; payload: { checklistId: string | string[] | undefined, itemId: string | string[] | undefined }}
-| { type: 'SET_USER_SETTINGS'; payload: UserSettings };
+| { type: 'SET_USER_SETTINGS'; payload: UserSettings }
+| { type: 'SET_IS_NEW'; payload: boolean };
 
 export interface CreateTripPayload {
   title: string;

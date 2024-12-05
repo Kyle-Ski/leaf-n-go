@@ -19,13 +19,30 @@ const ItemsPage = () => {
     const [sortOption, setSortOption] = useState<string>("name-asc");
 
     useEffect(() => {
-        if (state.items.length === 0) {
+        if (!state.noItems && state.items.length === 0) {
+            // Fetch items only if noItems is false and items array is empty
             const fetchItems = async () => {
                 try {
-                    const response = await fetch("/api/items", { headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" } });
+                    const response = await fetch("/api/items", {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-user-id": user?.id || "",
+                        },
+                    });
+
                     if (response.ok) {
                         const data = await response.json();
-                        dispatch({ type: "SET_ITEMS", payload: data });
+
+                        if (Array.isArray(data) && data.length === 0) {
+                            // No items found; set the noItems flag to true
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true });
+                        } else {
+                            // Items found; update the AppState with fetched items
+                            dispatch({ type: "SET_ITEMS", payload: data });
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false }); // Reset noItems if items exist
+                        }
+                    } else {
+                        console.error("Failed to fetch items:", response.statusText);
                     }
                 } catch (err) {
                     console.error("Failed to fetch items:", err);
@@ -34,7 +51,8 @@ const ItemsPage = () => {
 
             fetchItems();
         }
-    }, [dispatch, state.items]);
+    }, [dispatch, state.items, state.noItems, user?.id]);
+
 
     const items = state.items;
 
@@ -65,6 +83,15 @@ const ItemsPage = () => {
 
     // If there are no items in state, show a message or loading spinner
     if (!items || items.length === 0) {
+        if (state.noItems) {
+            // Handle the "no items" case
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen">
+                    <p className="text-gray-600 text-lg">You don’t have any items yet. Try creating your first item!</p>
+                </div>
+            );
+        }
+        // Handle the loading case
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <Loader className="h-12 w-12 mb-4 text-blue-500" />
@@ -72,6 +99,7 @@ const ItemsPage = () => {
             </div>
         );
     }
+
 
     return (
         <div className="p-4 max-w-4xl mx-auto space-y-8">

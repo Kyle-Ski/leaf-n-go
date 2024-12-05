@@ -23,15 +23,18 @@ const ChecklistsPage = () => {
 
   useEffect(() => {
     if (user) {
-      // Use existing checklists from AppState if available
-      if (state.checklists.length > 0) {
+      if (state.noChecklists) {
+        // User has no checklists; stop loading and optionally show a message
+        setLoading(false);
+      } else if (state.checklists.length > 0) {
+        // Use existing checklists from AppState if available
         setLoading(false);
       } else {
-        console.log("FETCHING CHECKLISTS", state)
+        console.log("FETCHING CHECKLISTS", state);
         fetchChecklists();
       }
     }
-  }, [user, state.checklists]);
+  }, [user, state.checklists, state.noChecklists]);
 
   const fetchChecklists = async () => {
     if (!user?.id) {
@@ -57,7 +60,12 @@ const ChecklistsPage = () => {
       }
 
       const data = await response.json();
-      dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+      if (Array.isArray(data) && data.length === 0) {
+        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+      } else {
+        dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
+      }
     } catch (error) {
       console.error("Error fetching checklists:", error);
       setError("Error fetching checklists. Please try again later.");
@@ -147,25 +155,25 @@ const ChecklistsPage = () => {
                       <p className="text-sm text-gray-500">Category: {list.category}</p>
                     </CardHeader>
                     <CardContent className="flex justify-between items-center mt-4">
-                    <div>
-                      <p className="text-gray-700">Completion</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{
-                            width: `${list.completion?.total
+                      <div>
+                        <p className="text-gray-700">Completion</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
+                            style={{
+                              width: `${list.completion?.total
                                 ? (list.completion.completed / list.completion.total) * 100
                                 : 0
-                              }%`,
-                          }}
-                        ></div>
+                                }%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          {list.completion?.total
+                            ? `${list.completion.completed}/${list.completion.total} items added`
+                            : "No items"}
+                        </span>
                       </div>
-                      <span className="text-xs text-gray-500 mt-2 block">
-                        {list.completion?.total
-                          ? `${list.completion.completed}/${list.completion.total} items added`
-                          : "No items"}
-                      </span>
-                    </div>
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
                           View Checklist
@@ -188,15 +196,15 @@ const ChecklistsPage = () => {
                     <p className="text-sm text-gray-500">Category: {list.category}</p>
                   </CardHeader>
                   <CardContent className="flex justify-between items-center mt-4">
-                  <div>
+                    <div>
                       <p className="text-gray-700">Completion</p>
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                         <div
                           className="bg-green-500 h-2 rounded-full"
                           style={{
                             width: `${list.completion?.total
-                                ? (list.completion.completed / list.completion.total) * 100
-                                : 0
+                              ? (list.completion.completed / list.completion.total) * 100
+                              : 0
                               }%`,
                           }}
                         ></div>
@@ -216,7 +224,8 @@ const ChecklistsPage = () => {
                 </Card>
               ))
             ) : (
-              <p className="text-gray-600">No checklists found.</p>
+              <p className="text-gray-600 text-center">No checklists found. Try creating a new checklist!</p>
+
             )}
           </section>
         </>
