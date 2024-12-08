@@ -18,49 +18,49 @@ const PlanningHub = () => {
 
   useEffect(() => {
     if (user) {
+      const fetchTrips = async () => {
+        try {
+          const response = await fetch(`/api/trips`, {
+            headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch trips.");
+          }
+
+          const data: FrontendTrip[] = await response.json();
+
+          // Split trips into upcoming and recent
+          const now = new Date();
+
+          // Sort trips by start date (earliest first)
+          const sortedTrips = data.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
+
+          // Find the upcoming trip (closest to now and not in the past)
+          const upcoming = sortedTrips.find((trip) => {
+            const tripStartDate = new Date(trip.start_date || "").getTime();
+            return tripStartDate >= now.getTime();
+          });
+
+          // Find all recent trips (already passed)
+          const recent = sortedTrips.filter((trip) => {
+            const tripStartDate = new Date(trip.start_date || "").getTime();
+            return tripStartDate < now.getTime();
+          });
+
+          setUpcomingTrip(upcoming || null);
+          setRecentTrips(recent);
+        } catch (err) {
+          console.error("Error fetching trips:", err);
+          setError("Unable to load trips. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
       fetchTrips();
     }
   }, [user]);
-
-  const fetchTrips = async () => {
-    try {
-      const response = await fetch(`/api/trips`, {
-        headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch trips.");
-      }
-
-      const data: FrontendTrip[] = await response.json();
-
-      // Split trips into upcoming and recent
-      const now = new Date();
-      
-      // Sort trips by start date (earliest first)
-      const sortedTrips = data.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
-      
-      // Find the upcoming trip (closest to now and not in the past)
-      const upcoming = sortedTrips.find((trip) => {
-        const tripStartDate = new Date(trip.start_date || "").getTime();
-        return tripStartDate >= now.getTime();
-      });
-
-      // Find all recent trips (already passed)
-      const recent = sortedTrips.filter((trip) => {
-        const tripStartDate = new Date(trip.start_date || "").getTime();
-        return tripStartDate < now.getTime();
-      });
-
-      setUpcomingTrip(upcoming || null);
-      setRecentTrips(recent);
-    } catch (err) {
-      console.error("Error fetching trips:", err);
-      setError("Unable to load trips. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

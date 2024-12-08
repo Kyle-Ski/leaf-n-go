@@ -23,6 +23,44 @@ const ChecklistsPage = () => {
 
   useEffect(() => {
     if (user) {
+      const fetchChecklists = async () => {
+        if (!user?.id) {
+          console.error("User ID is undefined. Cannot fetch checklists.");
+          setError("Unable to fetch checklists. Please try again later.");
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        setError("");
+        try {
+          const response = await fetch("/api/checklists", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": user.id,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch checklists");
+          }
+
+          const data = await response.json();
+          if (Array.isArray(data) && data.length === 0) {
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+          } else {
+            dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
+          }
+        } catch (error) {
+          console.error("Error fetching checklists:", error);
+          setError("Error fetching checklists. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
       if (state.noChecklists) {
         // User has no checklists; stop loading and optionally show a message
         setLoading(false);
@@ -30,49 +68,11 @@ const ChecklistsPage = () => {
         // Use existing checklists from AppState if available
         setLoading(false);
       } else {
-        console.log("FETCHING CHECKLISTS", state);
+        console.log("FETCHING CHECKLISTS");
         fetchChecklists();
       }
     }
   }, [user, state.checklists, state.noChecklists]);
-
-  const fetchChecklists = async () => {
-    if (!user?.id) {
-      console.error("User ID is undefined. Cannot fetch checklists.");
-      setError("Unable to fetch checklists. Please try again later.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/checklists", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch checklists");
-      }
-
-      const data = await response.json();
-      if (Array.isArray(data) && data.length === 0) {
-        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
-      } else {
-        dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
-        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
-      }
-    } catch (error) {
-      console.error("Error fetching checklists:", error);
-      setError("Error fetching checklists. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredChecklists = state.checklists // Use AppState for checklists
     .filter(

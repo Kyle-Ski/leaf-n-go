@@ -1,3 +1,5 @@
+import { CheckedState } from "@radix-ui/react-checkbox";
+
 export interface Item {
     id: string;
     checklist_id: string;
@@ -30,6 +32,7 @@ export type Action =
 | { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
 | { type: 'ADD_CHECKLIST'; payload: Checklist }
 | { type: 'REMOVE_CHECKLIST'; payload: (string | string[])}
+| { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[] } }
 | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
 | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
 | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}

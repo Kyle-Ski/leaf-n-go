@@ -16,7 +16,6 @@ const TripPage = () => {
     const { user } = useAuth();
     const { id } = useParams();
     const { state, dispatch } = useAppContext();
-    const [allChecklists, setAllChecklists] = useState<Checklist[]>([]);
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -32,14 +31,10 @@ const TripPage = () => {
 
         // If no checklists flag is set, don't fetch again
         if (state.noChecklists) {
-            setAllChecklists([]);
             return;
         }
 
-        // If checklists exist in state, use them
-        if (state.checklists.length > 0) {
-            setAllChecklists(state.checklists);
-        } else {
+        if (state.checklists.length === 0) {
             fetchAllChecklists();
         }
     }, [trip, state.checklists, state.noChecklists]);
@@ -59,11 +54,9 @@ const TripPage = () => {
             if (Array.isArray(data) && data.length === 0) {
                 // If no checklists found, set the noChecklists flag
                 dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true });
-                setAllChecklists([]);
             } else {
                 // If checklists exist, update the state
                 dispatch({ type: "SET_CHECKLISTS", payload: data });
-                setAllChecklists(data);
             }
         } catch (err) {
             console.error("Error fetching all checklists:", err);
@@ -162,7 +155,7 @@ const TripPage = () => {
                 {state.checklists.length === 0 ? (
                     <div className="text-center">
                         <p className="text-gray-600 mb-4">
-                            You don't have any checklists created yet. You can make one by going here:
+                            You don&apos;t have any checklists created yet. You can make one by going here:
                         </p>
                         <Link
                             href="/checklists/new"

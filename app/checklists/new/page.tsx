@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
-import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 
 const NewChecklistPage = () => {
