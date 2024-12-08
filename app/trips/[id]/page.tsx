@@ -28,7 +28,6 @@ const TripPage = () => {
             setError("Trip not found.");
             return;
         }
-
         // If no checklists flag is set, don't fetch again
         if (state.noChecklists) {
             return;

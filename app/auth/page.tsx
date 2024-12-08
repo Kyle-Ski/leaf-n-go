@@ -55,7 +55,16 @@ export default function AuthPage() {
       }
 
       const data = await response.json();
-      dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+
+      if (Array.isArray(data) && data.length === 0) {
+        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+      } else if (data.length > 0) {
+        dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+        dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
+      } else {
+        throw new Error("Checklist data is not formatted as expected.")
+      }
+
     } catch (error) {
       console.error("Error fetching checklists:", error);
     }
@@ -74,9 +83,41 @@ export default function AuthPage() {
       }
 
       const data = await response.json();
-      dispatch({ type: "SET_ITEMS", payload: data }); // Save items to global state
+
+      if (Array.isArray(data) && data.length === 0) {
+        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true})
+      } else if (data.length > 0) {
+        dispatch({ type: "SET_ITEMS", payload: data }); // Save items to global state
+        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false})
+      } else {
+        throw new Error("Items is not formatted as expected")
+      }
     } catch (err) {
       console.error("Error fetching items:", err);
+    }
+  };
+
+  const fetchTrips = async (userId: string) => {
+    try {
+      const response = await fetch("/api/trips", {
+        headers: { "x-user-id": userId },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch trips.");
+      }
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length === 0) {
+        dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: true });
+      } else {
+        dispatch({ type: "SET_TRIPS", payload: data });
+        dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: false });
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load trips. Please try again later.");
     }
   };
 
@@ -116,6 +157,7 @@ export default function AuthPage() {
         setUser(user); // Update user state in AuthContext
 
         // Fetch items and checklists after logging in
+        await fetchTrips(user.id)
         await fetchItems(user.id);
         await fetchChecklists(user.id)
         router.push("/"); // Redirect to homepage

@@ -8,16 +8,41 @@ import { withAuth } from "@/lib/withAuth";
 import { useAuth } from "@/lib/auth-Context";
 import { FrontendTrip } from "@/types/projectTypes";
 import { Loader } from "@/components/ui/loader";
+import { useAppContext } from "@/lib/appContext";
 
 const PlanningHub = () => {
   const { user } = useAuth();
+  const { state, dispatch } = useAppContext();
   const [upcomingTrip, setUpcomingTrip] = useState<FrontendTrip | null>(null);
   const [recentTrips, setRecentTrips] = useState<FrontendTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const formatUpcomingTrips = () => {
+    // Split trips into upcoming and recent
+    const now = new Date();
+
+    // Sort trips by start date (earliest first)
+    const sortedTrips = state.trips.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
+
+    // Find the upcoming trip (closest to now and not in the past)
+    const upcoming = sortedTrips.find((trip) => {
+      const tripStartDate = new Date(trip.start_date || "").getTime();
+      return tripStartDate >= now.getTime();
+    });
+
+    // Find all recent trips (already passed)
+    const recent = sortedTrips.filter((trip) => {
+      const tripStartDate = new Date(trip.start_date || "").getTime();
+      return tripStartDate < now.getTime();
+    });
+
+    setUpcomingTrip(upcoming || null);
+    setRecentTrips(recent);
+  }
+
   useEffect(() => {
-    if (user) {
+    if (user && !state.noTrips && state.trips.length === 0) {
       const fetchTrips = async () => {
         try {
           const response = await fetch(`/api/trips`, {
@@ -30,37 +55,26 @@ const PlanningHub = () => {
 
           const data: FrontendTrip[] = await response.json();
 
-          // Split trips into upcoming and recent
-          const now = new Date();
+          if (Array.isArray(data) && data.length === 0) {
+            dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: true });
+          } else {
+            dispatch({ type: "SET_TRIPS", payload: data });
+            dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: false });
+          }
 
-          // Sort trips by start date (earliest first)
-          const sortedTrips = data.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
-
-          // Find the upcoming trip (closest to now and not in the past)
-          const upcoming = sortedTrips.find((trip) => {
-            const tripStartDate = new Date(trip.start_date || "").getTime();
-            return tripStartDate >= now.getTime();
-          });
-
-          // Find all recent trips (already passed)
-          const recent = sortedTrips.filter((trip) => {
-            const tripStartDate = new Date(trip.start_date || "").getTime();
-            return tripStartDate < now.getTime();
-          });
-
-          setUpcomingTrip(upcoming || null);
-          setRecentTrips(recent);
         } catch (err) {
           console.error("Error fetching trips:", err);
           setError("Unable to load trips. Please try again later.");
         } finally {
-          setLoading(false);
+         
         }
       };
 
       fetchTrips();
     }
-  }, [user]);
+    setLoading(false);
+    formatUpcomingTrips();
+  }, [user, state.noTrips, state.trips]);
 
   if (loading) {
     return (
