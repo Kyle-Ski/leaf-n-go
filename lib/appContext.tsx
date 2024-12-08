@@ -55,36 +55,45 @@ const appReducer = (state: AppState, action: Action): AppState => {
         case "REMOVE_CHECKLIST":
             return { ...state, checklists: state.checklists.filter((c) => c.id !== action.payload) };
         case "CHECK_ITEM_IN_CHECKLIST":
-            console.log("PAYLOAD:", action.payload.checkedState)
-            const checklistToUpdate = state.checklists.find((c) => {
-                return c.id === action.payload.checklistId
-            })
-            let completedTotal = checklistToUpdate?.completion?.completed
-            console.log("--->", typeof completedTotal, checklistToUpdate)
-            if (!checklistToUpdate || !checklistToUpdate.completion || !(typeof completedTotal === "number" && !isNaN(completedTotal))) {
-                console.error("Can not find checklist to check item")
-                return { ...state }
-            } else {
-                if (action.payload.checkedState) {
-                    checklistToUpdate.completion.completed = completedTotal += 1;
-                } else {
-                    checklistToUpdate.completion.completed = completedTotal -+ 1;
-                }
+            console.log("PAYLOAD:", action.payload.checkedState);
 
-                // Replace the updated checklist in the array
-                const updatedChecklists = state.checklists.map((checklist) => {
-                    if (checklist.id === action.payload.checklistId) {
-                        return { ...checklistToUpdate }
-                    }
-                    return checklist
-                }
-                    
-                );
+            // Find the checklist to update without mutating state
+            const checklistToUpdateIndex = state.checklists.findIndex((c) => c.id === action.payload.checklistId);
+            const checklistToUpdate = state.checklists[checklistToUpdateIndex];
 
-                console.log("UPDATING WITH:", updatedChecklists);
-
-                return { ...state, checklists: updatedChecklists };
+            if (
+                !checklistToUpdate ||
+                !checklistToUpdate.completion ||
+                !(typeof checklistToUpdate.completion.completed === "number" && !isNaN(checklistToUpdate.completion.completed))
+            ) {
+                console.error("Cannot find checklist to check item");
+                return { ...state };
             }
+
+            // Calculate the new completion count immutably
+            const updatedCompletedTotal = action.payload.checkedState
+                ? checklistToUpdate.completion.completed + 1
+                : checklistToUpdate.completion.completed - 1;
+
+            // Create an updated checklist with immutability
+            const updatedChecklist = {
+                ...checklistToUpdate,
+                completion: {
+                    ...checklistToUpdate.completion,
+                    completed: updatedCompletedTotal,
+                },
+            };
+
+            // Replace the updated checklist in the array immutably
+            const updatedChecklists = state.checklists.map((checklist, index) =>
+                index === checklistToUpdateIndex ? updatedChecklist : checklist
+            );
+
+            console.log("UPDATING WITH:", updatedChecklists);
+
+            // Return the new state with the updated checklists array
+            return { ...state, checklists: updatedChecklists };
+
         case "SET_NO_CHECKLISTS_FOR_USER":
             return { ...state, noChecklists: action.payload };
         case "SET_IS_NEW":
