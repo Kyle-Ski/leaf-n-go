@@ -153,9 +153,12 @@ const appReducer = (state: AppState, action: Action): AppState => {
         case "ADD_CHECKLIST":
             // When a new checklist is added, initialize the weights
             if (action.payload.items) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const totalWeight = action.payload.items.reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
                 const currentWeight = action.payload.items
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((item: any) => item.completed)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
 
                 action.payload = {

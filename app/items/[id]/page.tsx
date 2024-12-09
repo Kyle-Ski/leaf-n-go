@@ -27,6 +27,7 @@ const ItemDetailsPage = () => {
         quantity: item?.quantity || 0,
         weight: item?.weight || 0,
         notes: item?.notes || "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         category_id: (item as any)?.category_id || null,
     });
 
