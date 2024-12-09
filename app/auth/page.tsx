@@ -130,6 +130,7 @@ export default function AuthPage() {
 
       if (Array.isArray(data) && data.length === 0) {
         dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: true });
+        dispatch({ type: "SET_TRIPS", payload: [] })
       } else {
         dispatch({ type: "SET_TRIPS", payload: data });
         dispatch({ type: "SET_NO_TRIPS_FOR_USER", payload: false });
