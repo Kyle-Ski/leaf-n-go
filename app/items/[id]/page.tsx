@@ -92,8 +92,8 @@ const ItemDetailsPage = () => {
 
             const updatedItem = await response.json();
             dispatch({
-                type: "SET_ITEMS",
-                payload: state.items.map((i) => (i.id === itemId ? updatedItem : i)),
+                type: "UPDATE_ITEM",
+                payload: updatedItem,
             }); // Update global state
             setIsEditing(false);
         } catch (err) {

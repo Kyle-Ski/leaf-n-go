@@ -153,26 +153,39 @@ const ChecklistsPage = () => {
                       <CardTitle>{list.title}</CardTitle>
                       <p className="text-sm text-gray-500">Category: {list.category}</p>
                     </CardHeader>
-                    <CardContent className="flex justify-between items-center mt-4">
+                    <CardContent className="flex flex-col space-y-4 mt-4">
+                      {/* Completion Section */}
                       <div>
                         <p className="text-gray-700">Completion</p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                           <div
                             className="bg-green-500 h-2 rounded-full"
                             style={{
-                              width: `${list.completion?.total
-                                ? (list.completion.completed / list.completion.total) * 100
-                                : 0
-                                }%`,
+                              width: `${(list.completion.completed / list.completion.total) * 100}%`,
                             }}
                           ></div>
                         </div>
                         <span className="text-xs text-gray-500 mt-2 block">
-                          {list.completion?.total
-                            ? `${list.completion.completed}/${list.completion.total} items added`
-                            : "No items"}
+                          {`${list.completion.completed}/${list.completion.total} items added`}
                         </span>
                       </div>
+
+                      {/* Weight Section */}
+                      <div>
+                        <p className="text-gray-700">Weight</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full"
+                            style={{
+                              width: `${(list.completion.currentWeight / list.completion.totalWeight) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          {`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`}
+                        </span>
+                      </div>
+
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
                           View Checklist
@@ -194,26 +207,39 @@ const ChecklistsPage = () => {
                     <CardTitle>{list.title}</CardTitle>
                     <p className="text-sm text-gray-500">Category: {list.category}</p>
                   </CardHeader>
-                  <CardContent className="flex justify-between items-center mt-4">
+                  <CardContent className="flex flex-col space-y-4 mt-4">
+                    {/* Completion Section */}
                     <div>
                       <p className="text-gray-700">Completion</p>
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                         <div
                           className="bg-green-500 h-2 rounded-full"
                           style={{
-                            width: `${list.completion?.total
-                              ? (list.completion.completed / list.completion.total) * 100
-                              : 0
-                              }%`,
+                            width: `${(list.completion.completed / list.completion.total) * 100}%`,
                           }}
                         ></div>
                       </div>
                       <span className="text-xs text-gray-500 mt-2 block">
-                        {list.completion?.total
-                          ? `${list.completion.completed}/${list.completion.total} items added`
-                          : "No items"}
+                        {`${list.completion.completed}/${list.completion.total} items added`}
                       </span>
                     </div>
+
+                    {/* Weight Section */}
+                    <div>
+                      <p className="text-gray-700">Weight</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{
+                            width: `${(list.completion.currentWeight / list.completion.totalWeight) * 100}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        {`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`}
+                      </span>
+                    </div>
+
                     <Link href={`/checklists/${list.id}`}>
                       <Button variant="outline" className="mt-2">
                         View Checklist
@@ -224,7 +250,6 @@ const ChecklistsPage = () => {
               ))
             ) : (
               <p className="text-gray-600 text-center">No checklists found. Try creating a new checklist!</p>
-
             )}
           </section>
         </>

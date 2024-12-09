@@ -82,6 +82,21 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
     const { completed, total } = calculateCompletion();
     const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
+    // **New Weight Calculation Function**
+    const calculateWeight = () => {
+        if (!checklist || !checklist.items.length) return { currentWeight: 0, totalWeight: 0 };
+
+        const totalWeight = checklist.items.reduce((sum, item) => sum + (item.items.weight || 0), 0);
+        const currentWeight = checklist.items
+            .filter((item) => item.completed)
+            .reduce((sum, item) => sum + (item.items.weight || 0), 0);
+        const weightPercentage = totalWeight > 0 ? (currentWeight / totalWeight) * 100 : 0;
+
+        return { currentWeight, totalWeight, weightPercentage };
+    };
+
+    const { currentWeight, totalWeight, weightPercentage } = calculateWeight();
+
     // Filter items for Add Item modal based on the search query
     const filteredItems = state.items.filter((item) => {
         const query = searchQuery.toLowerCase();
@@ -212,6 +227,7 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                 </Button>
             </div>
 
+            {/* **Existing Completion Progress Bar** */}
             <div className="mb-4">
                 <p className="text-gray-700">Completion</p>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -224,6 +240,23 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                     {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
                 </span>
             </div>
+
+            {/* **New Weight Progress Bar** */}
+            <div className="mb-4">
+                <p className="text-gray-700">Weight Progress</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${weightPercentage}%` }}
+                    ></div>
+                </div>
+                <span className="text-xs text-gray-500 mt-2 block">
+                    {totalWeight > 0
+                        ? `${currentWeight.toFixed(1)}/${totalWeight.toFixed(1)} lbs`
+                        : "No weight data available"}
+                </span>
+            </div>
+
             <div className="mb-6 space-y-4">
                 {/* Sort Dropdown */}
                 <div className="flex flex-col items-center space-y-2">
@@ -476,7 +509,7 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                 description="Are you sure you want to delete this checklist? This action cannot be undone."
             />
         </div>
-    );
+    )
 }
 
 export default ChecklistDetails;
