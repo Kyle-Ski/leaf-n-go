@@ -53,16 +53,24 @@ const ItemsPage = () => {
         }
     }, [dispatch, state.items, state.noItems, user?.id]);
 
-
     const items = state.items;
 
     // Filter items based on the search query (name and notes)
     const filteredItems = items
-        .filter((item) =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
+        .filter((item) => {
+            const query = searchQuery.toLowerCase();
+
+            const nameMatch = item.name.toLowerCase().includes(query);
+            const notesMatch = item.notes?.toLowerCase().includes(query) ?? false;
+            const categoryMatch = item.item_categories?.name?.toLowerCase().includes(query) ?? false;
+
+            return nameMatch || notesMatch || categoryMatch;
+        })
         .sort((a, b) => {
+            // Extract category names, defaulting to empty string if none
+            const aCategory = a.item_categories?.name?.toLowerCase() || "";
+            const bCategory = b.item_categories?.name?.toLowerCase() || "";
+
             switch (sortOption) {
                 case "name-asc":
                     return a.name.localeCompare(b.name);
@@ -76,12 +84,16 @@ const ItemsPage = () => {
                     return a.quantity - b.quantity;
                 case "quantity-desc":
                     return b.quantity - a.quantity;
+                case "category-asc":
+                    return aCategory.localeCompare(bCategory);
+                case "category-desc":
+                    return bCategory.localeCompare(aCategory);
                 default:
                     return 0;
             }
-        });
+        })
 
-    // If there are no items in state, show a message or loading spinner
+    // If there are no items in state, show a loading state
     if (!state.noItems && (!items || items.length === 0)) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
@@ -90,7 +102,6 @@ const ItemsPage = () => {
             </div>
         );
     }
-
 
     return (
         <>
@@ -104,7 +115,7 @@ const ItemsPage = () => {
                         Create New Item
                     </Button>
                 </div>
-            ) :
+            ) : (
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
                     <h1 className="text-2xl font-semibold">Your Items</h1>
                     <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center">
@@ -130,6 +141,8 @@ const ItemsPage = () => {
                                 <option value="weight-desc">Weight (High-Low)</option>
                                 <option value="quantity-asc">Quantity (Low-High)</option>
                                 <option value="quantity-desc">Quantity (High-Low)</option>
+                                <option value="category-asc">Category (A-Z)</option>
+                                <option value="category-desc">Category (Z-A)</option>
                             </select>
                         </div>
                     </div>
@@ -141,7 +154,7 @@ const ItemsPage = () => {
                         <Input
                             id="search-bar"
                             type="text"
-                            placeholder="Search by name, or notes.."
+                            placeholder="Search by name or notes..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full lg:w-auto lg:flex-grow p-2 border rounded-md"
@@ -157,6 +170,11 @@ const ItemsPage = () => {
                                 <Link href={`/items/${item.id}`} className="flex justify-between items-start md:items-center">
                                     <div className="flex flex-col space-y-1">
                                         <p className="font-semibold">{item.name}</p>
+                                        {item.item_categories?.name && (
+                                            <p className="text-xs text-gray-500 italic">
+                                                Category: {item.item_categories.name}
+                                            </p>
+                                        )}
                                         <p className="text-sm text-gray-500">Notes: {item.notes || "N/A"}</p>
                                     </div>
                                     <div className="flex flex-col text-right space-y-1">
@@ -168,14 +186,15 @@ const ItemsPage = () => {
                         ))}
                     </ul>
                 </div>
-            }            {/* Create New Item Modal */}
+            )}
+            {/* Create New Item Modal */}
             <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create New Item</DialogTitle>
                     </DialogHeader>
                     <NewItemModal
-                        userId={user?.id || ""} // User ID is no longer needed here
+                        userId={user?.id || ""}
                     />
                 </DialogContent>
             </Dialog>

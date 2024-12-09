@@ -42,7 +42,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     // Fetch the checklist items for the specific checklist
     const { data: checklistItems, error: itemsError } = await supabaseServer
       .from('checklist_items')
-      .select('*, items(*)')
+      // Include items along with their associated category name
+      .select('*, items(*, item_categories(name))')
       .eq('checklist_id', checklistId);
 
     if (itemsError) {

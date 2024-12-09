@@ -22,6 +22,14 @@ interface ChecklistDetailsProps {
     user: { id: string } | null;
     state: {
         items: (ItemDetails | Item)[];
+        // If you store categories in state, make sure this matches how you store them:
+        item_categories?: Array<{
+            id: string;
+            name: string;
+            description?: string;
+            user_id?: string;
+            created_at?: string;
+        }>;
     };
 }
 
@@ -74,10 +82,32 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
     const { completed, total } = calculateCompletion();
     const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
+    // **New Weight Calculation Function**
+    const calculateWeight = () => {
+        if (!checklist || !checklist.items.length) return { currentWeight: 0, totalWeight: 0 };
+
+        const totalWeight = checklist.items.reduce((sum, item) => sum + (item.items.weight || 0), 0);
+        const currentWeight = checklist.items
+            .filter((item) => item.completed)
+            .reduce((sum, item) => sum + (item.items.weight || 0), 0);
+        const weightPercentage = totalWeight > 0 ? (currentWeight / totalWeight) * 100 : 0;
+
+        return { currentWeight, totalWeight, weightPercentage };
+    };
+
+    const { currentWeight, totalWeight, weightPercentage } = calculateWeight();
+
     // Filter items for Add Item modal based on the search query
-    const filteredItems = state.items.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredItems = state.items.filter((item) => {
+        const query = searchQuery.toLowerCase();
+
+        const nameMatch = item.name.toLowerCase().includes(query);
+        const notesMatch = item.notes?.toLowerCase().includes(query) ?? false;
+        const categoryMatch = item.item_categories?.name?.toLowerCase().includes(query) ?? false;
+
+        return nameMatch || notesMatch || categoryMatch;
+    });
+
 
     useEffect(() => {
         if (!user || !id) return;
@@ -197,6 +227,7 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                 </Button>
             </div>
 
+            {/* **Existing Completion Progress Bar** */}
             <div className="mb-4">
                 <p className="text-gray-700">Completion</p>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -209,6 +240,23 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                     {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
                 </span>
             </div>
+
+            {/* **New Weight Progress Bar** */}
+            <div className="mb-4">
+                <p className="text-gray-700">Weight Progress</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${weightPercentage}%` }}
+                    ></div>
+                </div>
+                <span className="text-xs text-gray-500 mt-2 block">
+                    {totalWeight > 0
+                        ? `${currentWeight.toFixed(1)}/${totalWeight.toFixed(1)} lbs`
+                        : "No weight data available"}
+                </span>
+            </div>
+
             <div className="mb-6 space-y-4">
                 {/* Sort Dropdown */}
                 <div className="flex flex-col items-center space-y-2">
@@ -228,7 +276,10 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                         <option value="alphabetical-desc">Alphabetical (Z-A)</option>
                         <option value="completed-first">Completed First</option>
                         <option value="not-completed-first">Not Completed First</option>
+                        <option value="category-asc">Category (A-Z)</option>
+                        <option value="category-desc">Category (Z-A)</option>
                     </select>
+
                 </div>
 
                 {/* Search Bar */}
@@ -253,10 +304,18 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
 
             <ul className="space-y-4">
                 {checklist?.items
-                    .filter((item) =>
-                        item.items.name.toLowerCase().includes(checklistSearchQuery.toLowerCase())
+                    .filter((item) => {
+                        const nameMatch = item.items.name.toLowerCase().includes(checklistSearchQuery);
+                        const notesMatch = item.items.notes?.toLowerCase().includes(checklistSearchQuery) ?? false;
+                        const categoryMatch = item.items.item_categories?.name?.toLowerCase().includes(checklistSearchQuery) ?? false;
+                        return nameMatch || notesMatch || categoryMatch;
+                    }
                     )
                     .sort((a, b) => {
+                        // Extract category names
+                        const aCategory = a.items.item_categories?.name?.toLowerCase() || "";
+                        const bCategory = b.items.item_categories?.name?.toLowerCase() || "";
+
                         if (sortOption === "alphabetical-asc") {
                             return a.items.name.localeCompare(b.items.name);
                         } else if (sortOption === "alphabetical-desc") {
@@ -265,6 +324,10 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                             return Number(b.completed) - Number(a.completed);
                         } else if (sortOption === "not-completed-first") {
                             return Number(a.completed) - Number(b.completed);
+                        } else if (sortOption === "category-asc") {
+                            return aCategory.localeCompare(bCategory);
+                        } else if (sortOption === "category-desc") {
+                            return bCategory.localeCompare(aCategory);
                         }
                         return 0;
                     })
@@ -318,11 +381,26 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                                     }}
                                 />
                                 <span
-                                    className={`ml-2 ${item.completed ? "line-through text-gray-500" : ""
-                                        }`}
+                                    className={`ml-2 ${item.completed ? "line-through text-gray-500" : ""}`}
                                 >
                                     {item.items.name}
                                 </span>
+                                {/* Display category if available */}
+                                {item.items.item_categories?.name && (
+                                    <div className="ml-2 text-sm text-gray-500 italic">
+                                        Category: {item.items.item_categories.name}
+                                    </div>
+                                )}
+                                {/* Display weight if available */}
+                                {item.items.weight !== undefined && item.items.weight > 0 && (
+                                    <div className="ml-2 text-sm text-gray-500">Weight: {item.items.weight} lbs</div>
+                                )}
+                                {/* Display notes if not null or empty */}
+                                {item.items.notes && item.items.notes.trim().length > 0 && (
+                                    <div className="ml-2 mt-1 text-sm text-gray-500 italic">
+                                        {item.items.notes}
+                                    </div>
+                                )}
                             </div>
                             <Button
                                 variant="outline"
@@ -382,12 +460,17 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                                     <div
                                         key={item.id}
                                         className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
-                                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                                : "bg-gray-100 hover:bg-gray-200"
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-gray-100 hover:bg-gray-200"
                                             }`}
                                         onClick={() => remainingQuantity > 0 && handleAddItem(item)}
                                     >
                                         {item.name} (Remaining: {remainingQuantity})
+                                        {item.item_categories?.name && (
+                                            <span className="block text-xs text-gray-500 italic">
+                                                Category: {item.item_categories.name}
+                                            </span>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -426,7 +509,7 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                 description="Are you sure you want to delete this checklist? This action cannot be undone."
             />
         </div>
-    );
+    )
 }
 
 export default ChecklistDetails;

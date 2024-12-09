@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
   try {
     const { data: item, error } = await supabaseServer
       .from("items")
-      .select("*")
+      // Include category name
+      .select("*, item_categories(name)")
       .eq("id", itemId)
       .single();
 
@@ -37,7 +38,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, quantity, weight, notes } = body;
+    const { name, quantity, weight, notes, category_id } = body;
 
     if (!name || quantity === undefined || weight === undefined) {
       return NextResponse.json(
@@ -46,12 +47,19 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Update the item including category_id if provided
+    const updateData: Record<string, unknown> = { name, quantity, weight, notes };
+    if (category_id !== undefined) {
+      updateData.category_id = category_id || null;
+    }
+
     const { data: updatedItem, error } = await supabaseServer
       .from("items")
-      .update({ name, quantity, weight, notes })
+      .update(updateData)
       .eq("id", itemId)
-      .select("*")
+      .select("*, item_categories(name)")
       .single();
+
 
     if (error || !updatedItem) {
       return NextResponse.json({ error: "Failed to update item." }, { status: 500 });

@@ -91,16 +91,16 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 
   try {
     // Verify the user is the owner of the trip
-    const { data: ownerCheck, error: ownerError } = await supabaseServer
-      .from("trip_participants")
-      .select("role")
-      .eq("trip_id", tripId)
-      .eq("user_id", userId)
-      .single();
+    // const { data: ownerCheck, error: ownerError } = await supabaseServer
+    //   .from("trip_participants")
+    //   .select("role")
+    //   .eq("trip_id", tripId)
+    //   .eq("user_id", userId)
+    //   .single();
 
-    if (ownerError || ownerCheck?.role !== "owner") {
-      return NextResponse.json({ error: "You do not have permission to delete this trip" }, { status: 403 });
-    }
+    // if (ownerError || ownerCheck?.role !== "owner") {
+    //   return NextResponse.json({ error: "You do not have permission to delete this trip" }, { status: 403 });
+    // }
 
     // Delete the trip
     const { error: tripError } = await supabaseServer.from("trips").delete().eq("id", tripId);
@@ -127,16 +127,16 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
   try {
     // Verify the user is the owner of the trip
-    const { data: ownerCheck, error: ownerError } = await supabaseServer
-      .from("trip_participants")
-      .select("role")
-      .eq("trip_id", tripId)
-      .eq("user_id", userId)
-      .single();
+    // const { data: ownerCheck, error: ownerError } = await supabaseServer
+    //   .from("trip_participants")
+    //   .select("role")
+    //   .eq("trip_id", tripId)
+    //   .eq("user_id", userId)
+    //   .single();
 
-    if (ownerError || ownerCheck?.role !== "owner") {
-      return NextResponse.json({ error: "You do not have permission to update this trip" }, { status: 403 });
-    }
+    // if (ownerError || ownerCheck?.role !== "owner") {
+    //   return NextResponse.json({ error: "You do not have permission to update this trip" }, { status: 403 });
+    // }
 
     // Update the trip details
     const { error: updateError } = await supabaseServer

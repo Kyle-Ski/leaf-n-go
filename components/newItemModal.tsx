@@ -16,6 +16,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
   const [name, setName] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [weight, setWeight] = useState<number>(0);
+  const [category, setCategory] = useState<string>("")
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
           quantity,
           weight,
           notes,
+          category_id: category
         }),
       });
 
@@ -52,7 +54,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
       if (state.noItems) {
         dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
       }
-      
+
 
       // Reset form fields
       setName("");
@@ -122,6 +124,27 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
               step={0.1}
               className="w-full"
             />
+          </div>
+          <div>
+            <label htmlFor="category" className="block text-gray-700">
+              Category
+            </label>
+            <select
+              id="category"
+              value={category || ""}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+              required
+            >
+              <option value="" disabled>
+                Select a category
+              </option>
+              {state.item_categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">

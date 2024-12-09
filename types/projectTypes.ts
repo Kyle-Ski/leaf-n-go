@@ -1,54 +1,66 @@
 import { CheckedState } from "@radix-ui/react-checkbox";
 
+export interface ItemCategory {
+  id: string;
+  name: string;
+  description?: string;
+  user_id?: string;
+  created_at?: string;
+}
+
+export interface ItemDetails {
+  id: string;
+  name: string;
+  notes?: string;
+  weight: number;
+  user_id: string;
+  quantity: number;
+  item_categories?: ItemCategory;
+}
+
 export interface Item {
-    id: string;
-    checklist_id: string;
-    item_id: string;
-    completed: boolean;
-    quantity: number;
-    name: string;
-    weight: number;
-    notes?: string;
+  id: string;
+  checklist_id: string;
+  item_id: string;
+  completed: boolean;
+  quantity: number;
+  name: string;
+  weight: number;
+  notes?: string;
+  item_categories?: ItemCategory;
 }
 
-export interface AppState {
-  trips: FrontendTrip[];
-  checklists: ChecklistWithItems[];
-  items: (Item | ItemDetails)[]; // Allow both Item and ItemDetails
-  userSettings: UserSettings | null;
-  isNew: boolean;
-  noTrips: boolean;
-  noChecklists: boolean;
-  noItems: boolean;
-}
-
-export type Action =
-| { type: 'SET_TRIPS'; payload: FrontendTrip[] }
-| { type: 'ADD_TRIP'; payload: FrontendTrip }
-| { type: 'UPDATE_TRIP'; payload: FrontendTrip }
-| { type: 'REMOVE_TRIP'; payload: (string | string[]) }
-| { type: 'SET_NO_TRIPS_FOR_USER'; payload: boolean }
-| { type: 'SET_CHECKLISTS'; payload: ChecklistWithItems[] }
-| { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
-| { type: 'ADD_CHECKLIST'; payload: ChecklistWithItems }
-| { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
-| { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
-| { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem }
-| { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
-| { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
-| { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
-| { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
-| { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
-| { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
-| { type: 'SET_USER_SETTINGS'; payload: UserSettings }
-| { type: 'SET_IS_NEW'; payload: boolean };
-
-export interface CreateTripPayload {
+export interface Checklist {
+  id: string;
+  created_at: string;
   title: string;
-  start_date: string | null;
-  end_date: string | null;
-  location: string | null;
-  notes: string | null;
+  category: string;
+  favorite?: boolean;
+  completion?: {
+    completed: number;
+    total: number;
+    currentWeight: number;
+    totalWeight: number;
+  };
+}
+
+export interface ChecklistItem {
+  id: string;
+  checklist_id: string;
+  item_id: string;
+  completed: boolean;
+  quantity: number;
+  items: ItemDetails;
+}
+
+export interface ChecklistWithItems extends Omit<Checklist, 'completion'> {
+  items: ChecklistItem[];
+  completion: {
+    completed: number;
+    total: number;
+    currentWeight: number;
+    totalWeight: number;
+  };
 }
 
 export interface FrontendTrip {
@@ -67,16 +79,20 @@ export interface FrontendTrip {
       checklist_items: {
         id: string;
         completed: boolean;
+        item_id: string;
       }[];
     }[];
     totalItems: number;
     completedItems: number;
+    totalWeight: number;
+    currentWeight: number;
   }[];
   trip_participants: {
     user_id: string;
     role: string;
   }[];
 }
+
 export interface Trip {
   id: string;
   title: string;
@@ -89,6 +105,7 @@ export interface Trip {
   trip_checklists: Array<{
     checklist_id: string;
     title: string;
+    // Optionally add currentWeight and totalWeight here if needed
   }>;
   trip_participants: Array<{
     user_id: string;
@@ -96,82 +113,48 @@ export interface Trip {
   }>;
 }
 
-export interface ChecklistWithItems extends Checklist {
-  items: ChecklistItem[]; // Use a new type for items with the nested structure
-}
-
-export interface Checklist {
-  id: string;
-  created_at: string;
-  title: string;
-  category: string;
-  favorite?: boolean;
-  completion?: {
-    completed: number,
-    total: number
-  }
-}
-
-export interface ChecklistItem {
-  id: string;
-  checklist_id: string;
-  item_id: string;
-  completed: boolean;
-  quantity: number;
-  items: ItemDetails; // Refer to the nested "items" object in the response
-}
-
-export interface ItemDetails {
-  id: string;
-  name: string;
-  notes: string;
-  weight: number;
-  user_id: string;
-  quantity: number;
-}
-
 export interface UserSettings {
-    user_id: string;
-    dark_mode: boolean;
-    email_notifications: boolean;
-    push_notifications: boolean;
+  user_id: string;
+  dark_mode: boolean;
+  email_notifications: boolean;
+  push_notifications: boolean;
 }
 
 export interface ApiResponse<T> {
-    data?: T;
-    error?: string;
+  data?: T;
+  error?: string;
 }
 
 export interface Notification {
-    id: string;
-    user_id: string;
-    message: string;
-    read: boolean;
-    created_at: string;
+  id: string;
+  user_id: string;
+  message: string;
+  read: boolean;
+  created_at: string;
 }
 
 export interface ErrorResponse {
-    error: string;
-    details?: string;
-    code?: string;
+  error: string;
+  details?: string;
+  code?: string;
 }
 
 export interface AuthResponse {
-    message?: string;
-    error?: string;
+  message?: string;
+  error?: string;
 }
 
 export interface ChecklistTemplate {
-    id: string;
-    title: string;
-    description: string;
-    items: Item[];
+  id: string;
+  title: string;
+  description: string;
+  items: Item[];
 }
 
 export interface GeneralApiError {
-    message: string;
-    code: number;
-    details?: string;
+  message: string;
+  code: number;
+  details?: string;
 }
 
 export type Json =
@@ -293,3 +276,44 @@ export interface Database {
     CompositeTypes: {};
   };
 }
+
+export interface CreateTripPayload {
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+}
+export interface AppState {
+  trips: FrontendTrip[];
+  checklists: ChecklistWithItems[];
+  items: (Item | ItemDetails)[];
+  userSettings: UserSettings | null;
+  isNew: boolean;
+  noTrips: boolean;
+  noChecklists: boolean;
+  noItems: boolean;
+  item_categories: ItemCategory[];
+}
+
+export type Action =
+  | { type: 'SET_TRIPS'; payload: FrontendTrip[] }
+  | { type: 'ADD_TRIP'; payload: FrontendTrip }
+  | { type: 'UPDATE_TRIP'; payload: FrontendTrip }
+  | { type: 'REMOVE_TRIP'; payload: (string | string[]) }
+  | { type: 'SET_NO_TRIPS_FOR_USER'; payload: boolean }
+  | { type: 'SET_CHECKLISTS'; payload: ChecklistWithItems[] }
+  | { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
+  | { type: 'ADD_CHECKLIST'; payload: ChecklistWithItems }
+  | { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
+  | { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
+  | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem }
+  | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
+  | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
+  | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+  | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
+  | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
+  | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
+  | { type: 'SET_USER_SETTINGS'; payload: UserSettings }
+  | { type: 'SET_IS_NEW'; payload: boolean }
+  | { type: 'SET_CATEGORIES'; payload: ItemCategory[] };
