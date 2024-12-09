@@ -9,7 +9,7 @@ import ChecklistDetails from "@/components/checklistDetails";
 function ChecklistDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
-  const { state, dispatch } = useAppContext();
+  const { state } = useAppContext();
 
   // Pass all required props down to the reusable component
   return (
