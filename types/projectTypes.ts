@@ -277,6 +277,13 @@ export interface Database {
   };
 }
 
+export interface CreateTripPayload {
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  location: string | null;
+  notes: string | null;
+}
 export interface AppState {
   trips: FrontendTrip[];
   checklists: ChecklistWithItems[];
