@@ -10,6 +10,7 @@ const initialState: AppState = {
     noTrips: false,
     noChecklists: false,
     noItems: false,
+    item_categories: []
 };
 
 const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
@@ -228,6 +229,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, noChecklists: action.payload };
         case "SET_IS_NEW":
             return { ...state, isNew: action.payload };
+        case "SET_CATEGORIES":
+            return { ...state, item_categories: action.payload };
         default:
             // Add other cases..
             return state;
@@ -246,6 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 dispatch({ type: "SET_ITEMS", payload: parsedState.items });
                 dispatch({ type: "SET_TRIPS", payload: parsedState.trips });
                 dispatch({ type: "SET_CHECKLISTS", payload: parsedState.checklists });
+                dispatch({ type: "SET_CATEGORIES", payload: parsedState.item_categories })
                 // Add other state restoration as needed
             } catch (error) {
                 console.error("Failed to parse stored app state:", error);

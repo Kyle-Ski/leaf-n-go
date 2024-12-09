@@ -27,6 +27,7 @@ const ItemDetailsPage = () => {
         quantity: item?.quantity || 0,
         weight: item?.weight || 0,
         notes: item?.notes || "",
+        category_id: (item as any)?.category_id || null,
     });
 
     const [isEditing, setIsEditing] = useState(false);
@@ -46,7 +47,13 @@ const ItemDetailsPage = () => {
                 }
                 const fetchedItem = await response.json();
                 dispatch({ type: "SET_ITEMS", payload: [...state.items, fetchedItem] }); // Update global state
-                setEditItem(fetchedItem); // Set local state for editing
+                setEditItem({
+                    name: fetchedItem.name || "",
+                    quantity: fetchedItem.quantity || 0,
+                    weight: fetchedItem.weight || 0,
+                    notes: fetchedItem.notes || "",
+                    category_id: fetchedItem.category_id || null,
+                });
             } catch (err) {
                 console.error(err);
                 setError("Unable to load item. Please try again later.");
@@ -58,7 +65,9 @@ const ItemDetailsPage = () => {
         fetchItem();
     }, [item, itemId, isDeleted, dispatch, state.items]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    ) => {
         const { name, value } = e.target;
         setEditItem((prev) => ({
             ...prev,
@@ -134,6 +143,11 @@ const ItemDetailsPage = () => {
             {item ? (
                 <>
                     <h1 className="text-2xl font-semibold mb-4">{item.name}</h1>
+                    {item.item_categories?.name && (
+                        <p className="text-sm text-gray-500 italic mb-4">
+                            Category: {item.item_categories.name}
+                        </p>
+                    )}
                     <p className="text-gray-600 mb-4">Notes: {item.notes || "N/A"}</p>
                     <p className="text-gray-600 mb-4">Quantity: {item.quantity}</p>
                     <p className="text-gray-600 mb-4">Weight: {item.weight}kg</p>
@@ -174,7 +188,7 @@ const ItemDetailsPage = () => {
                                 Update the details for this item. Make sure all fields are correct before saving.
                             </DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleSave} className="space-y-4">
+                        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
                             <div>
                                 <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">
                                     Name
@@ -230,6 +244,27 @@ const ItemDetailsPage = () => {
                                     placeholder="Notes"
                                 />
                             </div>
+                            {/* Display and optionally edit category_id if you have a list of categories */}
+                            <div>
+                                <label htmlFor="edit-category_id" className="block text-sm font-medium text-gray-700">
+                                    Item Category
+                                </label>
+                                <select
+                                    id="edit-category_id"
+                                    name="category_id"
+                                    value={editItem.category_id || ""}
+                                    onChange={handleInputChange}
+                                    className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                                >
+                                    <option value="">No Category</option>
+                                    {state.item_categories?.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="flex justify-end space-x-4 mt-4">
                                 <Button type="submit" className="bg-blue-500 text-white">
                                     Save Changes

@@ -43,12 +43,33 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, quantity, weight, notes } = await req.json();
+    const { name, quantity, weight, notes, category_id } = await req.json();
 
     // Validate required fields
     if (!name || quantity === undefined || weight === undefined) {
       return NextResponse.json(
         { error: 'Name, quantity, and weight are required fields.' },
+        { status: 400 }
+      );
+    }
+
+    // If category_id is provided, optionally validate it exists
+    let validCategory = true;
+    if (category_id) {
+      const { data: categoryData, error: categoryError } = await supabaseServer
+        .from('item_categories')
+        .select('id')
+        .eq('id', category_id)
+        .single();
+
+      if (categoryError || !categoryData) {
+        validCategory = false;
+      }
+    }
+
+    if (!validCategory) {
+      return NextResponse.json(
+        { error: 'Invalid category_id provided.' },
         { status: 400 }
       );
     }
@@ -61,8 +82,9 @@ export async function POST(req: NextRequest) {
         quantity,
         weight,
         notes: notes || null,
+        category_id: category_id || null
       })
-      .select('*')
+      .select('*, item_categories(name)')
       .single();
 
     if (error) {

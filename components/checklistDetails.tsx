@@ -22,6 +22,14 @@ interface ChecklistDetailsProps {
     user: { id: string } | null;
     state: {
         items: (ItemDetails | Item)[];
+        // If you store categories in state, make sure this matches how you store them:
+        item_categories?: Array<{
+            id: string;
+            name: string;
+            description?: string;
+            user_id?: string;
+            created_at?: string;
+        }>;
     };
 }
 
@@ -75,9 +83,16 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
     const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
     // Filter items for Add Item modal based on the search query
-    const filteredItems = state.items.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredItems = state.items.filter((item) => {
+        const query = searchQuery.toLowerCase();
+
+        const nameMatch = item.name.toLowerCase().includes(query);
+        const notesMatch = item.notes?.toLowerCase().includes(query) ?? false;
+        const categoryMatch = item.item_categories?.name?.toLowerCase().includes(query) ?? false;
+
+        return nameMatch || notesMatch || categoryMatch;
+    });
+
 
     useEffect(() => {
         if (!user || !id) return;
@@ -228,7 +243,10 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                         <option value="alphabetical-desc">Alphabetical (Z-A)</option>
                         <option value="completed-first">Completed First</option>
                         <option value="not-completed-first">Not Completed First</option>
+                        <option value="category-asc">Category (A-Z)</option>
+                        <option value="category-desc">Category (Z-A)</option>
                     </select>
+
                 </div>
 
                 {/* Search Bar */}
@@ -253,10 +271,18 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
 
             <ul className="space-y-4">
                 {checklist?.items
-                    .filter((item) =>
-                        item.items.name.toLowerCase().includes(checklistSearchQuery.toLowerCase())
+                    .filter((item) => {
+                        const nameMatch = item.items.name.toLowerCase().includes(checklistSearchQuery);
+                        const notesMatch = item.items.notes?.toLowerCase().includes(checklistSearchQuery) ?? false;
+                        const categoryMatch = item.items.item_categories?.name?.toLowerCase().includes(checklistSearchQuery) ?? false;
+                        return nameMatch || notesMatch || categoryMatch;
+                    }
                     )
                     .sort((a, b) => {
+                        // Extract category names
+                        const aCategory = a.items.item_categories?.name?.toLowerCase() || "";
+                        const bCategory = b.items.item_categories?.name?.toLowerCase() || "";
+
                         if (sortOption === "alphabetical-asc") {
                             return a.items.name.localeCompare(b.items.name);
                         } else if (sortOption === "alphabetical-desc") {
@@ -265,6 +291,10 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                             return Number(b.completed) - Number(a.completed);
                         } else if (sortOption === "not-completed-first") {
                             return Number(a.completed) - Number(b.completed);
+                        } else if (sortOption === "category-asc") {
+                            return aCategory.localeCompare(bCategory);
+                        } else if (sortOption === "category-desc") {
+                            return bCategory.localeCompare(aCategory);
                         }
                         return 0;
                     })
@@ -318,11 +348,26 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                                     }}
                                 />
                                 <span
-                                    className={`ml-2 ${item.completed ? "line-through text-gray-500" : ""
-                                        }`}
+                                    className={`ml-2 ${item.completed ? "line-through text-gray-500" : ""}`}
                                 >
                                     {item.items.name}
                                 </span>
+                                {/* Display category if available */}
+                                {item.items.item_categories?.name && (
+                                    <div className="ml-2 text-sm text-gray-500 italic">
+                                        Category: {item.items.item_categories.name}
+                                    </div>
+                                )}
+                                {/* Display weight if available */}
+                                {item.items.weight !== undefined && item.items.weight > 0 && (
+                                    <div className="ml-2 text-sm text-gray-500">Weight: {item.items.weight} lbs</div>
+                                )}
+                                {/* Display notes if not null or empty */}
+                                {item.items.notes && item.items.notes.trim().length > 0 && (
+                                    <div className="ml-2 mt-1 text-sm text-gray-500 italic">
+                                        {item.items.notes}
+                                    </div>
+                                )}
                             </div>
                             <Button
                                 variant="outline"
@@ -382,12 +427,17 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                                     <div
                                         key={item.id}
                                         className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
-                                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                                : "bg-gray-100 hover:bg-gray-200"
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-gray-100 hover:bg-gray-200"
                                             }`}
                                         onClick={() => remainingQuantity > 0 && handleAddItem(item)}
                                     >
                                         {item.name} (Remaining: {remainingQuantity})
+                                        {item.item_categories?.name && (
+                                            <span className="block text-xs text-gray-500 italic">
+                                                Category: {item.item_categories.name}
+                                            </span>
+                                        )}
                                     </div>
                                 );
                             })}

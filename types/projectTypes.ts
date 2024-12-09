@@ -9,6 +9,7 @@ export interface Item {
     name: string;
     weight: number;
     notes?: string;
+    item_categories?: ItemCategory
 }
 
 export interface AppState {
@@ -20,6 +21,7 @@ export interface AppState {
   noTrips: boolean;
   noChecklists: boolean;
   noItems: boolean;
+  item_categories: ItemCategory[]
 }
 
 export type Action =
@@ -41,7 +43,8 @@ export type Action =
 | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
 | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
 | { type: 'SET_USER_SETTINGS'; payload: UserSettings }
-| { type: 'SET_IS_NEW'; payload: boolean };
+| { type: 'SET_IS_NEW'; payload: boolean }
+| { type: 'SET_CATEGORIES'; payload: ItemCategory[] };
 
 export interface CreateTripPayload {
   title: string;
@@ -128,6 +131,15 @@ export interface ItemDetails {
   weight: number;
   user_id: string;
   quantity: number;
+  item_categories?: ItemCategory;
+}
+
+export interface ItemCategory {
+  id: string;
+  name: string;
+  description?: string;
+  user_id?: string;
+  created_at?: string;
 }
 
 export interface UserSettings {

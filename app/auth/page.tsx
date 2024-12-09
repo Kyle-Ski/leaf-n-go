@@ -97,6 +97,25 @@ export default function AuthPage() {
     }
   };
 
+  const fetchCategories = async (userId: string) => {
+    try {
+      const response = await fetch("/api/item-categories", {
+        headers: { "x-user-id": userId },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch Item Categories")
+      }
+
+      const data = await response.json()
+
+      dispatch({ type: "SET_CATEGORIES", payload: data })
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load item categories. Please try again later.");
+    }
+  }
+
   const fetchTrips = async (userId: string) => {
     try {
       const response = await fetch("/api/trips", {
@@ -160,6 +179,7 @@ export default function AuthPage() {
         await fetchTrips(user.id)
         await fetchItems(user.id);
         await fetchChecklists(user.id)
+        await fetchCategories(user.id)
         router.push("/"); // Redirect to homepage
       }
     } catch (err) {
