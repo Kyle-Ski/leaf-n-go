@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
   );
   const [modalError, setModalError] = useState<string | null>(null);
 
-  const resetForm = () => {
+  // Wrap resetForm in useCallback
+  const resetForm = useCallback(() => {
     setTitle(trip.title || "");
     setStartDate(trip.start_date ? new Date(trip.start_date) : null);
     setEndDate(trip.end_date ? new Date(trip.end_date) : null);
@@ -44,14 +45,14 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
     setNotes(trip.notes || "");
     setSelectedChecklists(trip.trip_checklists?.map((c) => c.checklist_id) || []);
     setModalError(null);
-  };
+  }, [trip]);
 
   useEffect(() => {
     if (isOpen && trip) {
       resetForm();
     }
   }, [isOpen, trip, resetForm]);
-
+  
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
       prev.includes(checklistId) ? prev.filter((id) => id !== checklistId) : [...prev, checklistId]

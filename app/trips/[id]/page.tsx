@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
 import { ChecklistWithItems } from "@/types/projectTypes";
-import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
+import ChecklistDetails from "@/components/checklistDetails";
 
 const TripPage = () => {
     const router = useRouter();
@@ -20,6 +20,10 @@ const TripPage = () => {
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // New states for showing checklist details in a dialog
+    const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
+    const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
 
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
@@ -158,47 +162,54 @@ const TripPage = () => {
                         <p className="text-gray-600 mb-4">
                             You don&apos;t have any checklists created yet. You can make one by going here:
                         </p>
-                        <Link
+                        <a
                             href="/checklists/new"
                             className="text-blue-500 underline hover:text-blue-700"
                         >
                             Create a New Checklist
-                        </Link>
+                        </a>
                     </div>
                 ) : trip.trip_checklists.length === 0 ? (
                     <p className="text-gray-600">No checklists linked to this trip.</p>
                 ) : (
                     <ul className="space-y-4">
-                        {trip.trip_checklists.map((checklist) => (
-                            <li
-                                key={checklist.checklist_id}
-                                className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
-                            >
-                                <div>
-                                    <h3 className="font-semibold">
-                                        {checklist.checklists[0]?.title || "Untitled Checklist"}
-                                    </h3>
-                                    <p className="text-sm text-gray-500">
-                                        {checklist.completedItems} of {checklist.totalItems} items completed
-                                    </p>
-                                    <div className="relative h-2 bg-gray-200 rounded-full mt-2">
-                                        <div
-                                            className="absolute top-0 left-0 h-2 bg-green-500 rounded-full"
-                                            style={{
-                                                width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0
-                                                    }%`,
-                                            }}
-                                        ></div>
-                                    </div>
-                                </div>
-                                <Link
-                                    href={`/checklists/${checklist.checklist_id}`}
-                                    className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
+                        {trip.trip_checklists.map((checklist) => {
+                            return (
+                                <li
+                                    key={checklist.checklist_id}
+                                    className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
                                 >
-                                    View
-                                </Link>
-                            </li>
-                        ))}
+                                    <div>
+                                        <h3 className="font-semibold">
+                                            {checklist.checklists[0]?.title || "Untitled Checklist"}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">
+                                            {checklist.completedItems} of {checklist.totalItems} items completed
+                                        </p>
+                                        <div className="relative h-2 bg-gray-200 rounded-full mt-2">
+                                            <div
+                                                className="absolute top-0 left-0 h-2 bg-green-500 rounded-full"
+                                                style={{
+                                                    width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0
+                                                        }%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    {/* Replace Link with a button that opens the dialog */}
+                                    <Button
+                                        className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setSelectedChecklistId(checklist.checklist_id);
+                                            setIsChecklistDialogOpen(true);
+                                        }}
+                                    >
+                                        View
+                                    </Button>
+                                </li>
+                            )
+                        })}
                     </ul>
                 )}
 
@@ -227,6 +238,25 @@ const TripPage = () => {
                 title="Confirm Delete Trip"
                 description="Are you sure you want to delete this trip? This action cannot be undone."
             />
+
+            {/* Checklist Details Dialog */}
+            <Dialog open={isChecklistDialogOpen} onOpenChange={setIsChecklistDialogOpen}>
+                <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
+                    <DialogHeader>
+                        <DialogTitle>Checklist</DialogTitle>
+                        <DialogDescription>Viewing Checklist Details.</DialogDescription>
+                    </DialogHeader>
+                    {isChecklistDialogOpen && selectedChecklistId && user && (
+                        <ChecklistDetails
+                            id={selectedChecklistId}
+                            user={user}
+                            state={state}
+                            dispatch={dispatch}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 };

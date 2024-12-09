@@ -203,10 +203,9 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     if (fullTrip.trip_checklists) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fullTrip.trip_checklists = fullTrip.trip_checklists.map((tripChecklist: any) => {
-        const checklist = tripChecklist.checklists?.[0];
+        const checklist = tripChecklist.checklists;
         const totalItems = checklist?.checklist_items?.length || 0;
-        const completedItems =
-          checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
+        const completedItems = checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
 
         return {
           ...tripChecklist,

@@ -36,12 +36,26 @@ const appReducer = (state: AppState, action: Action): AppState => {
         case "ADD_TRIP":
             return { ...state, trips: [...state.trips, action.payload] };
         case "UPDATE_TRIP":
+            const updatedTrip = { ...action.payload };
+
+            // Ensure trip_checklists always have checklists as an array
+            updatedTrip.trip_checklists = updatedTrip.trip_checklists.map(tc => {
+                let checklistsAsArray = tc.checklists;
+                if (checklistsAsArray && !Array.isArray(checklistsAsArray)) {
+                    // If it's a single object, wrap it in an array
+                    checklistsAsArray = [checklistsAsArray];
+                }
+
+                return {
+                    ...tc,
+                    checklists: checklistsAsArray
+                };
+            });
+
             return {
                 ...state,
                 trips: state.trips.map((trip) =>
-                    trip.id === action.payload.id
-                        ? action.payload
-                        : trip
+                    trip.id === updatedTrip.id ? updatedTrip : trip
                 ),
             };
         case "REMOVE_TRIP":
