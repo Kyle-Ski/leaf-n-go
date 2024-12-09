@@ -8,6 +8,7 @@ import { Loader } from "@/components/ui/loader";
 import { useAppContext } from "@/lib/appContext"; // Access shared state
 import { withAuth } from "@/lib/withAuth";
 import { Input } from "@/components/ui/input";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const ItemDetailsPage = () => {
     const router = useRouter();
@@ -246,26 +247,14 @@ const ItemDetailsPage = () => {
                 </Dialog>
             )}
 
-
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Delete</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete this item? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex space-x-4">
-                        <Button onClick={handleDelete} className="bg-red-500 text-white">
-                            Delete
-                        </Button>
-                        <Button onClick={() => setIsDeleteModalOpen(false)} className="bg-gray-300 text-black">
-                            Cancel
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+                title="Confirm Delete Item"
+                description="Are you sure you want to delete this item? This action cannot be undone."
+            />
         </div>
     );
 };

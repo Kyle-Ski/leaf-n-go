@@ -429,25 +429,6 @@ function ChecklistDetailsPage() {
         title="Confirm Deletion of Checklist"
         description="Are you sure you want to delete this checklist? This action cannot be undone."
       />
-      {/* <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this checklist? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end space-x-4">
-            <Button
-              onClick={deleteChecklist}
-              className="bg-red-500 text-white"
-            >
-              Delete
-            </Button>
-            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-          </div>
-        </DialogContent>
-      </Dialog> */}
     </div>
   );
 }

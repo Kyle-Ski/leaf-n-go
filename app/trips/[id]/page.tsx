@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const TripPage = () => {
     const router = useRouter();
@@ -92,7 +93,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "DELETE",
-                headers: { "x-user-id": user?.id || ""}
+                headers: { "x-user-id": user?.id || "" }
             });
 
             if (!response.ok) {
@@ -219,24 +220,13 @@ const TripPage = () => {
             />
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Delete</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete this trip? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex space-x-4 mt-4">
-                        <Button onClick={handleDelete} className="bg-red-500 text-white">
-                            Delete
-                        </Button>
-                        <Button onClick={() => setIsDeleteModalOpen(false)} className="bg-gray-300 text-black">
-                            Cancel
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+                title="Confirm Delete Trip"
+                description="Are you sure you want to delete this trip? This action cannot be undone."
+            />
         </div>
     );
 };
