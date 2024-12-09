@@ -358,9 +358,6 @@ function ChecklistDetailsPage() {
           </DialogHeader>
           <NewItemModal
             userId={user?.id || ""}
-            onItemAdded={(newItem) => {
-              dispatch({ type: "ADD_ITEM", payload: newItem });
-            }}
           />
 
         </DialogContent>

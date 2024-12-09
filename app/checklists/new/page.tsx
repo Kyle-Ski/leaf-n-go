@@ -235,9 +235,6 @@ const NewChecklistPage = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Add a New Item</h2>
                 <NewItemModal
                     userId={user?.id || ""}
-                    onItemAdded={(newItem) => {
-                        dispatch({ type: "ADD_ITEM", payload: newItem });
-                    }}
                 />
             </div>
         </div>

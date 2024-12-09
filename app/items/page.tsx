@@ -176,12 +176,6 @@ const ItemsPage = () => {
                     </DialogHeader>
                     <NewItemModal
                         userId={user?.id || ""} // User ID is no longer needed here
-                        onItemAdded={(newItem) => {
-                            dispatch({ type: "ADD_ITEM", payload: newItem });
-                            if (state.noItems) {
-                                dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
-                            }
-                        }}
                     />
                 </DialogContent>
             </Dialog>

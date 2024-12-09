@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { ItemDetails } from "@/types/projectTypes";
+import { useAppContext } from "@/lib/appContext";
 
 interface NewItemModalProps {
   userId: string;
-  onItemAdded: (newItem: ItemDetails) => void;
+  onItemAdded?: (newItem: ItemDetails) => void;
 }
 
 const NewItemModal: React.FC<NewItemModalProps> = ({ userId, onItemAdded }) => {
+  const { state, dispatch } = useAppContext();
   const [name, setName] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [weight, setWeight] = useState<number>(0);
@@ -47,7 +49,11 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId, onItemAdded }) => {
       }
 
       const newItem: ItemDetails = await response.json();
-      onItemAdded(newItem);
+      dispatch({ type: "ADD_ITEM", payload: newItem });
+      if (state.noItems) {
+        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
+      }
+      onItemAdded && onItemAdded(newItem);
 
       // Reset form fields
       setName("");

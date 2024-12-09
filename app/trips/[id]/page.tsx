@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
-import { Checklist } from "@/types/projectTypes";
+import { Checklist, ChecklistWithItems } from "@/types/projectTypes";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
@@ -48,7 +48,7 @@ const TripPage = () => {
                 throw new Error("Failed to fetch all checklists.");
             }
 
-            const data: Checklist[] = await response.json();
+            const data: ChecklistWithItems[] = await response.json();
 
             if (Array.isArray(data) && data.length === 0) {
                 // If no checklists found, set the noChecklists flag
@@ -92,6 +92,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "DELETE",
+                headers: { "x-user-id": user?.id || ""}
             });
 
             if (!response.ok) {

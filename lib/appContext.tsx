@@ -55,7 +55,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
         case "REMOVE_CHECKLIST":
             return { ...state, checklists: state.checklists.filter((c) => c.id !== action.payload) };
         case "CHECK_ITEM_IN_CHECKLIST": {
-            const { checklistId, checkedState } = action.payload;
+            const { checklistId, checkedState, itemId } = action.payload;
 
             // Ensure `checklistId` is a string (if it could be a string array)
             if (Array.isArray(checklistId)) {
@@ -64,9 +64,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
             }
 
             // Find the checklist to update immutably
-            const checklistToUpdateIndex = state.checklists.findIndex(
-                (c) => c.id === checklistId
-            );
+            const checklistToUpdateIndex = state.checklists.findIndex((c) => c.id === checklistId);
             const checklistToUpdate = state.checklists[checklistToUpdateIndex];
 
             if (!checklistToUpdate) {
@@ -74,21 +72,21 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 return { ...state };
             }
 
-            // Update the completion count immutably
+            // Update the `completed` count immutably
             const updatedCompletedTotal = checkedState
                 ? (checklistToUpdate.completion?.completed ?? 0) + 1
                 : (checklistToUpdate.completion?.completed ?? 0) - 1;
 
             // Update the checklist items immutably
             const updatedItems = checklistToUpdate.items.map((item) =>
-                item.id === action.payload.itemId
-                    ? { ...item, completed: Boolean(checkedState) } // Ensure completed is a boolean
+                item.id === itemId
+                    ? { ...item, completed: Boolean(checkedState) } // Ensure `completed` is a boolean
                     : item
             );
 
-            // Create a fully typed updated checklist
+            // Create a fully updated checklist
             const updatedChecklist: ChecklistWithItems = {
-                ...checklistToUpdate, // Preserve all existing properties
+                ...checklistToUpdate,
                 items: updatedItems, // Update the items array
                 completion: {
                     completed: updatedCompletedTotal,
@@ -101,42 +99,77 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 index === checklistToUpdateIndex ? updatedChecklist : checklist
             );
 
+            // Update trips data to reflect changes in trip_checklists
+            const updatedTrips = state.trips.map((trip) => ({
+                ...trip,
+                trip_checklists: trip.trip_checklists.map((tripChecklist) => {
+                    if (tripChecklist.checklist_id === checklistId) {
+                        const wasCompleted = tripChecklist.checklists[0].checklist_items.find(
+                            (item) => item.id === itemId
+                        )?.completed;
+
+                        const updatedCompletedItems = checkedState
+                            ? tripChecklist.completedItems + 1
+                            : wasCompleted
+                                ? tripChecklist.completedItems - 1
+                                : tripChecklist.completedItems;
+
+                        return {
+                            ...tripChecklist,
+                            completedItems: updatedCompletedItems,
+                        };
+                    }
+                    return tripChecklist;
+                }),
+            }));
+
             // Return the updated state
             return {
                 ...state,
                 checklists: updatedChecklists,
+                trips: updatedTrips,
             };
         }
-        case "ADD_ITEM_TO_CHECKLIST":
-            const { checklist_id } = action.payload
+        case "ADD_ITEM_TO_CHECKLIST": {
+            const { checklist_id } = action.payload;
             return {
                 ...state,
                 checklists: state.checklists.map((checklist) => {
                     if (checklist.id === checklist_id) {
-                        const completedProperty = checklist.completion?.completed ?? 0
+                        const completedProperty = checklist.completion?.completed ?? 0;
                         const completedTotal = (checklist.completion?.total ?? 0) + 1;
                         return {
                             ...checklist,
                             completion: { completed: completedProperty, total: completedTotal },
                             items: [...checklist.items, action.payload], // Add the new item to the checklist's items array
-                        }
-                    } else {
-                        return checklist
+                        };
                     }
+                    return checklist;
+                }),
+                trips: state.trips.map((trip) => ({
+                    ...trip,
+                    trip_checklists: trip.trip_checklists.map((tripChecklist) => {
+                        if (tripChecklist.checklist_id === checklist_id) {
+                            return {
+                                ...tripChecklist,
+                                totalItems: tripChecklist.totalItems + 1,
+                            };
+                        }
+                        return tripChecklist;
+                    }),
+                })),
+            };
+        }
 
-
-                }
-                ),
-            }
-        case "REMOVE_ITEM_FROM_CHECKLIST":
+        case "REMOVE_ITEM_FROM_CHECKLIST": {
             return {
                 ...state,
                 checklists: state.checklists.map((checklist) => {
                     if (checklist.id === action.payload.checklistId) {
                         // Filter out the removed item
-                        const updatedItems = checklist.items.filter((item) => {
-                            return item.id !== action.payload.itemId;
-                        });
+                        const updatedItems = checklist.items.filter(
+                            (item) => item.id !== action.payload.itemId
+                        );
                         // Determine if the removed item was completed
                         const wasCompleted = checklist.items.find(
                             (item) => item.id === action.payload.itemId
@@ -156,7 +189,27 @@ const appReducer = (state: AppState, action: Action): AppState => {
                     }
                     return checklist;
                 }),
+                trips: state.trips.map((trip) => ({
+                    ...trip,
+                    trip_checklists: trip.trip_checklists.map((tripChecklist) => {
+                        if (tripChecklist.checklist_id === action.payload.checklistId) {
+                            const wasCompleted = tripChecklist.checklists[0].checklist_items.find(
+                                (item) => item.id === action.payload.itemId
+                            )?.completed;
+
+                            return {
+                                ...tripChecklist,
+                                totalItems: tripChecklist.totalItems - 1,
+                                completedItems: wasCompleted
+                                    ? tripChecklist.completedItems - 1
+                                    : tripChecklist.completedItems,
+                            };
+                        }
+                        return tripChecklist;
+                    }),
+                })),
             };
+        }
         case "SET_NO_CHECKLISTS_FOR_USER":
             return { ...state, noChecklists: action.payload };
         case "SET_IS_NEW":
