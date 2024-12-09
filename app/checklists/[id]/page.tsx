@@ -23,6 +23,7 @@ import {
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/lib/appContext";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 function ChecklistDetailsPage() {
   const { id } = useParams();
@@ -128,7 +129,7 @@ function ChecklistDetailsPage() {
     return item ? item.quantity - totalInChecklist : 0;
   };
 
-  const handleAddItem = async (item: ItemDetails | Item ) => {
+  const handleAddItem = async (item: ItemDetails | Item) => {
     try {
       const remainingQuantity = calculateRemainingQuantity(item.id);
       if (remainingQuantity <= 0) return;
@@ -149,7 +150,7 @@ function ChecklistDetailsPage() {
 
       if (!response.ok) throw new Error("Failed to add item to checklist.");
       const addedItem: ChecklistItem = await response.json();
-      dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem})
+      dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem })
       setChecklist((prev) =>
         prev
           ? { ...prev, items: [...prev.items, addedItem] }
@@ -172,7 +173,7 @@ function ChecklistDetailsPage() {
       });
 
       if (!response.ok) throw new Error("Failed to remove item from checklist.");
-      dispatch({ type: "REMOVE_ITEM_FROM_CHECKLIST", payload: {checklistId: id, itemId}})
+      dispatch({ type: "REMOVE_ITEM_FROM_CHECKLIST", payload: { checklistId: id, itemId } })
       setChecklist((prev) =>
         prev
           ? { ...prev, items: prev.items.filter((item) => item.id !== itemId) }
@@ -302,7 +303,7 @@ function ChecklistDetailsPage() {
                       const errorMessage = await response.text(); // Capture detailed API error
                       throw new Error(`Failed to update item status: ${errorMessage}`);
                     }
-                    dispatch({ type: 'CHECK_ITEM_IN_CHECKLIST', payload: { checkedState: value, checklistId: id, itemId: item.id} })
+                    dispatch({ type: 'CHECK_ITEM_IN_CHECKLIST', payload: { checkedState: value, checklistId: id, itemId: item.id } })
                     // Optimistically update the checklist UI
                     setChecklist((prev) => {
                       if (!prev || !prev.items) return prev; // Handle null or undefined state
@@ -421,7 +422,14 @@ function ChecklistDetailsPage() {
       </Dialog>
 
       {/*Delete Dialog*/}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <ConfirmDeleteModal
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onDelete={deleteChecklist}
+        title="Confirm Deletion of Checklist"
+        description="Are you sure you want to delete this checklist? This action cannot be undone."
+      />
+      {/* <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Delete</DialogTitle>
@@ -439,7 +447,7 @@ function ChecklistDetailsPage() {
             <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }
