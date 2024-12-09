@@ -58,6 +58,7 @@ export default function AuthPage() {
 
       if (Array.isArray(data) && data.length === 0) {
         dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+        dispatch({ type: "SET_CHECKLISTS", payload: [] })
       } else if (data.length > 0) {
         dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
         dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
@@ -86,6 +87,7 @@ export default function AuthPage() {
 
       if (Array.isArray(data) && data.length === 0) {
         dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true})
+        dispatch({ type: "SET_ITEMS", payload: [] });
       } else if (data.length > 0) {
         dispatch({ type: "SET_ITEMS", payload: data }); // Save items to global state
         dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false})
