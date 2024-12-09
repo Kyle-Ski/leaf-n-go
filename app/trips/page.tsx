@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-Context";
@@ -16,7 +16,7 @@ const TripsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const fetchTrips = async () => {
+  const fetchTrips = useCallback(async () => {
     try {
       const response = await fetch("/api/trips", {
         headers: { "x-user-id": user?.id || "" },
@@ -38,7 +38,7 @@ const TripsPage = () => {
       console.error(err);
       setError("Unable to load trips. Please try again later.");
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     if (user && !state.noTrips && state.trips.length === 0) {

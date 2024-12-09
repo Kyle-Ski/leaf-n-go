@@ -17,7 +17,6 @@ function ChecklistDetailsPage() {
       id={id as string}
       user={user}
       state={state}
-      dispatch={dispatch}
     />
   );
 }

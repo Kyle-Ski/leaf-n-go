@@ -11,6 +11,7 @@ import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
+import Link from "next/link";
 
 const TripPage = () => {
     const router = useRouter();
@@ -27,21 +28,6 @@ const TripPage = () => {
 
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
-
-    useEffect(() => {
-        if (!trip) {
-            setError("Trip not found.");
-            return;
-        }
-        // If no checklists flag is set, don't fetch again
-        if (state.noChecklists) {
-            return;
-        }
-
-        if (state.checklists.length === 0) {
-            fetchAllChecklists();
-        }
-    }, [trip, state.checklists, state.noChecklists]);
 
     const fetchAllChecklists = async () => {
         try {
@@ -67,6 +53,21 @@ const TripPage = () => {
             setError("Unable to load checklists. Please try again later.");
         }
     };
+
+    useEffect(() => {
+        if (!trip) {
+            setError("Trip not found.");
+            return;
+        }
+        // If no checklists flag is set, don't fetch again
+        if (state.noChecklists) {
+            return;
+        }
+
+        if (state.checklists.length === 0) {
+            fetchAllChecklists();
+        }
+    }, [trip, state.checklists, state.noChecklists, fetchAllChecklists]);
 
     const handleUpdateTrip = async (updatedTrip: UpdateTripPayload) => {
         try {
@@ -162,12 +163,12 @@ const TripPage = () => {
                         <p className="text-gray-600 mb-4">
                             You don&apos;t have any checklists created yet. You can make one by going here:
                         </p>
-                        <a
+                        <Link
                             href="/checklists/new"
                             className="text-blue-500 underline hover:text-blue-700"
                         >
                             Create a New Checklist
-                        </a>
+                        </Link>
                     </div>
                 ) : trip.trip_checklists.length === 0 ? (
                     <p className="text-gray-600">No checklists linked to this trip.</p>
@@ -251,7 +252,6 @@ const TripPage = () => {
                             id={selectedChecklistId}
                             user={user}
                             state={state}
-                            dispatch={dispatch}
                         />
                     )}
                 </DialogContent>

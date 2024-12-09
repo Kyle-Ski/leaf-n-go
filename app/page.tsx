@@ -18,29 +18,6 @@ const PlanningHub = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const formatUpcomingTrips = () => {
-    // Split trips into upcoming and recent
-    const now = new Date();
-
-    // Sort trips by start date (earliest first)
-    const sortedTrips = state.trips.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
-
-    // Find the upcoming trip (closest to now and not in the past)
-    const upcoming = sortedTrips.find((trip) => {
-      const tripStartDate = new Date(trip.start_date || "").getTime();
-      return tripStartDate >= now.getTime();
-    });
-
-    // Find all recent trips (already passed)
-    const recent = sortedTrips.filter((trip) => {
-      const tripStartDate = new Date(trip.start_date || "").getTime();
-      return tripStartDate < now.getTime();
-    });
-
-    setUpcomingTrip(upcoming || null);
-    setRecentTrips(recent);
-  }
-
   useEffect(() => {
     if (user && !state.noTrips && state.trips.length === 0) {
       const fetchTrips = async () => {
@@ -66,12 +43,35 @@ const PlanningHub = () => {
           console.error("Error fetching trips:", err);
           setError("Unable to load trips. Please try again later.");
         } finally {
-         
+
         }
       };
 
       fetchTrips();
     }
+    const formatUpcomingTrips = () => {
+      // Split trips into upcoming and recent
+      const now = new Date();
+
+      // Sort trips by start date (earliest first)
+      const sortedTrips = state.trips.sort((a, b) => new Date(a.start_date || "").getTime() - new Date(b.start_date || "").getTime());
+
+      // Find the upcoming trip (closest to now and not in the past)
+      const upcoming = sortedTrips.find((trip) => {
+        const tripStartDate = new Date(trip.start_date || "").getTime();
+        return tripStartDate >= now.getTime();
+      });
+
+      // Find all recent trips (already passed)
+      const recent = sortedTrips.filter((trip) => {
+        const tripStartDate = new Date(trip.start_date || "").getTime();
+        return tripStartDate < now.getTime();
+      });
+
+      setUpcomingTrip(upcoming || null);
+      setRecentTrips(recent);
+    }
+
     setLoading(false);
     formatUpcomingTrips();
   }, [user, state.noTrips, state.trips, dispatch]);
