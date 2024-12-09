@@ -97,6 +97,12 @@ const TripsPage = () => {
         >
           Create New Trip
         </Button>
+        {/* Create Trip Modal */}
+        <CreateTripModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreate={handleCreateTrip}
+        />
       </div>
     );
   }
