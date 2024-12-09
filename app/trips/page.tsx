@@ -16,12 +16,6 @@ const TripsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (user && !state.noTrips && state.trips.length === 0) {
-      fetchTrips();
-    }
-  }, [user, state.noTrips, state.trips]);
-
   const fetchTrips = async () => {
     try {
       const response = await fetch("/api/trips", {
@@ -45,6 +39,12 @@ const TripsPage = () => {
       setError("Unable to load trips. Please try again later.");
     }
   };
+
+  useEffect(() => {
+    if (user && !state.noTrips && state.trips.length === 0) {
+      fetchTrips();
+    }
+  }, [user, state.noTrips, state.trips, fetchTrips]);
 
   const handleCreateTrip = async (tripData: CreateTripPayload) => {
     try {

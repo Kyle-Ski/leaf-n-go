@@ -36,12 +36,6 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
   );
   const [modalError, setModalError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && trip) {
-      resetForm();
-    }
-  }, [isOpen, trip]);
-
   const resetForm = () => {
     setTitle(trip.title || "");
     setStartDate(trip.start_date ? new Date(trip.start_date) : null);
@@ -51,6 +45,12 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
     setSelectedChecklists(trip.trip_checklists?.map((c) => c.checklist_id) || []);
     setModalError(null);
   };
+
+  useEffect(() => {
+    if (isOpen && trip) {
+      resetForm();
+    }
+  }, [isOpen, trip, resetForm]);
 
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>

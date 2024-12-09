@@ -74,7 +74,7 @@ const PlanningHub = () => {
     }
     setLoading(false);
     formatUpcomingTrips();
-  }, [user, state.noTrips, state.trips]);
+  }, [user, state.noTrips, state.trips, dispatch]);
 
   if (loading) {
     return (

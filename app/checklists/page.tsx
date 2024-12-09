@@ -71,7 +71,7 @@ const ChecklistsPage = () => {
         fetchChecklists();
       }
     }
-  }, [user, state.checklists, state.noChecklists]);
+  }, [user, state.checklists, state.noChecklists, dispatch]);
 
   const filteredChecklists = state.checklists
     .filter(
