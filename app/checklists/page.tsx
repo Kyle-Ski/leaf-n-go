@@ -68,13 +68,12 @@ const ChecklistsPage = () => {
         // Use existing checklists from AppState if available
         setLoading(false);
       } else {
-        console.log("FETCHING CHECKLISTS");
         fetchChecklists();
       }
     }
   }, [user, state.checklists, state.noChecklists]);
 
-  const filteredChecklists = state.checklists // Use AppState for checklists
+  const filteredChecklists = state.checklists
     .filter(
       (list) =>
         (categoryFilter === "All" || list.category === categoryFilter) &&

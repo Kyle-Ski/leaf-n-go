@@ -149,6 +149,7 @@ function ChecklistDetailsPage() {
 
       if (!response.ok) throw new Error("Failed to add item to checklist.");
       const addedItem: ChecklistItem = await response.json();
+      dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem})
       setChecklist((prev) =>
         prev
           ? { ...prev, items: [...prev.items, addedItem] }
@@ -163,6 +164,7 @@ function ChecklistDetailsPage() {
 
   const handleRemoveItem = async (itemId: string) => {
     try {
+      if (!id) throw new Error("No checklist id")
       const response = await fetch(`/api/checklists/${id}`, {
         method: "DELETE",
         headers: { "x-user-id": user?.id || "" },
@@ -170,6 +172,7 @@ function ChecklistDetailsPage() {
       });
 
       if (!response.ok) throw new Error("Failed to remove item from checklist.");
+      dispatch({ type: "REMOVE_ITEM_FROM_CHECKLIST", payload: {checklistId: id, itemId}})
       setChecklist((prev) =>
         prev
           ? { ...prev, items: prev.items.filter((item) => item.id !== itemId) }
@@ -299,7 +302,7 @@ function ChecklistDetailsPage() {
                       const errorMessage = await response.text(); // Capture detailed API error
                       throw new Error(`Failed to update item status: ${errorMessage}`);
                     }
-                    dispatch({ type: 'CHECK_ITEM_IN_CHECKLIST', payload: { checkedState: value, checklistId: id} })
+                    dispatch({ type: 'CHECK_ITEM_IN_CHECKLIST', payload: { checkedState: value, checklistId: id, itemId: item.id} })
                     // Optimistically update the checklist UI
                     setChecklist((prev) => {
                       if (!prev || !prev.items) return prev; // Handle null or undefined state

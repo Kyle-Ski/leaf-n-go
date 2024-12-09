@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useContext, useEffect } from "react";
-import { AppState, Action } from "@/types/projectTypes";
+import { AppState, Action, ChecklistWithItems } from "@/types/projectTypes";
 
 const initialState: AppState = {
     trips: [],
@@ -54,46 +54,109 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, checklists: [...state.checklists, action.payload] };
         case "REMOVE_CHECKLIST":
             return { ...state, checklists: state.checklists.filter((c) => c.id !== action.payload) };
-        case "CHECK_ITEM_IN_CHECKLIST":
-            console.log("PAYLOAD:", action.payload.checkedState);
+        case "CHECK_ITEM_IN_CHECKLIST": {
+            const { checklistId, checkedState } = action.payload;
 
-            // Find the checklist to update without mutating state
-            const checklistToUpdateIndex = state.checklists.findIndex((c) => c.id === action.payload.checklistId);
-            const checklistToUpdate = state.checklists[checklistToUpdateIndex];
-
-            if (
-                !checklistToUpdate ||
-                !checklistToUpdate.completion ||
-                !(typeof checklistToUpdate.completion.completed === "number" && !isNaN(checklistToUpdate.completion.completed))
-            ) {
-                console.error("Cannot find checklist to check item");
+            // Ensure `checklistId` is a string (if it could be a string array)
+            if (Array.isArray(checklistId)) {
+                console.error("Checklist ID must be a string.");
                 return { ...state };
             }
 
-            // Calculate the new completion count immutably
-            const updatedCompletedTotal = action.payload.checkedState
-                ? checklistToUpdate.completion.completed + 1
-                : checklistToUpdate.completion.completed - 1;
+            // Find the checklist to update immutably
+            const checklistToUpdateIndex = state.checklists.findIndex(
+                (c) => c.id === checklistId
+            );
+            const checklistToUpdate = state.checklists[checklistToUpdateIndex];
 
-            // Create an updated checklist with immutability
-            const updatedChecklist = {
-                ...checklistToUpdate,
+            if (!checklistToUpdate) {
+                console.error("Cannot find checklist to check item.");
+                return { ...state };
+            }
+
+            // Update the completion count immutably
+            const updatedCompletedTotal = checkedState
+                ? (checklistToUpdate.completion?.completed ?? 0) + 1
+                : (checklistToUpdate.completion?.completed ?? 0) - 1;
+
+            // Update the checklist items immutably
+            const updatedItems = checklistToUpdate.items.map((item) =>
+                item.id === action.payload.itemId
+                    ? { ...item, completed: Boolean(checkedState) } // Ensure completed is a boolean
+                    : item
+            );
+
+            // Create a fully typed updated checklist
+            const updatedChecklist: ChecklistWithItems = {
+                ...checklistToUpdate, // Preserve all existing properties
+                items: updatedItems, // Update the items array
                 completion: {
-                    ...checklistToUpdate.completion,
                     completed: updatedCompletedTotal,
+                    total: checklistToUpdate.completion?.total ?? 0, // Ensure total is always a number
                 },
             };
 
             // Replace the updated checklist in the array immutably
-            const updatedChecklists = state.checklists.map((checklist, index) =>
+            const updatedChecklists: ChecklistWithItems[] = state.checklists.map((checklist, index) =>
                 index === checklistToUpdateIndex ? updatedChecklist : checklist
             );
 
-            console.log("UPDATING WITH:", updatedChecklists);
+            // Return the updated state
+            return {
+                ...state,
+                checklists: updatedChecklists,
+            };
+        }
+        case "ADD_ITEM_TO_CHECKLIST":
+            const { checklist_id } = action.payload
+            return {
+                ...state,
+                checklists: state.checklists.map((checklist) => {
+                    if (checklist.id === checklist_id) {
+                        let completedProperty = checklist.completion?.completed ?? 0
+                        let completedTotal = (checklist.completion?.total ?? 0) + 1;
+                        return {
+                            ...checklist,
+                            completion: { completed: completedProperty, total: completedTotal },
+                            items: [...checklist.items, action.payload], // Add the new item to the checklist's items array
+                        }
+                    } else {
+                        return checklist
+                    }
 
-            // Return the new state with the updated checklists array
-            return { ...state, checklists: updatedChecklists };
 
+                }
+                ),
+            }
+        case "REMOVE_ITEM_FROM_CHECKLIST":
+            return {
+                ...state,
+                checklists: state.checklists.map((checklist) => {
+                    if (checklist.id === action.payload.checklistId) {
+                        // Filter out the removed item
+                        const updatedItems = checklist.items.filter((item) => {
+                            return item.id !== action.payload.itemId;
+                        });
+                        // Determine if the removed item was completed
+                        const wasCompleted = checklist.items.find(
+                            (item) => item.id === action.payload.itemId
+                        )?.completed;
+
+                        // Update totals
+                        let completedTotal = (checklist.completion?.total ?? 0) - 1;
+                        let completedProperty = wasCompleted
+                            ? (checklist.completion?.completed ?? 0) - 1
+                            : checklist.completion?.completed ?? 0;
+
+                        return {
+                            ...checklist,
+                            completion: { completed: completedProperty, total: completedTotal },
+                            items: updatedItems,
+                        };
+                    }
+                    return checklist;
+                }),
+            };
         case "SET_NO_CHECKLISTS_FOR_USER":
             return { ...state, noChecklists: action.payload };
         case "SET_IS_NEW":

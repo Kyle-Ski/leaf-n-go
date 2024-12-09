@@ -83,21 +83,6 @@ const ItemsPage = () => {
 
     // If there are no items in state, show a message or loading spinner
     if (!state.noItems && (!items || items.length === 0)) {
-        // if (state.noItems) {
-        //     // Handle the "no items" case
-        //     return (
-        //         <div className="flex flex-col items-center justify-center min-h-screen">
-        //             <p className="text-gray-600 text-lg">You don’t have any items yet. Try creating your first item!</p>
-        //             <Button
-        //                 onClick={() => setIsCreateItemModalOpen(true)}
-        //                 className="bg-green-500 text-white"
-        //             >
-        //                 Create New Item
-        //             </Button>
-        //         </div>
-        //     );
-        // }
-        // Handle the loading case
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <Loader className="h-12 w-12 mb-4 text-blue-500" />

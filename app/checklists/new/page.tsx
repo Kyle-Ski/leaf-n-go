@@ -101,6 +101,7 @@ const NewChecklistPage = () => {
             }
             const data = await response.json()
             dispatch({ type: 'ADD_CHECKLIST', payload: data})
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false})
             router.push("/checklists");
         } catch (err) {
             console.error("Error creating checklist:", err);
