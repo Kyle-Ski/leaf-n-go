@@ -1,3 +1,5 @@
+import { CheckedState } from "@radix-ui/react-checkbox";
+
 export interface Item {
     id: string;
     checklist_id: string;
@@ -8,6 +10,38 @@ export interface Item {
     weight: number;
     notes?: string;
 }
+
+export interface AppState {
+  trips: FrontendTrip[];
+  checklists: ChecklistWithItems[];
+  items: (Item | ItemDetails)[]; // Allow both Item and ItemDetails
+  userSettings: UserSettings | null;
+  isNew: boolean;
+  noTrips: boolean;
+  noChecklists: boolean;
+  noItems: boolean;
+}
+
+export type Action =
+| { type: 'SET_TRIPS'; payload: FrontendTrip[] }
+| { type: 'ADD_TRIP'; payload: FrontendTrip }
+| { type: 'UPDATE_TRIP'; payload: FrontendTrip }
+| { type: 'REMOVE_TRIP'; payload: (string | string[]) }
+| { type: 'SET_NO_TRIPS_FOR_USER'; payload: boolean }
+| { type: 'SET_CHECKLISTS'; payload: ChecklistWithItems[] }
+| { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
+| { type: 'ADD_CHECKLIST'; payload: ChecklistWithItems }
+| { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
+| { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
+| { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem }
+| { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
+| { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
+| { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+| { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
+| { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
+| { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
+| { type: 'SET_USER_SETTINGS'; payload: UserSettings }
+| { type: 'SET_IS_NEW'; payload: boolean };
 
 export interface CreateTripPayload {
   title: string;

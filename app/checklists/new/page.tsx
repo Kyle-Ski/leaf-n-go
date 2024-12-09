@@ -5,14 +5,14 @@ import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
-import { ItemDetails } from "@/types/projectTypes";
+import { useAppContext } from "@/lib/appContext";
 
 const NewChecklistPage = () => {
-    const { user } = useAuth();
     const router = useRouter();
+    const { user } = useAuth();
+    const { state, dispatch } = useAppContext();
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
-    const [items, setItems] = useState<ItemDetails[]>([]);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
     const [error, setError] = useState<string | null>(null);
     const newItemModalRef = useRef<HTMLDivElement>(null); // Reference for scrolling to the form
@@ -20,34 +20,39 @@ const NewChecklistPage = () => {
     const categories = ["Day Trip", "Overnight", "Weekend Trip"];
 
     useEffect(() => {
-        if (user) {
+        if (!state.noItems && state.items.length === 0) {
+            // Fetch items only if noItems is false and items array is empty
+            const fetchItems = async () => {
+                try {
+                    const response = await fetch("/api/items", {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-user-id": user?.id || "",
+                        },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        if (Array.isArray(data) && data.length === 0) {
+                            // No items found; set the noItems flag to true
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true });
+                        } else {
+                            // Items found; update the AppState with fetched items
+                            dispatch({ type: "SET_ITEMS", payload: data });
+                            dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false }); // Reset noItems if items exist
+                        }
+                    } else {
+                        console.error("Failed to fetch items:", response.statusText);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch items:", err);
+                }
+            };
+
             fetchItems();
         }
-    }, [user]);
-
-    const fetchItems = async () => {
-        setError(null); // Reset error before fetching
-        try {
-            const response = await fetch("/api/items", {
-                method: "GET",
-                headers: {
-                    "x-user-id": user?.id || "",
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                setError(errorData.error || "Failed to fetch items.");
-                return;
-            }
-
-            const fetchedItems: ItemDetails[] = await response.json();
-            setItems(fetchedItems);
-        } catch (err) {
-            console.error("Network error while fetching items:", err);
-            setError("Unable to load items. Please check your network connection.");
-        }
-    };
+    }, [dispatch, state.items, state.noItems, user?.id]);
 
     const handleItemQuantityChange = (itemId: string, quantity: number) => {
         setSelectedItems((prev) => {
@@ -94,7 +99,9 @@ const NewChecklistPage = () => {
                 setError(errorData.error || "Failed to create checklist.");
                 return;
             }
-
+            const data = await response.json()
+            dispatch({ type: 'ADD_CHECKLIST', payload: data})
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false})
             router.push("/checklists");
         } catch (err) {
             console.error("Error creating checklist:", err);
@@ -164,10 +171,10 @@ const NewChecklistPage = () => {
                         <div className="space-y-4">
                             {error ? (
                                 <p className="text-red-500">{error}</p>
-                            ) : items.length === 0 ? (
+                            ) : state.items.length === 0 ? (
                                 <p className="text-gray-500">No items found. Add items to your inventory first.</p>
                             ) : (
-                                items.map((item) => (
+                                state.items.map((item) => (
                                     <div key={item.id} className="flex items-center justify-between space-x-4">
                                         <label htmlFor={`item-${item.id}`} className="text-gray-700 flex-grow">
                                             {item.name} (Available: {item.quantity})
@@ -228,9 +235,6 @@ const NewChecklistPage = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Add a New Item</h2>
                 <NewItemModal
                     userId={user?.id || ""}
-                    onItemAdded={(newItem) => {
-                        setItems((prev) => [...prev, newItem]);
-                    }}
                 />
             </div>
         </div>

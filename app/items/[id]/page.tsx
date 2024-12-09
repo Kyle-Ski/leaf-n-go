@@ -2,34 +2,41 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader } from "@/components/ui/loader";
-import { Item } from '@/types/projectTypes';
+import { useAppContext } from "@/lib/appContext"; // Access shared state
 import { withAuth } from "@/lib/withAuth";
+import { Input } from "@/components/ui/input";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const ItemDetailsPage = () => {
     const router = useRouter();
     const params = useParams();
     const itemId = params?.id;
 
-    const [item, setItem] = useState<Item | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { state, dispatch } = useAppContext(); // Access global state
+    const item = state.items.find((i) => i.id === itemId); // Find item in context
+
+    const [loading, setLoading] = useState(!item); // Skip loading if item exists in state
     const [error, setError] = useState<string | null>(null);
 
-    // State for editing the item
+    // Local state for editing
     const [editItem, setEditItem] = useState({
-        name: "",
-        quantity: 0,
-        weight: 0,
-        notes: "",
+        name: item?.name || "",
+        quantity: item?.quantity || 0,
+        weight: item?.weight || 0,
+        notes: item?.notes || "",
     });
 
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleted, setIsDeleted] = useState(false);
 
+    // Fetch item details if not available in the global state
     useEffect(() => {
+        if (item || !itemId || isDeleted) return;
+
         const fetchItem = async () => {
             setLoading(true);
             try {
@@ -37,9 +44,9 @@ const ItemDetailsPage = () => {
                 if (!response.ok) {
                     throw new Error("Failed to fetch item details.");
                 }
-                const data = await response.json();
-                setItem(data);
-                setEditItem(data); // Initialize edit form with current item data
+                const fetchedItem = await response.json();
+                dispatch({ type: "SET_ITEMS", payload: [...state.items, fetchedItem] }); // Update global state
+                setEditItem(fetchedItem); // Set local state for editing
             } catch (err) {
                 console.error(err);
                 setError("Unable to load item. Please try again later.");
@@ -48,8 +55,8 @@ const ItemDetailsPage = () => {
             }
         };
 
-        if (itemId) fetchItem();
-    }, [itemId]);
+        fetchItem();
+    }, [item, itemId, isDeleted, dispatch, state.items]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -75,7 +82,10 @@ const ItemDetailsPage = () => {
             }
 
             const updatedItem = await response.json();
-            setItem(updatedItem);
+            dispatch({
+                type: "SET_ITEMS",
+                payload: state.items.map((i) => (i.id === itemId ? updatedItem : i)),
+            }); // Update global state
             setIsEditing(false);
         } catch (err) {
             console.error(err);
@@ -94,6 +104,12 @@ const ItemDetailsPage = () => {
                 throw new Error("Failed to delete item.");
             }
 
+            dispatch({
+                type: "SET_ITEMS",
+                payload: state.items.filter((i) => i.id !== itemId),
+            }); // Update global state
+
+            setIsDeleted(true);
             router.push("/items");
         } catch (err) {
             console.error(err);
@@ -232,32 +248,15 @@ const ItemDetailsPage = () => {
             )}
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Delete</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete this item? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex space-x-4 mt-4">
-                        <Button
-                            onClick={handleDelete}
-                            className="bg-red-500 text-white"
-                        >
-                            Delete
-                        </Button>
-                        <Button
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            className="bg-gray-300 text-black"
-                        >
-                            Cancel
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+                title="Confirm Delete Item"
+                description="Are you sure you want to delete this item? This action cannot be undone."
+            />
         </div>
     );
-}
+};
 
 export default withAuth(ItemDetailsPage);

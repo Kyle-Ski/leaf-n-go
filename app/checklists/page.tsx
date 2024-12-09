@@ -8,13 +8,13 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth-Context";
+import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
-import { Checklist } from '@/types/projectTypes';
 import { Loader } from "@/components/ui/loader";
 
 const ChecklistsPage = () => {
   const { user } = useAuth();
-  const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const { state, dispatch } = useAppContext(); // Use AppState for global checklists
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortOption, setSortOption] = useState("Recent");
@@ -23,43 +23,57 @@ const ChecklistsPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchChecklists();
-    }
-  }, [user]);
+      const fetchChecklists = async () => {
+        if (!user?.id) {
+          console.error("User ID is undefined. Cannot fetch checklists.");
+          setError("Unable to fetch checklists. Please try again later.");
+          setLoading(false);
+          return;
+        }
 
-  const fetchChecklists = async () => {
-    if (!user?.id) {
-      console.error("User ID is undefined. Cannot fetch checklists.");
-      setError("Unable to fetch checklists. Please try again later.");
-      return;
-    }
+        setLoading(true);
+        setError("");
+        try {
+          const response = await fetch("/api/checklists", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": user.id,
+            },
+          });
 
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/checklists", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id,
-        },
-      });
+          if (!response.ok) {
+            throw new Error("Failed to fetch checklists");
+          }
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch checklists");
+          const data = await response.json();
+          if (Array.isArray(data) && data.length === 0) {
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+          } else {
+            dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
+          }
+        } catch (error) {
+          console.error("Error fetching checklists:", error);
+          setError("Error fetching checklists. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      if (state.noChecklists) {
+        // User has no checklists; stop loading and optionally show a message
+        setLoading(false);
+      } else if (state.checklists.length > 0) {
+        // Use existing checklists from AppState if available
+        setLoading(false);
+      } else {
+        fetchChecklists();
       }
-
-      const data: Checklist[] = await response.json();
-      setChecklists(data);
-    } catch (error) {
-      console.error("Error fetching checklists:", error);
-      setError("Error fetching checklists. Please try again later.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user, state.checklists, state.noChecklists, dispatch]);
 
-  const filteredChecklists = checklists
+  const filteredChecklists = state.checklists
     .filter(
       (list) =>
         (categoryFilter === "All" || list.category === categoryFilter) &&
@@ -188,8 +202,8 @@ const ChecklistsPage = () => {
                           className="bg-green-500 h-2 rounded-full"
                           style={{
                             width: `${list.completion?.total
-                                ? (list.completion.completed / list.completion.total) * 100
-                                : 0
+                              ? (list.completion.completed / list.completion.total) * 100
+                              : 0
                               }%`,
                           }}
                         ></div>
@@ -209,7 +223,8 @@ const ChecklistsPage = () => {
                 </Card>
               ))
             ) : (
-              <p className="text-gray-600">No checklists found.</p>
+              <p className="text-gray-600 text-center">No checklists found. Try creating a new checklist!</p>
+
             )}
           </section>
         </>

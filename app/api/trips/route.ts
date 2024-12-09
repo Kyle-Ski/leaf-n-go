@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supbaseClient";
+import { FrontendTrip } from "@/types/projectTypes";
 
 // GET all trips for the current user
 export async function GET(req: NextRequest) {
@@ -13,20 +14,68 @@ export async function GET(req: NextRequest) {
     const { data: trips, error } = await supabaseServer
       .from("trips")
       .select(`
-        *,
-        trip_checklists(*),
-        trip_participants(*)
+        id,
+        title,
+        start_date,
+        end_date,
+        location,
+        notes,
+        created_at,
+        updated_at,
+        trip_checklists (
+          checklist_id,
+          checklists (
+            title,
+            checklist_items (
+              id,
+              completed
+            )
+          )
+        ),
+        trip_participants (
+          user_id,
+          role
+        )
       `)
       .eq("user_id", userId);
 
     if (error) throw error;
 
-    return NextResponse.json(trips, { status: 200 });
+    // Format each trip's trip_checklists
+    const formattedTrips = trips.map((trip) => {
+      if (trip.trip_checklists) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        trip.trip_checklists = trip.trip_checklists.map((tripChecklist: any) => {
+          const checklist = tripChecklist.checklists; // Not an array based on the log
+          const totalItems = checklist?.checklist_items?.length || 0;
+          const completedItems =
+            checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
+
+          return {
+            checklist_id: tripChecklist.checklist_id,
+            checklists: [
+              {
+                title: checklist?.title || "Untitled Checklist",
+                checklist_items: checklist?.checklist_items || [],
+              },
+            ],
+            totalItems,
+            completedItems,
+          };
+        });
+      }
+
+      // Cast the trip to the new type if needed (optional for TypeScript)
+      return trip as FrontendTrip;
+    });
+
+    return NextResponse.json(formattedTrips, { status: 200 });
   } catch (err) {
     console.error("Error fetching trips:", err);
     return NextResponse.json({ error: "Failed to fetch trips" }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
     const { title, start_date, end_date, location, notes, checklists = [], participants = [] } = await req.json();
