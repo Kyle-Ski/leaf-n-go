@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
     // Format each trip's trip_checklists
     const formattedTrips = trips.map((trip) => {
       if (trip.trip_checklists) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         trip.trip_checklists = trip.trip_checklists.map((tripChecklist: any) => {
           const checklist = tripChecklist.checklists; // Not an array based on the log
           const totalItems = checklist?.checklist_items?.length || 0;

@@ -113,8 +113,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 checklists: state.checklists.map((checklist) => {
                     if (checklist.id === checklist_id) {
-                        let completedProperty = checklist.completion?.completed ?? 0
-                        let completedTotal = (checklist.completion?.total ?? 0) + 1;
+                        const completedProperty = checklist.completion?.completed ?? 0
+                        const completedTotal = (checklist.completion?.total ?? 0) + 1;
                         return {
                             ...checklist,
                             completion: { completed: completedProperty, total: completedTotal },
@@ -143,8 +143,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         )?.completed;
 
                         // Update totals
-                        let completedTotal = (checklist.completion?.total ?? 0) - 1;
-                        let completedProperty = wasCompleted
+                        const completedTotal = (checklist.completion?.total ?? 0) - 1;
+                        const completedProperty = wasCompleted
                             ? (checklist.completion?.completed ?? 0) - 1
                             : checklist.completion?.completed ?? 0;
 
