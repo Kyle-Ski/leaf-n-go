@@ -23,7 +23,7 @@ interface DetailedItemViewProps {
     onClose?: () => void;
 }
 
-const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, isOpen, onClose }) => {
+const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const router = useRouter();
     const { state, dispatch } = useAppContext();
     const { user } = useAuth();
@@ -54,6 +54,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, isOpen, onC
                 quantity: item.quantity || 0,
                 weight: item.weight || 0,
                 notes: item.notes || "",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 category_id: (item as any).category_id || null,
             });
         }
