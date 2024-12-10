@@ -51,6 +51,7 @@ export interface ChecklistItem {
   completed: boolean;
   quantity: number;
   items: ItemDetails;
+  item_categories?: ItemCategory
 }
 
 export interface ChecklistWithItems extends Omit<Checklist, 'completion'> {
@@ -283,6 +284,7 @@ export interface CreateTripPayload {
   end_date: string | null;
   location: string | null;
   notes: string | null;
+  checklists?: string[];
 }
 export interface AppState {
   trips: FrontendTrip[];
@@ -307,7 +309,7 @@ export type Action =
   | { type: 'ADD_CHECKLIST'; payload: ChecklistWithItems }
   | { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
   | { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
-  | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem }
+  | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem[] }
   | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
   | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }

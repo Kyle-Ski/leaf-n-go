@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
 import Link from "next/link";
+import ProgressBar from "@/components/progressBar";
 
 const TripPage = () => {
     const router = useRouter();
@@ -133,8 +134,11 @@ const TripPage = () => {
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{trip.title}</h1>
-                <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
-                    Edit Trip
+                <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="bg-red-500 text-white shadow-md"
+                >
+                    Delete Trip
                 </Button>
             </header>
 
@@ -184,18 +188,7 @@ const TripPage = () => {
                                         <h3 className="font-semibold">
                                             {checklist.checklists[0]?.title || "Untitled Checklist"}
                                         </h3>
-                                        <p className="text-sm text-gray-500">
-                                            {checklist.completedItems} of {checklist.totalItems} items completed
-                                        </p>
-                                        <div className="relative h-2 bg-gray-200 rounded-full mt-2">
-                                            <div
-                                                className="absolute top-0 left-0 h-2 bg-green-500 rounded-full"
-                                                style={{
-                                                    width: `${(checklist.completedItems / checklist.totalItems) * 100 || 0
-                                                        }%`,
-                                                }}
-                                            ></div>
-                                        </div>
+                                        <ProgressBar label="" percentage={checklist.totalItems !== 0 ? (checklist.completedItems / checklist.totalItems) * 100 : 0} color="green" description={`${checklist.completedItems} of ${checklist.totalItems} items completed`} />
                                     </div>
                                     {/* Replace Link with a button that opens the dialog */}
                                     <Button
@@ -215,12 +208,8 @@ const TripPage = () => {
                 )}
 
             </section>
-
-            <Button
-                onClick={() => setIsDeleteModalOpen(true)}
-                className="bg-red-500 text-white shadow-md"
-            >
-                Delete Trip
+            <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
+                Edit Trip
             </Button>
 
             {/* Edit Trip Modal */}
@@ -242,7 +231,7 @@ const TripPage = () => {
 
             {/* Checklist Details Dialog */}
             <Dialog open={isChecklistDialogOpen} onOpenChange={setIsChecklistDialogOpen}>
-                <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
+                <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
                     <DialogHeader>
                         <DialogTitle>Checklist</DialogTitle>
                         <DialogDescription>Viewing Checklist Details.</DialogDescription>
@@ -252,6 +241,7 @@ const TripPage = () => {
                             id={selectedChecklistId}
                             user={user}
                             state={state}
+                            currentPage="trips"
                         />
                     )}
                 </DialogContent>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supbaseClient';
+import { Item } from '@/types/projectTypes';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -80,29 +81,70 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
 
   const body = await req.json();
-  const { item_id, quantity, completed } = body;
 
-  if (!item_id) {
-    return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
+  // Ensure the body contains an array of items
+  if (!Array.isArray(body.items) || body.items.length === 0) {
+    return NextResponse.json({ error: 'Items array is required and cannot be empty' }, { status: 400 });
+  }
+
+  const items = body.items; // Array of { item_id, quantity, completed }
+
+  // Validate each item in the array
+  for (const item of items) {
+    if (!item.item_id || typeof item.quantity !== 'number' || typeof item.completed !== 'boolean') {
+      return NextResponse.json(
+        { error: 'Each item must have item_id, quantity (number), and completed (boolean)' },
+        { status: 400 }
+      );
+    }
   }
 
   try {
-    // Insert the item into the checklist_items table
+    // Expand items based on quantity
+    const expandedItems = items.flatMap((item: Item) =>
+      Array.from({ length: item.quantity }).map(() => ({
+        checklist_id: checklistId,
+        item_id: item.item_id,
+        completed: item.completed,
+        quantity: 1, // Each row represents one unit
+      }))
+    );
+
+    // Insert all expanded rows into the checklist_items table
     const { data: insertedData, error: insertError } = await supabaseServer
       .from('checklist_items')
-      .insert({ checklist_id: checklistId, item_id, quantity, completed })
-      .select('id, checklist_id, item_id, completed, quantity, items(*)')
-      .single();
+      .insert(expandedItems)
+      .select(
+        `
+          id,
+          checklist_id,
+          item_id,
+          completed,
+          quantity,
+          items (
+            id,
+            name,
+            notes,
+            weight,
+            user_id,
+            quantity,
+            category_id,
+            item_categories (
+              name
+            )
+          )
+        `
+      );
 
     if (insertError) {
-      console.error("Error adding item to checklist:", insertError);
+      console.error("Error adding items to checklist:", insertError);
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Return the full inserted item with details
+    // Return all inserted rows with details
     return NextResponse.json(insertedData, { status: 201 });
   } catch (error) {
-    console.error("Unexpected error adding item:", error);
+    console.error("Unexpected error adding items:", error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }

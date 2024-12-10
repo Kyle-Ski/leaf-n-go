@@ -76,13 +76,22 @@ export async function POST(req: NextRequest) {
 
   interface InventoryItem {
     id: string;
+    name: string;
+    notes?: string;
+    weight?: number;
+    user_id: string;
     quantity: number;
+    category_id?: string;
+    item_categories?: {
+      name: string;
+    };
   }
 
   interface ChecklistItem {
     checklist_id: string;
     item_id: string;
     completed: boolean;
+    items: InventoryItem;
   }
 
   const body = await req.json();
@@ -93,7 +102,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Create a new checklist and return it directly
+    // Create a new checklist
     const { data: newChecklist, error: checklistError } = await supabaseServer
       .from("checklists")
       .insert([{ title, category, user_id: userId }])
@@ -105,13 +114,14 @@ export async function POST(req: NextRequest) {
     }
 
     let inventoryItems: InventoryItem[] = [];
+    let expandedChecklistItems: ChecklistItem[] = [];
 
     if (items && items.length > 0) {
       // Fetch user's inventory in one query
       const itemIds = items.map((item: ItemInput) => item.id);
-      const { data, error: inventoryError } = await supabaseServer
+      const { data: inventoryData, error: inventoryError } = await supabaseServer
         .from("items")
-        .select("id, quantity")
+        .select("*, item_categories(name)")
         .in("id", itemIds)
         .eq("user_id", userId);
 
@@ -119,24 +129,28 @@ export async function POST(req: NextRequest) {
         throw inventoryError;
       }
 
-      if (!data || data.length === 0) {
+      if (!inventoryData || inventoryData.length === 0) {
         return NextResponse.json(
           { error: "No items found in user inventory" },
           { status: 400 }
         );
       }
 
-      inventoryItems = data;
+      inventoryItems = inventoryData;
 
       // Map inventory items by ID for quick lookup
-      const inventoryMap = new Map<string, number>(
-        inventoryItems.map((item: InventoryItem) => [item.id, item.quantity])
+      const inventoryMap = new Map<string, InventoryItem>(
+        inventoryItems.map((item: InventoryItem) => [item.id, item])
       );
 
       // Expand the items array based on the quantity
-      const expandedChecklistItems: ChecklistItem[] = items.flatMap(({ id: itemId, quantity }: ItemInput) => {
-        const availableQuantity = inventoryMap.get(itemId) || 0;
-        if (quantity > availableQuantity) {
+      expandedChecklistItems = items.flatMap(({ id: itemId, quantity }: ItemInput) => {
+        const inventoryItem = inventoryMap.get(itemId);
+        if (!inventoryItem) {
+          throw new Error(`Item ${itemId} not found in inventory`);
+        }
+
+        if (quantity > inventoryItem.quantity) {
           throw new Error(`Insufficient quantity for item ${itemId}`);
         }
 
@@ -144,31 +158,41 @@ export async function POST(req: NextRequest) {
           checklist_id: newChecklist.id,
           item_id: itemId,
           completed: false,
+          items: inventoryItem,
         }));
       });
 
       // Batch insert checklist items
       const { error: itemsError } = await supabaseServer
         .from("checklist_items")
-        .insert(expandedChecklistItems);
+        .insert(
+          expandedChecklistItems.map(({ checklist_id, item_id, completed }) => ({
+            checklist_id,
+            item_id,
+            completed,
+          }))
+        );
 
       if (itemsError) {
         throw itemsError;
       }
     }
 
-    // Calculate completion stats directly
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    // Calculate completion stats
+    const totalItems = expandedChecklistItems.length;
+    const totalWeight = expandedChecklistItems.reduce(
+      (sum, item) => sum + (item.items.weight || 0),
+      0
+    );
 
     const checklistWithItems = {
       ...newChecklist,
-      items: items.map((item) => ({
-        ...item,
-        inventory: inventoryItems.find((invItem) => invItem.id === item.id),
-      })),
+      items: expandedChecklistItems,
       completion: {
         completed: 0,
         total: totalItems,
+        totalWeight,
+        currentWeight: 0, // No items are completed initially
       },
     };
 

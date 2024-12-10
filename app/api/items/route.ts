@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
     const { data: items, error } = await supabaseServer
       .from('items')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .select("*, item_categories(name)")
 
     if (error) {
       console.error('Error fetching items:', error, 'Referrer:', referrer);

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CreateTripPayload } from "@/types/projectTypes";
+import { useAppContext } from "@/lib/appContext";
+import Link from "next/link";
 
 interface CreateTripModalProps {
   isOpen: boolean;
@@ -15,12 +17,20 @@ interface CreateTripModalProps {
 }
 
 const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) => {
+  const { state } = useAppContext();
   const [modalError, setModalError] = useState<string | null>(null);
   const [newTripTitle, setNewTripTitle] = useState("");
   const [newTripStartDate, setNewTripStartDate] = useState<Date | null>(null);
   const [newTripEndDate, setNewTripEndDate] = useState<Date | null>(null);
   const [newTripLocation, setNewTripLocation] = useState("");
   const [newTripNotes, setNewTripNotes] = useState("");
+  const [selectedChecklists, setSelectedChecklists] = useState<string[]>([]);
+
+  const handleChecklistToggle = (checklistId: string) => {
+    setSelectedChecklists((prev) =>
+      prev.includes(checklistId) ? prev.filter((id) => id !== checklistId) : [...prev, checklistId]
+    );
+  };
 
   const handleCreate = () => {
     if (!newTripTitle) {
@@ -34,6 +44,7 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
       end_date: newTripEndDate ? newTripEndDate.toISOString() : null,
       location: newTripLocation || null,
       notes: newTripNotes || null,
+      checklists: selectedChecklists
     });
 
     setModalError(null);
@@ -47,6 +58,7 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
     setNewTripEndDate(null);
     setNewTripLocation("");
     setNewTripNotes("");
+    setSelectedChecklists([])
   };
 
   return (
@@ -113,6 +125,36 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
             />
           </div>
         </DialogDescription>
+        <div className="space-y-2">
+              {state.noChecklists ? (
+                <div className="flex flex-col items-center">
+                  <p className="text-gray-600 text-sm mb-2">You have no checklists created yet.</p>
+                  <Link href="/checklists/new">
+                    <Button className="bg-blue-500 text-white">
+                      Create a New Checklist
+                    </Button>
+                  </Link>
+                  <p className="text-red-500 text-xs mt-2">
+                    Note: All unsaved changes will be lost.
+                  </p>
+                </div>
+              ) : (
+                state.checklists.map((checklist) => (
+                  <div key={checklist.id} className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id={`checklist-${checklist.id}`}
+                      checked={selectedChecklists.includes(checklist.id)}
+                      onChange={() => handleChecklistToggle(checklist.id)}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor={`checklist-${checklist.id}`} className="text-sm text-gray-700">
+                      {checklist.title}
+                    </label>
+                  </div>
+                ))
+              )}
+            </div>
         <div className="mt-4 flex justify-end space-x-4">
           <Button onClick={onClose} variant="outline">
             Cancel
