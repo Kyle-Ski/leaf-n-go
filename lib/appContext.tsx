@@ -156,7 +156,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const totalWeight = action.payload.items.reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
                 const currentWeight = action.payload.items
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((item: any) => item.completed)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
@@ -233,28 +233,19 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...trip,
                 trip_checklists: trip.trip_checklists.map((tc) => {
                     if (tc.checklist_id === checklistId) {
-                        const tripItem = tc.checklists[0].checklist_items.find((ci) => ci.id === itemId);
-                        const itemWasCompleted = tripItem?.completed ?? false;
-
-                        let newCompletedItems = tc.completedItems;
-                        let newCurrentWeight = tc.currentWeight ?? 0;
-
-                        if (!itemWasCompleted && nowCompleted) {
-                            newCompletedItems += 1;
-                            newCurrentWeight += itemWeight;
-                        } else if (itemWasCompleted && !nowCompleted) {
-                            newCompletedItems -= 1;
-                            newCurrentWeight -= itemWeight;
-                        }
+                        // Update the trip's checklist completion info
+                        const matchingChecklist = updatedChecklists.find((cl) => cl.id === checklistId);
+                        const updatedCompletedItems = matchingChecklist?.completion?.completed ?? 0;
+                        const updatedCurrentWeight = matchingChecklist?.completion?.currentWeight ?? 0;
 
                         return {
                             ...tc,
-                            completedItems: newCompletedItems,
-                            currentWeight: newCurrentWeight
+                            completedItems: updatedCompletedItems,
+                            currentWeight: updatedCurrentWeight,
                         };
                     }
                     return tc;
-                })
+                }),
             }));
 
             return { ...state, checklists: updatedChecklists, trips: updatedTrips };
@@ -262,7 +253,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "ADD_ITEM_TO_CHECKLIST": {
             const newItems: ChecklistItem[] = action.payload; // Array of ChecklistItem objects
-        
+
             // Create a map of total quantities and weights to update completion
             const totalsMap = newItems.reduce<Record<string, { totalQuantity: number; totalWeight: number }>>(
                 (acc, item) => {
@@ -275,15 +266,15 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 },
                 {}
             );
-        
+
             // Update checklists
             const updatedChecklists = state.checklists.map((checklist) => {
                 if (totalsMap[checklist.id]) {
                     const { totalQuantity, totalWeight } = totalsMap[checklist.id];
-        
+
                     // Append all new items related to this checklist
                     const newChecklistItems = newItems.filter((item) => item.checklist_id === checklist.id);
-        
+
                     return {
                         ...checklist,
                         completion: {
@@ -297,7 +288,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 }
                 return checklist;
             });
-        
+
             // Update trips
             const updatedTrips = state.trips.map((trip) => ({
                 ...trip,
@@ -314,10 +305,10 @@ const appReducer = (state: AppState, action: Action): AppState => {
                     return tc;
                 }),
             }));
-        
+
             return { ...state, checklists: updatedChecklists, trips: updatedTrips };
         }
-                
+
         case "REMOVE_ITEM_FROM_CHECKLIST": {
             const { checklistId, itemId } = action.payload;
 

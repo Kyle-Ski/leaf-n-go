@@ -2,7 +2,6 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -16,6 +15,9 @@ import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { useAppContext } from "@/lib/appContext";
+import ProgressBar from "./progressBar";
+import { CheckedState } from "@radix-ui/react-checkbox";
+import ChecklistItemComponent from "@/components/checklistItem"
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -63,7 +65,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             quantity,
             completed: false, // Assuming new items are added as incomplete
         }));
-    
+
         try {
             // Make the API call to add multiple items
             const response = await fetch(`/api/checklists/${id}`, {
@@ -74,38 +76,37 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 },
                 body: JSON.stringify({ items: itemsToAdd }),
             });
-    
+
             if (!response.ok) {
                 const errorResponse = await response.json();
                 console.error('Failed to add items:', errorResponse);
                 throw new Error(errorResponse.error || 'Failed to add items');
             }
-    
+
             // Parse the response data
             const addedItems: ChecklistItem[] = await response.json();
-    
+
             // Dispatch each added item to the state
             dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItems });
-            
+
             // Update the local checklist state
             setChecklist((prev) =>
                 prev
                     ? { ...prev, items: [...prev.items, ...addedItems] }
                     : prev
             );
-    
-            console.log('Items added successfully:', addedItems);
+
         } catch (err) {
             console.error("Error adding items:", err);
         } finally {
             // Close the modal after adding
             setIsAddModalOpen(false);
-    
+
             // Reset the selected items
             setSelectedItems({});
         }
     };
-    
+
     // Handle change event for the number input
     const onNumberInputChange = (value: string, itemId: string) => {
         const quantity = parseInt(value, 10);
@@ -262,6 +263,47 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
         }
     };
 
+    const handleToggleItem = async (value: CheckedState, item: ChecklistItem) => {
+        if (!id) {
+            setError("Error updating checklist, try again later.");
+            return;
+        }
+        const response = await fetch(
+            `/api/checklists/${id}/items/${item.id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || "",
+                },
+                body: JSON.stringify({
+                    checklistId: id,
+                    itemId: item.item_id,
+                    completed: value,
+                    id: item.id,
+                }),
+            }
+        );
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(`Failed to update item status: ${errorMessage}`);
+        }
+        dispatch({
+            type: "CHECK_ITEM_IN_CHECKLIST",
+            payload: { checkedState: value, checklistId: id, itemId: item.id },
+        });
+        // Optimistically update the checklist UI
+        setChecklist((prev) => {
+            if (!prev || !prev.items) return prev;
+            return {
+                ...prev,
+                items: prev.items.map((i) =>
+                    i.id === item.id ? { ...i, completed: Boolean(value) } : i
+                ),
+            };
+        });
+    }
+
     if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
     if (error) return <p className="text-red-500">{error}</p>;
 
@@ -278,35 +320,13 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 </Button>
             </div>)}
 
-            {/* **Existing Completion Progress Bar** */}
-            <div className="mb-4">
-                <p className="text-gray-700">Completion</p>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${completionPercentage}%` }}
-                    ></div>
-                </div>
-                <span className="text-xs text-gray-500 mt-2 block">
-                    {total > 0 ? `${completed}/${total} items completed` : "No items in checklist"}
-                </span>
-            </div>
+            {/* **Completion Progress Bar** */}
+            <ProgressBar label="Completion" percentage={completionPercentage} color="green" description={total > 0 ? `${completed}/${total} items completed` : "No items in checklist"} />
 
-            {/* **New Weight Progress Bar** */}
-            <div className="mb-4">
-                <p className="text-gray-700">Weight Progress</p>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${weightPercentage}%` }}
-                    ></div>
-                </div>
-                <span className="text-xs text-gray-500 mt-2 block">
-                    {totalWeight > 0
-                        ? `${currentWeight.toFixed(1)}/${totalWeight.toFixed(1)} lbs`
-                        : "No weight data available"}
-                </span>
-            </div>
+            {/* **Weight Progress Bar** */}
+            <ProgressBar label="Weight Progress" percentage={weightPercentage ? weightPercentage : 0} color="blue" description={totalWeight > 0
+                ? `${currentWeight.toFixed(1)}/${totalWeight.toFixed(1)} lbs`
+                : "No weight data available"} />
 
             <div className="mb-6 space-y-4">
                 {/* Sort Dropdown */}
@@ -390,87 +410,10 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                         }
                     })
                     .map((item) => (
-                        <li
-                            key={item.id}
-                            className="p-4 bg-white rounded-lg shadow-md flex justify-between items-center"
-                        >
-                            <div>
-                                <Checkbox
-                                    checked={item.completed}
-                                    onCheckedChange={async (value) => {
-                                        if (!id) {
-                                            setError("Error updating checklist, try again later.");
-                                            return;
-                                        }
-                                        const response = await fetch(
-                                            `/api/checklists/${id}/items/${item.id}`,
-                                            {
-                                                method: "PUT",
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                    "x-user-id": user?.id || "",
-                                                },
-                                                body: JSON.stringify({
-                                                    checklistId: id,
-                                                    itemId: item.item_id,
-                                                    completed: value,
-                                                    id: item.id,
-                                                }),
-                                            }
-                                        );
-                                        if (!response.ok) {
-                                            const errorMessage = await response.text();
-                                            throw new Error(`Failed to update item status: ${errorMessage}`);
-                                        }
-                                        dispatch({
-                                            type: "CHECK_ITEM_IN_CHECKLIST",
-                                            payload: { checkedState: value, checklistId: id, itemId: item.id },
-                                        });
-                                        // Optimistically update the checklist UI
-                                        setChecklist((prev) => {
-                                            if (!prev || !prev.items) return prev;
-                                            return {
-                                                ...prev,
-                                                items: prev.items.map((i) =>
-                                                    i.id === item.id ? { ...i, completed: Boolean(value) } : i
-                                                ),
-                                            };
-                                        });
-                                    }}
-                                />
-                                <span
-                                    className={`ml-2 ${item.completed ? "line-through text-gray-500" : ""}`}
-                                >
-                                    {item.items.name}
-                                </span>
-                                {/* Display category if available */}
-                                {item.items.item_categories?.name && (
-                                    <div className="ml-2 text-sm text-gray-500 italic">
-                                        Category: {item.items.item_categories.name}
-                                    </div>
-                                )}
-                                {/* Display weight if available */}
-                                {item.items.weight !== undefined && item.items.weight > 0 && (
-                                    <div className="ml-2 text-sm text-gray-500">Weight: {item.items.weight} lbs</div>
-                                )}
-                                {/* Display notes if not null or empty */}
-                                {item.items.notes && item.items.notes.trim().length > 0 && (
-                                    <div className="ml-2 mt-1 text-sm text-gray-500 italic">
-                                        {item.items.notes}
-                                    </div>
-                                )}
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    setSelectedItem(item);
-                                    setIsRemoveModalOpen(true);
-                                }}
-                            >
-                                Remove
-                            </Button>
-                        </li>
+                        <ChecklistItemComponent key={item.id} item={item} onToggle={handleToggleItem} onRemove={() => {
+                            setSelectedItem(item);
+                            setIsRemoveModalOpen(true);
+                        }} />
                     ))}
             </ul>
 
@@ -597,25 +540,13 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             </Dialog>
 
             {/* Remove Item Modal */}
-            <Dialog open={isRemoveModalOpen} onOpenChange={setIsRemoveModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Remove Item</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to remove {selectedItem?.items.name} from the checklist?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-end space-x-4">
-                        <Button
-                            onClick={() => handleRemoveItem(selectedItem?.id || "")}
-                            className="bg-red-500 text-white"
-                        >
-                            Remove
-                        </Button>
-                        <Button onClick={() => setIsRemoveModalOpen(false)}>Cancel</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDeleteModal
+                isOpen={isRemoveModalOpen}
+                onClose={() => setIsRemoveModalOpen(false)}
+                onDelete={() => handleRemoveItem(selectedItem?.id || "")}
+                title="Remove Item"
+                description={`Are you sure you want to remove ${selectedItem?.items.name} from the checklist?`} deleteButtonText="Remove"
+            />
 
             {/*Delete Dialog*/}
             <ConfirmDeleteModal

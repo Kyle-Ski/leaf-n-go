@@ -100,7 +100,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
 
   try {
-    // Insert multiple items into the checklist_items table
+    // Expand items based on quantity
     const expandedItems = items.flatMap((item: Item) =>
       Array.from({ length: item.quantity }).map(() => ({
         checklist_id: checklistId,
@@ -109,13 +109,32 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         quantity: 1, // Each row represents one unit
       }))
     );
-    console.log("About to add ---->", expandedItems)
 
     // Insert all expanded rows into the checklist_items table
     const { data: insertedData, error: insertError } = await supabaseServer
       .from('checklist_items')
       .insert(expandedItems)
-      .select('id, checklist_id, item_id, completed, quantity, items(*)');
+      .select(
+        `
+          id,
+          checklist_id,
+          item_id,
+          completed,
+          quantity,
+          items (
+            id,
+            name,
+            notes,
+            weight,
+            user_id,
+            quantity,
+            category_id,
+            item_categories (
+              name
+            )
+          )
+        `
+      );
 
     if (insertError) {
       console.error("Error adding items to checklist:", insertError);

@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth-Context";
 import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
+import ProgressBar from "@/components/progressBar";
 
 const ChecklistsPage = () => {
   const { user } = useAuth();
@@ -155,36 +156,10 @@ const ChecklistsPage = () => {
                     </CardHeader>
                     <CardContent className="flex flex-col space-y-4 mt-4">
                       {/* Completion Section */}
-                      <div>
-                        <p className="text-gray-700">Completion</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div
-                            className="bg-green-500 h-2 rounded-full"
-                            style={{
-                              width: `${(list.completion.completed / list.completion.total) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-2 block">
-                          {`${list.completion.completed}/${list.completion.total} items added`}
-                        </span>
-                      </div>
+                      <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
 
                       {/* Weight Section */}
-                      <div>
-                        <p className="text-gray-700">Weight</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full"
-                            style={{
-                              width: `${(list.completion.currentWeight / list.completion.totalWeight) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 mt-2 block">
-                          {`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`}
-                        </span>
-                      </div>
+                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
 
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
@@ -209,36 +184,10 @@ const ChecklistsPage = () => {
                   </CardHeader>
                   <CardContent className="flex flex-col space-y-4 mt-4">
                     {/* Completion Section */}
-                    <div>
-                      <p className="text-gray-700">Completion</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{
-                            width: `${(list.completion.completed / list.completion.total) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-gray-500 mt-2 block">
-                        {`${list.completion.completed}/${list.completion.total} items added`}
-                      </span>
-                    </div>
+                    <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
 
                     {/* Weight Section */}
-                    <div>
-                      <p className="text-gray-700">Weight</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{
-                            width: `${(list.completion.currentWeight / list.completion.totalWeight) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-gray-500 mt-2 block">
-                        {`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`}
-                      </span>
-                    </div>
+                    <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
 
                     <Link href={`/checklists/${list.id}`}>
                       <Button variant="outline" className="mt-2">
