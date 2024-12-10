@@ -262,52 +262,65 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "ADD_ITEM_TO_CHECKLIST": {
             const newItem = action.payload;
-            const { checklist_id } = newItem;
-
-            const itemWeight = newItem.items.weight || 0;
-
+            const { checklist_id, quantity } = newItem;
+        
+            // If weight is per unit, multiply it by the quantity added
+            const itemWeight = (newItem.items.weight || 0) * (quantity || 1);
+        
             const updatedChecklists = state.checklists.map((checklist) => {
                 if (checklist.id === checklist_id) {
-                    const total = (checklist.completion?.total ?? 0) + 1;
+                    const total = (checklist.completion?.total ?? 0) + (quantity || 1);
                     const totalWeight = (checklist.completion?.totalWeight ?? 0) + itemWeight;
                     const currentWeight = checklist.completion?.currentWeight ?? 0; // Not completed initially
-
+        
+                    // Check if the item already exists in the checklist to update quantity
+                    const existingItemIndex = checklist.items.findIndex((item) => item.item_id === newItem.item_id);
+                    const updatedItems = [...checklist.items];
+                    if (existingItemIndex !== -1) {
+                        updatedItems[existingItemIndex] = {
+                            ...updatedItems[existingItemIndex],
+                            quantity: (updatedItems[existingItemIndex].quantity || 0) + (quantity || 1),
+                        };
+                    } else {
+                        updatedItems.push(newItem);
+                    }
+        
                     return {
                         ...checklist,
                         completion: {
                             completed: checklist.completion?.completed ?? 0,
                             total: total,
                             totalWeight: totalWeight,
-                            currentWeight: currentWeight
+                            currentWeight: currentWeight,
                         },
-                        items: [...checklist.items, newItem],
+                        items: updatedItems,
                     };
                 }
                 return checklist;
             });
-
+        
             const updatedTrips = state.trips.map((trip) => ({
                 ...trip,
                 trip_checklists: trip.trip_checklists.map((tc) => {
                     if (tc.checklist_id === checklist_id) {
-                        const totalItems = tc.totalItems + 1;
+                        const totalItems = tc.totalItems + (quantity || 1);
                         const totalWeight = (tc.totalWeight ?? 0) + itemWeight;
                         const currentWeight = tc.currentWeight ?? 0; // No change since not completed
-
+        
                         return {
                             ...tc,
                             totalItems,
                             totalWeight,
-                            currentWeight
+                            currentWeight,
                         };
                     }
                     return tc;
                 }),
             }));
-
+        
             return { ...state, checklists: updatedChecklists, trips: updatedTrips };
         }
-
+        
         case "REMOVE_ITEM_FROM_CHECKLIST": {
             const { checklistId, itemId } = action.payload;
 

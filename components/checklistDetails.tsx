@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -50,6 +50,84 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
     const [sortOption, setSortOption] = useState<string>("alphabetical-asc");
     const [checklistSearchQuery, setChecklistSearchQuery] = useState<string>("");
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
+
+    // Determine if any items have been selected
+    const hasSelectedItems = Object.keys(selectedItems).length > 0;
+
+    // Handle the "Add Items" button click
+    const handleAddItems = async () => {
+        // Prepare the payload for the API
+        const itemsToAdd = Object.entries(selectedItems).map(([id, quantity]) => ({
+            item_id: id, // Aligns with API expectations
+            quantity,
+            completed: false, // Assuming new items are added as incomplete
+        }));
+    
+        try {
+            // Make the API call to add multiple items
+            const response = await fetch(`/api/checklists/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-id': user?.id || "",
+                },
+                body: JSON.stringify({ items: itemsToAdd }),
+            });
+    
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                console.error('Failed to add items:', errorResponse);
+                throw new Error(errorResponse.error || 'Failed to add items');
+            }
+    
+            // Parse the response data
+            const addedItems: ChecklistItem[] = await response.json();
+    
+            // Dispatch each added item to the state
+            addedItems.forEach((addedItem) => {
+                dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem });
+            });
+    
+            // Update the local checklist state
+            setChecklist((prev) =>
+                prev
+                    ? { ...prev, items: [...prev.items, ...addedItems] }
+                    : prev
+            );
+    
+            console.log('Items added successfully:', addedItems);
+        } catch (err) {
+            console.error("Error adding items:", err);
+        } finally {
+            // Close the modal after adding
+            setIsAddModalOpen(false);
+    
+            // Reset the selected items
+            setSelectedItems({});
+        }
+    };
+    
+    // Handle change event for the number input
+    const onNumberInputChange = (value: string, itemId: string) => {
+        const quantity = parseInt(value, 10);
+        if (!isNaN(quantity)) {
+            handleQuantityChange(itemId, quantity);
+        }
+    };
+
+    // Handle changes in the number input
+    const handleQuantityChange = (itemId: string, quantity: number) => {
+        setSelectedItems((prevSelected) => {
+            const newSelected = { ...prevSelected };
+            if (quantity > 0) {
+                newSelected[itemId] = quantity;
+            } else {
+                delete newSelected[itemId];
+            }
+            return newSelected;
+        });
+    };
 
     const deleteChecklist = async () => {
         if (!id || !user) return;
@@ -157,7 +235,10 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
         const checklistItems = checklist.items.filter((item) => item.item_id === itemId);
         const totalInChecklist = checklistItems.reduce((sum, item) => sum + item.quantity, 0);
         const item = state.items.find((i) => i.id === itemId) as ItemDetails;
-        return item ? item.quantity - totalInChecklist : 0;
+
+        // Subtract the currently selected quantity from the remaining quantity
+        const selectedQuantity = selectedItems[itemId] || 0;
+        return item ? item.quantity - totalInChecklist - selectedQuantity : 0;
     };
 
     const handleAddItem = async (item: ItemDetails | Item) => {
@@ -188,7 +269,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
         } catch (err) {
             console.error("Error adding item:", err);
         } finally {
-            setIsAddModalOpen(false);
+            // setIsAddModalOpen(false);
         }
     };
 
@@ -454,38 +535,97 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add Item to Checklist</DialogTitle>
-                        <DialogDescription>Select an item to add.</DialogDescription>
+                        <DialogDescription>Select items to add with specified quantities.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <Input
                             type="text"
                             placeholder="Search items..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                             className="w-full p-2 border rounded-md"
                         />
                         <div className="max-h-80 overflow-y-auto space-y-2">
                             {filteredItems.map((item) => {
                                 const remainingQuantity = calculateRemainingQuantity(item.id);
+                                const selectedQuantity = selectedItems[item.id] || 0;
+
                                 return (
                                     <div
                                         key={item.id}
-                                        className={`p-2 rounded-md cursor-pointer ${remainingQuantity <= 0
-                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                            : "bg-gray-100 hover:bg-gray-200"
+                                        className={`p-4 rounded-md border flex items-center justify-between ${remainingQuantity <= 0
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            : 'bg-gray-100 hover:bg-gray-200'
                                             }`}
-                                        onClick={() => remainingQuantity > 0 && handleAddItem(item)}
                                     >
-                                        {item.name} (Remaining: {remainingQuantity})
-                                        {item.item_categories?.name && (
-                                            <span className="block text-xs text-gray-500 italic">
-                                                Category: {item.item_categories.name}
-                                            </span>
-                                        )}
+                                        <div>
+                                            <div className="font-medium">{item.name}</div>
+                                            {item.item_categories?.name && (
+                                                <span className="block text-xs text-gray-500 italic">
+                                                    Category: {item.item_categories.name}
+                                                </span>
+                                            )}
+                                            <div className="text-sm text-gray-600">
+                                                Remaining: {calculateRemainingQuantity(item.id)}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            {/* Decrement Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => onNumberInputChange(String(selectedQuantity - 1), item.id)}
+                                                disabled={selectedQuantity <= 0}
+                                                className={`w-8 h-8 flex items-center justify-center rounded-full 
+                                                            bg-red-500 text-white font-bold 
+                                                            ${selectedQuantity > 0 ? 'hover:bg-red-600' : 'opacity-50 cursor-not-allowed'}
+                                                            transition-all duration-200
+                                                          `}
+                                            >
+                                                -
+                                            </button>
+
+                                            {/* Number Input */}
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max={remainingQuantity}
+                                                value={selectedQuantity}
+                                                onChange={(e) => onNumberInputChange(e.target.value, item.id)}
+                                                disabled={remainingQuantity <= 0}
+                                                className="w-12 text-center p-1 border rounded-md bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+
+                                            {/* Increment Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => onNumberInputChange(String(selectedQuantity + 1), item.id)}
+                                                disabled={remainingQuantity <= 0}
+                                                className={`w-8 h-8 flex items-center justify-center rounded-full 
+                                                            bg-green-500 text-white font-bold 
+                                                            ${remainingQuantity > 0 ? 'hover:bg-green-600' : 'opacity-50 cursor-not-allowed'}
+                                                            transition-all duration-200
+                                                          `}
+                                            >
+                                                +
+                                            </button>
+
+                                        </div>
+
                                     </div>
                                 );
                             })}
                         </div>
+                        {/* Conditionally render the "Add Items" button */}
+                        {hasSelectedItems && (
+                            <div className="flex justify-end">
+                                <Button
+                                    onClick={handleAddItems}
+                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    Add Items
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
