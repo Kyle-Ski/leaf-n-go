@@ -231,7 +231,7 @@ const TripPage = () => {
 
             {/* Checklist Details Dialog */}
             <Dialog open={isChecklistDialogOpen} onOpenChange={setIsChecklistDialogOpen}>
-                <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
+                <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
                     <DialogHeader>
                         <DialogTitle>Checklist</DialogTitle>
                         <DialogDescription>Viewing Checklist Details.</DialogDescription>

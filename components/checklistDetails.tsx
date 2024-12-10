@@ -442,7 +442,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
 
             {/* Add Item Modal */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                <DialogContent>
+                <DialogContent className="min-h-[500px]">
                     <DialogHeader>
                         <DialogTitle>Add Item to Checklist</DialogTitle>
                         <DialogDescription>Select items to add with specified quantities.</DialogDescription>
@@ -455,7 +455,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                             onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                             className="w-full p-2 border rounded-md"
                         />
-                        <div className="max-h-80 overflow-y-auto space-y-2">
+                        <div className="max-h-[500px] overflow-y-auto space-y-2">
                             {filteredItems.map((item) => {
                                 const remainingQuantity = calculateRemainingQuantity(item.id);
                                 const selectedQuantity = selectedItems[item.id] || 0;
