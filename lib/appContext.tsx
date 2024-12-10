@@ -351,29 +351,19 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...trip,
                 trip_checklists: trip.trip_checklists.map((tc) => {
                     if (tc.checklist_id === checklistId) {
-                        const tripItem = tc.checklists[0].checklist_items.find((ci) => ci.id === itemId);
-                        if (!tripItem) return tc;
-
-                        const wasCompleted = tripItem.completed;
-                        const itemWeight = state.items.find((itm) => itm.id === tripItem.item_id)?.weight || 0;
-
-                        const totalItems = tc.totalItems - 1;
-                        let completedItems = tc.completedItems;
-                        let totalWeight = tc.totalWeight ?? 0;
-                        let currentWeight = tc.currentWeight ?? 0;
-
-                        totalWeight -= itemWeight;
-                        if (wasCompleted) {
-                            completedItems -= 1;
-                            currentWeight -= itemWeight;
-                        }
-
+                        // Recalculate trip-level values based on the updated checklist
+                        const matchingChecklist = updatedChecklists.find((cl) => cl.id === checklistId);
+                        const updatedTotalItems = matchingChecklist?.completion?.total ?? 0;
+                        const updatedCompletedItems = matchingChecklist?.completion?.completed ?? 0;
+                        const updatedTotalWeight = matchingChecklist?.completion?.totalWeight ?? 0;
+                        const updatedCurrentWeight = matchingChecklist?.completion?.currentWeight ?? 0;
+        
                         return {
                             ...tc,
-                            totalItems,
-                            completedItems,
-                            totalWeight,
-                            currentWeight
+                            totalItems: updatedTotalItems,
+                            completedItems: updatedCompletedItems,
+                            totalWeight: updatedTotalWeight,
+                            currentWeight: updatedCurrentWeight,
                         };
                     }
                     return tc;
