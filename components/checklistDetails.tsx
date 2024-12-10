@@ -10,7 +10,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Loader } from "@/components/ui/loader";
-import { ChecklistWithItems, ChecklistItem, ItemDetails, Item, AppState } from "@/types/projectTypes";
+import { ChecklistWithItems, ChecklistItem, ItemDetails, AppState } from "@/types/projectTypes";
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
