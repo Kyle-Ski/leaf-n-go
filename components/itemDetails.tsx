@@ -16,6 +16,7 @@ import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { ItemDetails, Item } from "@/types/projectTypes";
 import { useAuth } from "@/lib/auth-Context";
+import { formatWeight, kgToLbs, lbsToKg } from "@/utils/convertWeight";
 
 interface DetailedItemViewProps {
     itemId: string;
@@ -28,7 +29,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const { state, dispatch } = useAppContext();
     const { user } = useAuth();
     const item = state.items.find((i) => i.id === itemId);
-
     const [loading, setLoading] = useState(!item);
     const [error, setError] = useState<string | null>(null);
 
@@ -49,16 +49,20 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     // Update editItem when item changes in global state
     useEffect(() => {
         if (item) {
+            const { weight_unit } = state.user_settings;
+            const convertedWeight =
+                weight_unit === "kg" ? lbsToKg(item.weight) ?? 0 : item.weight;
+
             setEditItem({
                 name: item.name || "",
                 quantity: item.quantity || 0,
-                weight: item.weight || 0,
+                weight: convertedWeight,
                 notes: item.notes || "",
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 category_id: (item as any).category_id || null,
             });
         }
-    }, [item]);
+    }, [item, state.user_settings.weight_unit]);
 
     // Fetch item details if not available in the global state
     useEffect(() => {
@@ -99,13 +103,28 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const handleSave = async () => {
         setError(null);
         try {
+            const { weight_unit } = state.user_settings;
+            let weightInLbs: number;
+
+            if (weight_unit === "kg") {
+                const converted = kgToLbs(editItem.weight);
+                if (converted === null) {
+                    throw new Error("Invalid weight input.");
+                }
+                weightInLbs = converted;
+            } else {
+                weightInLbs = editItem.weight;
+            }
+
+            const updatedItemData = { ...editItem, weight: weightInLbs };
+
             const response = await fetch(`/api/items/${itemId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "x-user-id": user?.id || "",
                 },
-                body: JSON.stringify(editItem),
+                body: JSON.stringify(updatedItemData),
             });
 
             if (!response.ok) {
@@ -177,7 +196,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             )}
             <p className="text-gray-600 mb-4">Notes: {item.notes || "N/A"}</p>
             <p className="text-gray-600 mb-4">Quantity: {item.quantity}</p>
-            <p className="text-gray-600 mb-4">Weight: {item.weight}kg</p>
+            <p className="text-gray-600 mb-4">Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}{state.user_settings.weight_unit}</p>
 
             {/* Environmental Insights Placeholder */}
             <div className="bg-gray-100 p-4 rounded-md mb-4">
@@ -242,7 +261,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                             </div>
                             <div>
                                 <label htmlFor="edit-weight" className="block text-sm font-medium text-gray-700">
-                                    Weight (kg)
+                                    Weight ({state.user_settings.weight_unit})
                                 </label>
                                 <Input
                                     id="edit-weight"
@@ -250,7 +269,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                                     name="weight"
                                     value={editItem.weight}
                                     onChange={handleInputChange}
-                                    placeholder="Weight (kg)"
+                                    placeholder={`Weight (${state.user_settings.weight_unit})`}
                                     required
                                 />
                             </div>

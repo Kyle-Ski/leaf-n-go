@@ -5,12 +5,18 @@ const initialState: AppState = {
     trips: [],
     checklists: [],
     items: [],
-    userSettings: null,
     isNew: false,
     noTrips: false,
     noChecklists: false,
     noItems: false,
-    item_categories: []
+    item_categories: [],
+    user_settings: {
+        user_id: "",
+        dark_mode: false,
+        email_notifications: false,
+        push_notifications: false,
+        weight_unit: "lbs"
+    }
 };
 
 const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | undefined>(undefined);
@@ -354,7 +360,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         const updatedCompletedItems = matchingChecklist?.completion?.completed ?? 0;
                         const updatedTotalWeight = matchingChecklist?.completion?.totalWeight ?? 0;
                         const updatedCurrentWeight = matchingChecklist?.completion?.currentWeight ?? 0;
-        
+
                         return {
                             ...tc,
                             totalItems: updatedTotalItems,
@@ -378,6 +384,24 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "SET_CATEGORIES":
             return { ...state, item_categories: action.payload };
+
+        case "SET_USER_SETTINGS": {
+            return {
+                ...state,
+                user_settings: { ...state.user_settings, ...action.payload },
+            };
+        }
+
+        case "UPDATE_USER_SETTING": {
+            const { key, value } = action.payload;
+            return {
+                ...state,
+                user_settings: {
+                    ...state.user_settings,
+                    [key]: value,
+                },
+            };
+        }
 
         default:
             return state;
@@ -407,6 +431,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 dispatch({ type: "SET_TRIPS", payload: parsedState.trips });
                 dispatch({ type: "SET_CHECKLISTS", payload: checklistsWithCompletion });
                 dispatch({ type: "SET_CATEGORIES", payload: parsedState.item_categories });
+                dispatch({ type: "SET_USER_SETTINGS", payload: parsedState.user_settings });
                 // Add other state restoration as needed
             } catch (error) {
                 console.error("Failed to parse stored app state:", error);

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
+import { kgToLbs } from "@/utils/convertWeight";
 
 interface NewItemModalProps {
   userId: string;
@@ -29,19 +30,37 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
     setLoading(true);
 
     try {
+      // Retrieve the user's preferred weight unit
+      const { weight_unit } = state.user_settings;
+
+      // Convert weight to pounds if the preferred unit is kilograms
+      let weightInLbs: number;
+      if (weight_unit === "kg") {
+        const converted = kgToLbs(weight);
+        if (converted === null) {
+          throw new Error("Invalid weight input.");
+        }
+        weightInLbs = converted;
+      } else {
+        weightInLbs = weight;
+      }
+
+      // Prepare the payload with weight in pounds
+      const payload = {
+        name,
+        quantity,
+        weight: weightInLbs, // Use the converted weight
+        notes,
+        category_id: category,
+      };
+
       const response = await fetch("/api/items", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-id": userId,
         },
-        body: JSON.stringify({
-          name,
-          quantity,
-          weight,
-          notes,
-          category_id: category
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -54,7 +73,6 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
       if (state.noItems) {
         dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
       }
-
 
       // Reset form fields
       setName("");
@@ -71,6 +89,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-[300px] flex items-center justify-center">
@@ -112,7 +131,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
           </div>
           <div>
             <label htmlFor="weight" className="block text-sm font-medium text-gray-700">
-              Weight (kg)
+              Weight ({state.user_settings.weight_unit})
             </label>
             <Input
               type="number"
@@ -122,6 +141,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
               required
               min={0}
               step={0.1}
+              placeholder={`Enter weight in ${state.user_settings.weight_unit}`}
               className="w-full"
             />
           </div>
