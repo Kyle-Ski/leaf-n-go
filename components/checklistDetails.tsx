@@ -434,6 +434,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create New Item</DialogTitle>
+                        <DialogDescription>Create a new item to add to your checklist.</DialogDescription>
                     </DialogHeader>
                     <NewItemModal userId={user?.id || ""} />
                 </DialogContent>

@@ -176,27 +176,30 @@ const ChecklistsPage = () => {
           {/* Checklist Cards */}
           <section className="w-full max-w-4xl grid gap-4">
             {filteredChecklists.length > 0 ? (
-              filteredChecklists.map((list) => (
-                <Card key={list.id} className="p-4 bg-white shadow-lg">
-                  <CardHeader>
-                    <CardTitle>{list.title}</CardTitle>
-                    <p className="text-sm text-gray-500">Category: {list.category}</p>
-                  </CardHeader>
-                  <CardContent className="flex flex-col space-y-4 mt-4">
-                    {/* Completion Section */}
-                    <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
-
-                    {/* Weight Section */}
-                    <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
-
-                    <Link href={`/checklists/${list.id}`}>
-                      <Button variant="outline" className="mt-2">
-                        View Checklist
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))
+              filteredChecklists.map((list) => {
+                // console.log("--->", list)
+                return(
+                  <Card key={list.id} className="p-4 bg-white shadow-lg">
+                    <CardHeader>
+                      <CardTitle>{list.title}</CardTitle>
+                      <p className="text-sm text-gray-500">Category: {list.category}</p>
+                    </CardHeader>
+                    <CardContent className="flex flex-col space-y-4 mt-4">
+                      {/* Completion Section */}
+                      <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
+  
+                      {/* Weight Section */}
+                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
+  
+                      <Link href={`/checklists/${list.id}`}>
+                        <Button variant="outline" className="mt-2">
+                          View Checklist
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )
+              })
             ) : (
               <p className="text-gray-600 text-center">No checklists found. Try creating a new checklist!</p>
             )}

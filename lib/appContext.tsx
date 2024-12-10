@@ -48,7 +48,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                                 ...ci.items,
                                 // Update all relevant fields of the item. Adjust as necessary.
                                 name: action.payload.name,
-                                weight: action.payload.weight,
+                                weight: action.payload?.weight,
                                 notes: action.payload.notes,
                                 quantity: action.payload.quantity,
                                 // Add other fields if necessary
@@ -60,13 +60,13 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
                 // Recalculate totalWeight and currentWeight based on updated items
                 const totalWeight = updatedChecklistItems.reduce(
-                    (sum, ci) => sum + (ci.items.weight || 0),
+                    (sum, ci) => sum + (ci.items?.weight || 0),
                     0
                 );
 
                 const currentWeight = updatedChecklistItems
                     .filter((ci) => ci.completed)
-                    .reduce((sum, ci) => sum + (ci.items.weight || 0), 0);
+                    .reduce((sum, ci) => sum + (ci.items?.weight || 0), 0);
 
                 // Optionally, recalculate 'completed' count if it depends on specific logic
                 const completedCount = updatedChecklistItems.filter((ci) => ci.completed).length;
@@ -126,10 +126,10 @@ const appReducer = (state: AppState, action: Action): AppState => {
         case "SET_CHECKLISTS": {
             // Initialize currentWeight and totalWeight for each checklist
             const updatedChecklists = action.payload.map((checklist: ChecklistWithItems) => {
-                const totalWeight = checklist.items.reduce((sum, item) => sum + (item.items.weight || 0), 0);
+                const totalWeight = checklist.items.reduce((sum, item) => sum + (item.items?.weight || 0), 0);
                 const currentWeight = checklist.items
                     .filter((item) => item.completed)
-                    .reduce((sum, item) => sum + (item.items.weight || 0), 0);
+                    .reduce((sum, item) => sum + (item.items?.weight || 0), 0);
 
                 return {
                     ...checklist,
@@ -149,12 +149,14 @@ const appReducer = (state: AppState, action: Action): AppState => {
             // When a new checklist is added, initialize the weights
             if (action.payload.items) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const totalWeight = action.payload.items.reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
+                const totalWeight = action.payload.items.reduce((sum: number, item: any) => {
+                    return sum + (item.items?.weight || 0)
+                }, 0);
                 const currentWeight = action.payload.items
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((item: any) => item.completed)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .reduce((sum: number, item: any) => sum + (item.items.weight || 0), 0);
+                    .reduce((sum: number, item: any) => sum + (item.items?.weight || 0), 0);
 
                 action.payload = {
                     ...action.payload,
@@ -196,7 +198,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
             const wasCompleted = checklist.items.find(i => i.id === itemId)?.completed ?? false;
             const nowCompleted = item.completed;
-            const itemWeight = item.items.weight || 0;
+            const itemWeight = item.items?.weight || 0;
 
             let completedCount = checklist.completion?.completed ?? 0;
             let currentWeight = checklist.completion?.currentWeight ?? 0;
@@ -256,7 +258,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         acc[item.checklist_id] = { totalQuantity: 0, totalWeight: 0 };
                     }
                     acc[item.checklist_id].totalQuantity += item.quantity || 1;
-                    acc[item.checklist_id].totalWeight += (item.items.weight || 0) * item.quantity;
+                    acc[item.checklist_id].totalWeight += (item.items?.weight || 0) * item.quantity;
                     return acc;
                 },
                 {}
@@ -313,7 +315,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                     if (!removedItem) return checklist;
 
                     const wasCompleted = removedItem.completed;
-                    const itemWeight = removedItem.items.weight || 0;
+                    const itemWeight = removedItem.items?.weight || 0;
 
                     const updatedItems = checklist.items.filter((i) => i.id !== itemId);
 
