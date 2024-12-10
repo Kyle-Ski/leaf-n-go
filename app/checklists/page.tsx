@@ -178,7 +178,6 @@ const ChecklistsPage = () => {
           <section className="w-full max-w-4xl grid gap-4">
             {filteredChecklists.length > 0 ? (
               filteredChecklists.map((list) => {
-                // console.log("--->", list)
                 return(
                   <Card key={list.id} className="p-4 bg-white shadow-lg">
                     <CardHeader>

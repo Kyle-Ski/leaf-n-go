@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-Context";
 import { useAppContext } from "@/lib/appContext";
+import { UserSettings } from "@/types/projectTypes";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -39,6 +40,22 @@ export default function AuthPage() {
       hasSpecialChar
     );
   };
+
+  const fetchUserSettings = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/user-settings?userId=${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user settings');
+      }
+      const data: UserSettings = await response.json();
+
+      // Dispatch the fetched user settings to the global state
+      dispatch({ type: 'SET_USER_SETTINGS', payload: data });
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+    }
+  };
+
 
   const fetchChecklists = async (userId: string) => {
     try {
@@ -86,11 +103,11 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (Array.isArray(data) && data.length === 0) {
-        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true})
+        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: true })
         dispatch({ type: "SET_ITEMS", payload: [] });
       } else if (data.length > 0) {
         dispatch({ type: "SET_ITEMS", payload: data }); // Save items to global state
-        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false})
+        dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
       } else {
         throw new Error("Items is not formatted as expected")
       }
@@ -183,6 +200,7 @@ export default function AuthPage() {
         await fetchItems(user.id);
         await fetchChecklists(user.id)
         await fetchCategories(user.id)
+        await fetchUserSettings(user.id)
         router.push("/"); // Redirect to homepage
       }
     } catch (err) {

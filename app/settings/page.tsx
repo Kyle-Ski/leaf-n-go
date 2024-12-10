@@ -1,4 +1,5 @@
 "use client";
+
 import { withAuth } from "@/lib/withAuth";
 import { useAuth } from "@/lib/auth-Context";
 import { useState, useEffect } from "react";
@@ -8,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/lib/appContext";
 import { UserSettings } from "@/types/projectTypes";
+import { Loader } from "@/components/ui/loader"; // Ensure Loader is imported
 
 interface UpdateUserSettingAction {
   type: "UPDATE_USER_SETTING";
@@ -34,6 +36,24 @@ const SettingsPage = () => {
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [preferredWeight, setPreferredWeight] = useState<"kg" | "lbs">(user?.user_metadata?.preferred_weight || "lbs");
+
+  // **New State Variables Start Here**
+  // Appearance Settings
+  const [isSavingAppearance, setIsSavingAppearance] = useState(false);
+  const [saveSuccessAppearance, setSaveSuccessAppearance] = useState(false);
+
+  // Notifications Settings
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [saveSuccessNotifications, setSaveSuccessNotifications] = useState(false);
+
+  // Preferred Weight Unit
+  const [isSavingWeightUnit, setIsSavingWeightUnit] = useState(false);
+  const [saveSuccessWeightUnit, setSaveSuccessWeightUnit] = useState(false);
+
+  // Profile Information
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [saveSuccessProfile, setSaveSuccessProfile] = useState(false);
+  // **New State Variables End Here**
 
   // Track changed fields using a partial UserSettings type
   const [changedFields, setChangedFields] = useState<Partial<UserSettings>>({});
@@ -65,12 +85,6 @@ const SettingsPage = () => {
   const handleFieldChange = (key: keyof UserSettings, value: UserSettings[keyof UserSettings]) => {
     // Update local state
     switch (key) {
-      // case "name":
-      //   setUpdatedName(value as string);
-      //   break;
-      // case "email":
-      //   setUpdatedEmail(value as string);
-      //   break;
       case "dark_mode":
         setDarkMode(value as boolean);
         break;
@@ -83,6 +97,12 @@ const SettingsPage = () => {
       case "weight_unit":
         setPreferredWeight(value as "kg" | "lbs");
         break;
+      // case "name":
+      //   setUpdatedName(value as string);
+      //   break;
+      // case "email":
+      //   setUpdatedEmail(value as string);
+      //   break;
       default:
         break;
     }
@@ -94,53 +114,77 @@ const SettingsPage = () => {
     }));
   };
 
-  // Save updated user settings to the database
-  const handleSave = async (sectionFields: (keyof UserSettings)[]) => {
+  // **Updated handleSave Function Start Here**
+  const handleSave = async (
+    sectionFields: (keyof UserSettings)[],
+    section: "profile" | "appearance" | "notifications" | "weight_unit"
+  ) => {
     if (!user) return;
 
-    // Explicitly type updatedFields as Partial<UserSettings>
-    const updatedFields: Partial<UserSettings> = {};
-
-    // Update the forEach loop with type assertions
-    for (const field of sectionFields) {
-      if (changedFields[field] !== undefined) {
-        switch (field) {
-          case "dark_mode":
-            updatedFields.dark_mode = changedFields.dark_mode as boolean;
-            break;
-          case "email_notifications":
-            updatedFields.email_notifications = changedFields.email_notifications as boolean;
-            break;
-          case "push_notifications":
-            updatedFields.push_notifications = changedFields.push_notifications as boolean;
-            break;
-          case "weight_unit":
-            updatedFields.weight_unit = changedFields.weight_unit as "kg" | "lbs";
-            break;
-          default:
-            // Optionally handle unexpected fields or throw an error
-            break;
-        }
-      }
-    }
-
-    if (Object.keys(updatedFields).length === 0) {
-      // Nothing to save
-      return;
+    // Set the appropriate isSaving state based on the section
+    switch (section) {
+      case "profile":
+        setIsSavingProfile(true);
+        break;
+      case "appearance":
+        setIsSavingAppearance(true);
+        break;
+      case "notifications":
+        setIsSavingNotifications(true);
+        break;
+      case "weight_unit":
+        setIsSavingWeightUnit(true);
+        break;
+      default:
+        break;
     }
 
     try {
+      // Prepare updatedFields as before
+      const updatedFields: Partial<UserSettings> = {};
+
+      for (const field of sectionFields) {
+        if (changedFields[field] !== undefined) {
+          switch (field) {
+            case "dark_mode":
+              updatedFields.dark_mode = changedFields.dark_mode as boolean;
+              break;
+            case "email_notifications":
+              updatedFields.email_notifications = changedFields.email_notifications as boolean;
+              break;
+            case "push_notifications":
+              updatedFields.push_notifications = changedFields.push_notifications as boolean;
+              break;
+            case "weight_unit":
+              updatedFields.weight_unit = changedFields.weight_unit as "kg" | "lbs";
+              break;
+            // case "name":
+            //   updatedFields.name = changedFields.name as string;
+            //   break;
+            // case "email":
+            //   updatedFields.email = changedFields.email as string;
+            //   break;
+          default:
+              break;
+          }
+        }
+      }
+
+      if (Object.keys(updatedFields).length === 0) {
+        // Nothing to save
+        return;
+      }
+
       // Dispatch the updated settings to the reducer
       Object.entries(updatedFields).forEach(([key, value]) => {
-        // Type assertion ensures key is keyof UserSettings
         dispatch(updateUserSetting({ key: key as keyof UserSettings, value }));
       });
 
       // Make the API call with only the updated fields
       const response = await fetch(`/api/user-settings`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: user.id,
@@ -154,10 +198,47 @@ const SettingsPage = () => {
 
       const result = await response.json();
       console.log(result);
+
+      // Set the appropriate saveSuccess state based on the section
+      switch (section) {
+        case "profile":
+          setSaveSuccessProfile(true);
+          break;
+        case "appearance":
+          setSaveSuccessAppearance(true);
+          break;
+        case "notifications":
+          setSaveSuccessNotifications(true);
+          break;
+        case "weight_unit":
+          setSaveSuccessWeightUnit(true);
+          break;
+        default:
+          break;
+      }
+
       // Reset changed fields after successful save
       setChangedFields({});
     } catch (error) {
       console.error("Error saving user settings:", error);
+    } finally {
+      // Reset the isSaving state
+      switch (section) {
+        case "profile":
+          setIsSavingProfile(false);
+          break;
+        case "appearance":
+          setIsSavingAppearance(false);
+          break;
+        case "notifications":
+          setIsSavingNotifications(false);
+          break;
+        case "weight_unit":
+          setIsSavingWeightUnit(false);
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -175,11 +256,11 @@ const SettingsPage = () => {
         </Card>
 
         {/* Profile Information */}
-        <Card className="p-6 bg-white shadow-lg">
+        <Card className="p-6 bg-white shadow-lg relative">
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 relative">
             <div>
               <label className="block text-gray-700">Name</label>
               <Input
@@ -200,12 +281,28 @@ const SettingsPage = () => {
                 readOnly // Assuming email is not editable; remove if it should be editable
               />
             </div>
+
+            {/* Loader */}
+            {isSavingProfile && (
+              <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+                <Loader className="h-8 w-8 text-blue-500" />
+              </div>
+            )}
+
+            {/* Success Message */}
+            {saveSuccessProfile && (
+              <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+            )}
+
             <div className="flex space-x-4 mt-4">
-              <Button onClick={
-                // () => handleSave(["name"])
-                () => console.log("SAVING NAME")
-              }
-                className="bg-green-500 text-white hover:bg-green-600">
+              <Button
+                onClick={
+                  () => console.log("Save Profile")
+                  // () => handleSave(["name", "email"], "profile")
+                }
+                className="bg-green-500 text-white hover:bg-green-600"
+                disabled={isSavingProfile} // Disable button while saving
+              >
                 Save
               </Button>
             </div>
@@ -213,7 +310,7 @@ const SettingsPage = () => {
         </Card>
 
         {/* Appearance Settings */}
-        <Card className="p-6 bg-white shadow-lg">
+        <Card className="p-6 bg-white shadow-lg relative">
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
           </CardHeader>
@@ -224,15 +321,32 @@ const SettingsPage = () => {
               onCheckedChange={(value) => handleFieldChange("dark_mode", value)}
             />
           </CardContent>
+
+          {/* Loader */}
+          {isSavingAppearance && (
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+              <Loader className="h-8 w-8 text-blue-500" />
+            </div>
+          )}
+
+          {/* Success Message */}
+          {saveSuccessAppearance && (
+            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+          )}
+
           <CardContent className="flex space-x-4 mt-4">
-            <Button onClick={() => handleSave(["dark_mode"])} className="bg-green-500 text-white hover:bg-green-600">
+            <Button
+              onClick={() => handleSave(["dark_mode"], "appearance")}
+              className="bg-green-500 text-white hover:bg-green-600"
+              disabled={isSavingAppearance} // Disable button while saving
+            >
               Save
             </Button>
           </CardContent>
         </Card>
 
         {/* Notifications Settings */}
-        <Card className="p-6 bg-white shadow-lg">
+        <Card className="p-6 bg-white shadow-lg relative">
           <CardHeader>
             <CardTitle>Notifications</CardTitle>
           </CardHeader>
@@ -253,12 +367,23 @@ const SettingsPage = () => {
             </div>
           </CardContent>
 
+          {/* Loader */}
+          {isSavingNotifications && (
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+              <Loader className="h-8 w-8 text-blue-500" />
+            </div>
+          )}
 
+          {/* Success Message */}
+          {saveSuccessNotifications && (
+            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+          )}
 
           <CardContent className="flex space-x-4 mt-4">
             <Button
-              onClick={() => handleSave(["email_notifications", "push_notifications"])}
+              onClick={() => handleSave(["email_notifications", "push_notifications"], "notifications")}
               className="bg-green-500 text-white hover:bg-green-600"
+              disabled={isSavingNotifications} // Disable button while saving
             >
               Save
             </Button>
@@ -266,7 +391,7 @@ const SettingsPage = () => {
         </Card>
 
         {/* Preferred Weight Setting */}
-        <Card className="p-6 bg-white shadow-lg">
+        <Card className="p-6 bg-white shadow-lg relative">
           <CardHeader>
             <CardTitle>Preferred Weight Unit</CardTitle>
           </CardHeader>
@@ -293,10 +418,24 @@ const SettingsPage = () => {
               </div>
             </div>
           </CardContent>
+
+          {/* Loader */}
+          {isSavingWeightUnit && (
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+              <Loader className="h-6 w-6 text-blue-500" />
+            </div>
+          )}
+
+          {/* Success Message */}
+          {saveSuccessWeightUnit && (
+            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+          )}
+
           <CardContent className="flex space-x-4 mt-4">
             <Button
-              onClick={() => handleSave(["weight_unit"])}
+              onClick={() => handleSave(["weight_unit"], "weight_unit")}
               className="bg-green-500 text-white hover:bg-green-600"
+              disabled={isSavingWeightUnit} // Disable button while saving
             >
               Save
             </Button>
