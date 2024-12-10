@@ -252,6 +252,7 @@ const TripPage = () => {
                             id={selectedChecklistId}
                             user={user}
                             state={state}
+                            currentPage="trips"
                         />
                     )}
                 </DialogContent>

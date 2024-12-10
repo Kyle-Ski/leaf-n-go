@@ -17,12 +17,14 @@ import { Input } from "@/components/ui/input";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { useAppContext } from "@/lib/appContext";
 
+const dontShowDelete = ['trips'] as const
+type DontShowDeletePages = typeof dontShowDelete[number]
+
 interface ChecklistDetailsProps {
     id: string;
     user: { id: string } | null;
     state: {
         items: (ItemDetails | Item)[];
-        // If you store categories in state, make sure this matches how you store them:
         item_categories?: Array<{
             id: string;
             name: string;
@@ -31,9 +33,11 @@ interface ChecklistDetailsProps {
             created_at?: string;
         }>;
     };
+    currentPage?: DontShowDeletePages
 }
 
-function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
+
+function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProps) {
     const { dispatch } = useAppContext();
     const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
     const [loading, setLoading] = useState(true);
@@ -218,14 +222,14 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
         <div className="p-4 max-w-4xl mx-auto">
             <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
 
-            <div className="flex justify-end mb-4">
+            {(currentPage && dontShowDelete.includes(currentPage)) ? <></> : (<div className="flex justify-end mb-4">
                 <Button
                     onClick={() => setIsDeleteDialogOpen(true)}
                     className="bg-red-500 text-white"
                 >
                     Delete Checklist
                 </Button>
-            </div>
+            </div>)}
 
             {/* **Existing Completion Progress Bar** */}
             <div className="mb-4">
@@ -278,6 +282,8 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                         <option value="not-completed-first">Not Completed First</option>
                         <option value="category-asc">Category (A-Z)</option>
                         <option value="category-desc">Category (Z-A)</option>
+                        <option value="weight-asc">Weight (Low - High)</option>
+                        <option value="weight-desc">Weight (High - Low)</option>
                     </select>
 
                 </div>
@@ -309,27 +315,32 @@ function ChecklistDetails({ id, user, state }: ChecklistDetailsProps) {
                         const notesMatch = item.items.notes?.toLowerCase().includes(checklistSearchQuery) ?? false;
                         const categoryMatch = item.items.item_categories?.name?.toLowerCase().includes(checklistSearchQuery) ?? false;
                         return nameMatch || notesMatch || categoryMatch;
-                    }
-                    )
+                    })
                     .sort((a, b) => {
                         // Extract category names
                         const aCategory = a.items.item_categories?.name?.toLowerCase() || "";
                         const bCategory = b.items.item_categories?.name?.toLowerCase() || "";
 
-                        if (sortOption === "alphabetical-asc") {
-                            return a.items.name.localeCompare(b.items.name);
-                        } else if (sortOption === "alphabetical-desc") {
-                            return b.items.name.localeCompare(a.items.name);
-                        } else if (sortOption === "completed-first") {
-                            return Number(b.completed) - Number(a.completed);
-                        } else if (sortOption === "not-completed-first") {
-                            return Number(a.completed) - Number(b.completed);
-                        } else if (sortOption === "category-asc") {
-                            return aCategory.localeCompare(bCategory);
-                        } else if (sortOption === "category-desc") {
-                            return bCategory.localeCompare(aCategory);
+                        switch (sortOption) {
+                            case "alphabetical-asc":
+                                return a.items.name.localeCompare(b.items.name);
+                            case "alphabetical-desc":
+                                return b.items.name.localeCompare(a.items.name);
+                            case "completed-first":
+                                return Number(b.completed) - Number(a.completed);
+                            case "not-completed-first":
+                                return Number(a.completed) - Number(b.completed);
+                            case "category-asc":
+                                return aCategory.localeCompare(bCategory);
+                            case "category-desc":
+                                return bCategory.localeCompare(aCategory);
+                            case "weight-asc":
+                                return (a.items.weight || 0) - (b.items.weight || 0);
+                            case "weight-desc":
+                                return (b.items.weight || 0) - (a.items.weight || 0);
+                            default:
+                                return 0;
                         }
-                        return 0;
                     })
                     .map((item) => (
                         <li
