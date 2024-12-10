@@ -88,6 +88,10 @@ const ItemsPage = () => {
                     return aCategory.localeCompare(bCategory);
                 case "category-desc":
                     return bCategory.localeCompare(aCategory);
+                case "weight-asc":
+                    return (a.weight || 0) - (b.weight || 0);
+                case "weight-desc":
+                    return (b.weight || 0) - (a.weight || 0);
                 default:
                     return 0;
             }
@@ -143,6 +147,8 @@ const ItemsPage = () => {
                                 <option value="quantity-desc">Quantity (High-Low)</option>
                                 <option value="category-asc">Category (A-Z)</option>
                                 <option value="category-desc">Category (Z-A)</option>
+                                <option value="weight-asc">Weight (Low - High)</option>
+                                <option value="weight-desc">Weight (High - Low)</option>
                             </select>
                         </div>
                     </div>
