@@ -394,6 +394,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
         }
 
         case "UPDATE_USER_SETTING": {
+            console.log("UPDATING:", action.payload)
             const { key, value } = action.payload;
             return {
                 ...state,
