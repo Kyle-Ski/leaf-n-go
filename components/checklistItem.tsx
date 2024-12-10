@@ -2,6 +2,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ChecklistItem, ChecklistItem as ChecklistItemType } from "@/types/projectTypes";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { formatWeight } from "@/utils/convertWeight";
+import { useAppContext } from "@/lib/appContext";
 
 interface ChecklistItemProps {
     item: ChecklistItemType;
@@ -10,6 +12,7 @@ interface ChecklistItemProps {
 }
 
 const ChecklistItemComponent = ({ item, onToggle, onRemove }: ChecklistItemProps) => {
+    const { state } = useAppContext();
     return (
         <li key={item.id} className="p-4 bg-white rounded-lg shadow-md flex justify-between items-center">
             <div>
@@ -36,7 +39,7 @@ const ChecklistItemComponent = ({ item, onToggle, onRemove }: ChecklistItemProps
                 {/* Display weight if available */}
                 {item.items.weight !== undefined && item.items.weight > 0 && (
                     <div className="ml-2 text-sm text-gray-500">
-                        Weight: {item.items.weight} lbs
+                        Weight: {formatWeight(item.items.weight, state.user_settings.weight_unit)} {state.user_settings.weight_unit}
                     </div>
                 )}
 

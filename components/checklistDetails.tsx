@@ -10,7 +10,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Loader } from "@/components/ui/loader";
-import { ChecklistWithItems, ChecklistItem, ItemDetails, Item } from "@/types/projectTypes";
+import { ChecklistWithItems, ChecklistItem, ItemDetails, Item, AppState } from "@/types/projectTypes";
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
@@ -18,6 +18,7 @@ import { useAppContext } from "@/lib/appContext";
 import ProgressBar from "./progressBar";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import ChecklistItemComponent from "@/components/checklistItem"
+import { formatWeight } from "@/utils/convertWeight";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -25,16 +26,7 @@ type DontShowDeletePages = typeof dontShowDelete[number]
 interface ChecklistDetailsProps {
     id: string;
     user: { id: string } | null;
-    state: {
-        items: (ItemDetails | Item)[];
-        item_categories?: Array<{
-            id: string;
-            name: string;
-            description?: string;
-            user_id?: string;
-            created_at?: string;
-        }>;
-    };
+    state: AppState;
     currentPage?: DontShowDeletePages
 }
 
@@ -325,7 +317,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
 
             {/* **Weight Progress Bar** */}
             <ProgressBar label="Weight Progress" percentage={weightPercentage ? weightPercentage : 0} color="blue" description={totalWeight > 0
-                ? `${currentWeight.toFixed(1)}/${totalWeight.toFixed(1)} lbs`
+                ? `${formatWeight(currentWeight.toFixed(1), state.user_settings.weight_unit)}/${formatWeight(totalWeight.toFixed(1), state.user_settings.weight_unit)} ${state.user_settings.weight_unit}`
                 : "No weight data available"} />
 
             <div className="mb-6 space-y-4">

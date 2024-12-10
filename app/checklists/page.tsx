@@ -12,6 +12,7 @@ import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
 import ProgressBar from "@/components/progressBar";
+import { formatWeight } from "@/utils/convertWeight";
 
 const ChecklistsPage = () => {
   const { user } = useAuth();
@@ -159,7 +160,7 @@ const ChecklistsPage = () => {
                       <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
 
                       {/* Weight Section */}
-                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
+                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} ${state.user_settings.weight_unit}`} />
 
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
@@ -189,7 +190,7 @@ const ChecklistsPage = () => {
                       <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
   
                       {/* Weight Section */}
-                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${list.completion.currentWeight.toFixed(1)}/${list.completion.totalWeight.toFixed(1)} kg`} />
+                      <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${formatWeight((list.completion.currentWeight.toFixed(1)), state.user_settings.weight_unit)}/${formatWeight(list.completion.totalWeight.toFixed(1), state.user_settings.weight_unit)} ${state.user_settings.weight_unit}`} />
   
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import DetailedItemView from "@/components/itemDetails";
+import { formatWeight } from "@/utils/convertWeight";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -187,7 +188,7 @@ const ItemsPage = () => {
                                     </div>
                                     <div className="flex flex-col text-right space-y-1">
                                         <p className="text-sm">Quantity: {item.quantity}</p>
-                                        <p className="text-sm">Weight: {item.weight}kg</p>
+                                        <p className="text-sm">Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}{state.user_settings.weight_unit}</p>
                                     </div>
                                 </div>
                             </li>

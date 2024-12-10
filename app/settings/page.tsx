@@ -1,7 +1,7 @@
 "use client";
 import { withAuth } from "@/lib/withAuth";
 import { useAuth } from "@/lib/auth-Context";
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/switch";
@@ -26,7 +26,9 @@ const updateUserSetting = (payload: { key: keyof UserSettings; value: UserSettin
 const SettingsPage = () => {
   const { user, logout } = useAuth();
   const { dispatch } = useAppContext();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updatedName, setUpdatedName] = useState(user?.user_metadata?.name || "");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updatedEmail, setUpdatedEmail] = useState(user?.email || "");
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(false);

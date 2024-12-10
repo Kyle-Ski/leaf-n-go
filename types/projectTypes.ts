@@ -291,7 +291,6 @@ export interface AppState {
   trips: FrontendTrip[];
   checklists: ChecklistWithItems[];
   items: (Item | ItemDetails)[];
-  userSettings: UserSettings | null;
   isNew: boolean;
   noTrips: boolean;
   noChecklists: boolean;

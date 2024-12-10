@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (!userId) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
-  console.log("----->", userId)
+
   const { data, error } = await supabaseServer
     .from('user_settings')
     .select('*')
@@ -41,7 +41,6 @@ export async function POST(request: Request) {
     ...(weight_unit !== undefined && { weight_unit }),
   };
   
-  console.log("FIELDS:", updatedFields, body)
   // If no fields to update, return early
   if (Object.keys(updatedFields).length === 0) {
     return NextResponse.json({ message: 'No settings to update' }, { status: 200 });
