@@ -24,7 +24,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { userId, darkMode, emailNotifications, pushNotifications } = body;
+  
+  const { userId, darkMode, emailNotifications, pushNotifications, weight_unit } = body;
 
   if (!userId) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
         dark_mode: darkMode,
         email_notifications: emailNotifications,
         push_notifications: pushNotifications,
+        weight_unit: weight_unit,
       },
       { onConflict: 'user_id' }
     );

@@ -119,6 +119,7 @@ export interface UserSettings {
   dark_mode: boolean;
   email_notifications: boolean;
   push_notifications: boolean;
+  weight_unit: "kg" | "lbs"
 }
 
 export interface ApiResponse<T> {
@@ -296,6 +297,7 @@ export interface AppState {
   noChecklists: boolean;
   noItems: boolean;
   item_categories: ItemCategory[];
+  user_settings: UserSettings
 }
 
 export type Action =
@@ -316,6 +318,7 @@ export type Action =
   | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
   | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
   | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
-  | { type: 'SET_USER_SETTINGS'; payload: UserSettings }
+  | { type: "SET_USER_SETTINGS"; payload: Partial<AppState["user_settings"]> }
+  | { type: "UPDATE_USER_SETTING"; payload: { key: keyof AppState["user_settings"]; value: any } }
   | { type: 'SET_IS_NEW'; payload: boolean }
   | { type: 'SET_CATEGORIES'; payload: ItemCategory[] };
