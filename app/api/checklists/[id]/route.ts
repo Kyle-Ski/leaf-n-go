@@ -101,16 +101,20 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
   try {
     // Insert multiple items into the checklist_items table
+    const expandedItems = items.flatMap((item: Item) =>
+      Array.from({ length: item.quantity }).map(() => ({
+        checklist_id: checklistId,
+        item_id: item.item_id,
+        completed: item.completed,
+        quantity: 1, // Each row represents one unit
+      }))
+    );
+    console.log("About to add ---->", expandedItems)
+
+    // Insert all expanded rows into the checklist_items table
     const { data: insertedData, error: insertError } = await supabaseServer
       .from('checklist_items')
-      .insert(
-        items.map((item: Item) => ({
-          checklist_id: checklistId,
-          item_id: item.item_id,
-          quantity: item.quantity,
-          completed: item.completed,
-        }))
-      )
+      .insert(expandedItems)
       .select('id, checklist_id, item_id, completed, quantity, items(*)');
 
     if (insertError) {
@@ -118,7 +122,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Return all inserted items with details
+    // Return all inserted rows with details
     return NextResponse.json(insertedData, { status: 201 });
   } catch (error) {
     console.error("Unexpected error adding items:", error);

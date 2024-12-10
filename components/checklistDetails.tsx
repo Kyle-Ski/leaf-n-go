@@ -85,10 +85,8 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             const addedItems: ChecklistItem[] = await response.json();
     
             // Dispatch each added item to the state
-            addedItems.forEach((addedItem) => {
-                dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem });
-            });
-    
+            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItems });
+            
             // Update the local checklist state
             setChecklist((prev) =>
                 prev
@@ -239,38 +237,6 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
         // Subtract the currently selected quantity from the remaining quantity
         const selectedQuantity = selectedItems[itemId] || 0;
         return item ? item.quantity - totalInChecklist - selectedQuantity : 0;
-    };
-
-    const handleAddItem = async (item: ItemDetails | Item) => {
-        try {
-            const remainingQuantity = calculateRemainingQuantity(item.id);
-            if (remainingQuantity <= 0) return;
-
-            const response = await fetch(`/api/checklists/${id}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
-                },
-                body: JSON.stringify({
-                    checklist_id: id,
-                    item_id: item.id,
-                    quantity: 1,
-                    completed: false,
-                }),
-            });
-
-            if (!response.ok) throw new Error("Failed to add item to checklist.");
-            const addedItem: ChecklistItem = await response.json();
-            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItem });
-            setChecklist((prev) =>
-                prev ? { ...prev, items: [...prev.items, addedItem] } : prev
-            );
-        } catch (err) {
-            console.error("Error adding item:", err);
-        } finally {
-            // setIsAddModalOpen(false);
-        }
     };
 
     const handleRemoveItem = async (itemId: string) => {
