@@ -134,8 +134,11 @@ const TripPage = () => {
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{trip.title}</h1>
-                <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
-                    Edit Trip
+                <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="bg-red-500 text-white shadow-md"
+                >
+                    Delete Trip
                 </Button>
             </header>
 
@@ -185,7 +188,7 @@ const TripPage = () => {
                                         <h3 className="font-semibold">
                                             {checklist.checklists[0]?.title || "Untitled Checklist"}
                                         </h3>
-                                        <ProgressBar label="" percentage={checklist.totalItems !== 0 ? (checklist.completedItems / checklist.totalItems) * 100 : 0} color="green" description={`${checklist.completedItems} of ${checklist.totalItems} items completed`}/>
+                                        <ProgressBar label="" percentage={checklist.totalItems !== 0 ? (checklist.completedItems / checklist.totalItems) * 100 : 0} color="green" description={`${checklist.completedItems} of ${checklist.totalItems} items completed`} />
                                     </div>
                                     {/* Replace Link with a button that opens the dialog */}
                                     <Button
@@ -205,12 +208,8 @@ const TripPage = () => {
                 )}
 
             </section>
-
-            <Button
-                onClick={() => setIsDeleteModalOpen(true)}
-                className="bg-red-500 text-white shadow-md"
-            >
-                Delete Trip
+            <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
+                Edit Trip
             </Button>
 
             {/* Edit Trip Modal */}

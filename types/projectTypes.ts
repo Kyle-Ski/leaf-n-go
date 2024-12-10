@@ -284,6 +284,7 @@ export interface CreateTripPayload {
   end_date: string | null;
   location: string | null;
   notes: string | null;
+  checklists?: string[];
 }
 export interface AppState {
   trips: FrontendTrip[];

@@ -83,11 +83,6 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 };
             });
 
-            // Additional Logging for State After Update
-            console.log("State After UPDATE_ITEM:");
-            console.log("Updated Items:", updatedItems);
-            console.log("Updated Checklists:", updatedChecklists);
-
             return { ...state, items: updatedItems, checklists: updatedChecklists };
         }
 
