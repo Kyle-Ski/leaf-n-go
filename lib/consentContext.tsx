@@ -17,7 +17,7 @@ type ConsentKeys = keyof ConsentCategories['cookies'] | keyof Omit<ConsentCatego
 
 type ConsentContextType = {
     consent: ConsentCategories;
-    updateConsent: (newConsent: ConsentCategories) => void;
+    updateConsent: (newConsent: ConsentCategories, saveToDB?: boolean, userId?: string) => void;
     hasConsent: (key: ConsentKeys) => boolean;
 };
 
@@ -102,9 +102,38 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         transferConsentToBackend();
     }, [user]);
 
-    const updateConsent = (newConsent: ConsentCategories) => {
+    const updateConsent = async (newConsent: ConsentCategories, saveToDB?: boolean, userId?: string) => {
         setConsent(newConsent);
         localStorage.setItem('userConsent', JSON.stringify(newConsent));
+        if (saveToDB && userId) {
+            try {
+               
+                // Post to backend
+                const response = await fetch('/api/consent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId,
+                    },
+                    body: JSON.stringify({
+                        consent: newConsent,
+                        privacyPolicyVersion: 'v1.0', // Update as needed
+                    }),
+                });
+
+                if (response.ok) {
+                    console.log("Consent preferences successfully transferred to backend.");
+                    if (!hasConsent("localStorage")) {
+                        localStorage.removeItem('userConsent') ; // Clear localStorage after successful transfer
+                        localStorage.removeItem('appState')
+                    }
+                } else {
+                    console.error("Failed to transfer consent preferences to backend.");
+                }
+            } catch (error) {
+                console.error("Error transferring consent to backend:", error);
+            }
+        }
     };
 
     const hasConsent = (key: ConsentKeys): boolean => {
