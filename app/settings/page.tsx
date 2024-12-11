@@ -578,7 +578,7 @@ const SettingsPage = () => {
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">
-                      Yes! I'd like to use the app to the fullest
+                      Yes! I&apos;d like to use the app to the fullest
                     </span>
                     <span className="text-sm text-gray-600">
                       Enable all cookies and AI data usage for the best experience.
@@ -597,7 +597,7 @@ const SettingsPage = () => {
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">
-                      I'd like to use all the functions, but don't track me
+                      I&apos;d like to use all the functions, but don&apos;t track me
                     </span>
                     <span className="text-sm text-gray-600">
                       Enable functional cookies but disable analytics and AI data usage.
@@ -616,7 +616,7 @@ const SettingsPage = () => {
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">
-                      I'm cautious about privacy
+                      I&apos;m cautious about privacy
                     </span>
                     <span className="text-sm text-gray-600">
                       Enable only essential cookies and disable functional, analytics, and AI data usage.
@@ -744,7 +744,12 @@ const SettingsPage = () => {
                       ...localConsent,
                       localStorage: true,
                     };
-                    user?.id && await updateConsent(updatedConsentToSave, true, user.id);
+                    
+                    if (user?.id) {
+                      await updateConsent(updatedConsentToSave, true, user.id);
+                    } else {
+                      await updateConsent(updatedConsentToSave)
+                    }
                     setSaveSuccessConsent(true);
                     setSelectedPreset(null);
                     // Optionally, display a success message for a short duration
