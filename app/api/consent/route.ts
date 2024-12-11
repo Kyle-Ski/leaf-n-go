@@ -13,9 +13,6 @@ export type ConsentCategories = {
     aiDataUsage: boolean;
 };
 
-// Define a type that includes only the consentable keys (excluding 'cookies')
-type ConsentKeys = keyof ConsentCategories['cookies'] | keyof Omit<ConsentCategories, 'cookies'>;
-
 // GET: Fetch user consent preferences
 export async function GET(req: NextRequest) {
     const userId = req.headers.get('x-user-id');

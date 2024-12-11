@@ -199,7 +199,7 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               <DialogHeader>
                 <DialogTitle>Welcome to Leaf-N-Go!</DialogTitle>
                 <DialogDescription>
-                  Hello!! Welcome to Leaf-N-Go! Let's get to helping you plan for your next adventure. Before we can do that, we need to make sure you're okay with these settings.
+                  Hello!! Welcome to Leaf-N-Go! Let&apos;s get to helping you plan for your next adventure. Before we can do that, we need to make sure you&apos;re okay with these settings.
                 </DialogDescription>
               </DialogHeader>
 
@@ -218,7 +218,7 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   >
                     <div className="flex flex-col">
                       <span className="font-medium">
-                        Yes! I'd like to use the app to the fullest
+                        Yes! I&apos;d like to use the app to the fullest
                       </span>
                       <span className="text-sm text-gray-600">
                         Enable all cookies and AI data usage for the best experience.
@@ -238,7 +238,7 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   >
                     <div className="flex flex-col">
                       <span className="font-medium">
-                        I'd like to use all the functions, but don't track me
+                        I&apos;d like to use all the functions, but don&apos;t track me
                       </span>
                       <span className="text-sm text-gray-600">
                         Enable functional cookies but disable analytics and AI data usage.
@@ -258,7 +258,7 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   >
                     <div className="flex flex-col">
                       <span className="font-medium">
-                        I'm cautious about privacy
+                        I&apos;m cautious about privacy
                       </span>
                       <span className="text-sm text-gray-600">
                         Enable only essential cookies and disable functional, analytics, and AI data usage.
