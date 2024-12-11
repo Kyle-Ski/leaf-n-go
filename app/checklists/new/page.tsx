@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
 import { useAppContext } from "@/lib/appContext";
-import ProgressBar from "@/components/progressBar";
 import { formatWeight } from "@/utils/convertWeight";
 
 const NewChecklistPage = () => {
