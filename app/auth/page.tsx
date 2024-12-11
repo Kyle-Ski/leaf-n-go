@@ -24,6 +24,17 @@ export default function AuthPage() {
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(!consent.cookies.functional && !consent.aiDataUsage);
+  
+  // Determine if consent modal should be shown
+  useEffect(() => {
+    // Show modal if user hasn't set functional, analytics, or aiDataUsage preferences
+    const shouldShowConsent =
+      !consent.cookies.functional &&
+      !consent.cookies.analytics &&
+      !consent.aiDataUsage;
+    setIsConsentModalOpen(shouldShowConsent);
+  }, [consent]);
+  
   // Check query parameters for mode
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -273,7 +284,9 @@ export default function AuthPage() {
           </span>
         </p>
       )}
-      <ConsentModal isOpen={isConsentModalOpen} onClose={() => setIsConsentModalOpen(false)} />
+      <ConsentModal isOpen={isConsentModalOpen} onClose={() => {
+          setIsConsentModalOpen(false)
+      }} />
     </div>
   );
 }
