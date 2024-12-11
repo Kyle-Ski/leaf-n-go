@@ -9,10 +9,13 @@ import { useAuth } from "@/lib/auth-Context";
 import { FrontendTrip } from "@/types/projectTypes";
 import { Loader } from "@/components/ui/loader";
 import { useAppContext } from "@/lib/appContext";
+import { useConsent } from "@/lib/consentContext";
 
 const PlanningHub = () => {
   const { user } = useAuth();
   const { state, dispatch } = useAppContext();
+  const { hasConsent } = useConsent();
+
   const [upcomingTrip, setUpcomingTrip] = useState<FrontendTrip | null>(null);
   const [recentTrips, setRecentTrips] = useState<FrontendTrip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +77,7 @@ const PlanningHub = () => {
 
     setLoading(false);
     formatUpcomingTrips();
-  }, [user, state.noTrips, state.trips, dispatch]);
+  }, [user, state.noTrips, state.trips, dispatch, hasConsent]);
 
   if (loading) {
     return (
@@ -83,7 +86,6 @@ const PlanningHub = () => {
       </div>
     );
   }
-
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
       {error && (

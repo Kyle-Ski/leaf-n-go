@@ -7,20 +7,34 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-Context";
 import { useAppContext } from "@/lib/appContext";
 import { UserSettings } from "@/types/projectTypes";
+import ConsentModal from "@/components/consentModal";
+import { useConsent } from "@/lib/consentContext";
 
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useAuth(); // Use setUser from AuthContext
   const { dispatch } = useAppContext(); // Use dispatch from AppContext
-
+  const { consent } = useConsent();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false); // Default to Sign In
   const [error, setError] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Loading state
-
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(!consent.cookies.functional && !consent.aiDataUsage);
+  
+  // Determine if consent modal should be shown
+  useEffect(() => {
+    // Show modal if user hasn't set functional, analytics, or aiDataUsage preferences
+    const shouldShowConsent =
+      !consent.cookies.functional &&
+      !consent.cookies.analytics &&
+      !consent.aiDataUsage;
+    setIsConsentModalOpen(shouldShowConsent);
+  }, [consent]);
+  
   // Check query parameters for mode
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -214,6 +228,7 @@ export default function AuthPage() {
   return (
     <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
       <h1 className="text-2xl font-semibold mb-6">
+        
         {isSignUp ? "Sign Up" : "Sign In"}
       </h1>
       {isSignUp && (
@@ -269,6 +284,9 @@ export default function AuthPage() {
           </span>
         </p>
       )}
+      <ConsentModal isOpen={isConsentModalOpen} onClose={() => {
+          setIsConsentModalOpen(false)
+      }} />
     </div>
   );
 }
