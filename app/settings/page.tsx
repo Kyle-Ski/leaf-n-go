@@ -37,7 +37,6 @@ const SettingsPage = () => {
   const [pushNotifications, setPushNotifications] = useState(false);
   const [preferredWeight, setPreferredWeight] = useState<"kg" | "lbs">(user?.user_metadata?.preferred_weight || "lbs");
 
-  // **New State Variables Start Here**
   // Appearance Settings
   const [isSavingAppearance, setIsSavingAppearance] = useState(false);
   const [saveSuccessAppearance, setSaveSuccessAppearance] = useState(false);
@@ -53,7 +52,6 @@ const SettingsPage = () => {
   // Profile Information
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [saveSuccessProfile, setSaveSuccessProfile] = useState(false);
-  // **New State Variables End Here**
 
   // Track changed fields using a partial UserSettings type
   const [changedFields, setChangedFields] = useState<Partial<UserSettings>>({});

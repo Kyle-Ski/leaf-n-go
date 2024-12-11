@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
 import { useAppContext } from "@/lib/appContext";
+import ProgressBar from "@/components/progressBar";
+import { formatWeight } from "@/utils/convertWeight";
 
 const NewChecklistPage = () => {
     const router = useRouter();
@@ -18,6 +20,17 @@ const NewChecklistPage = () => {
     const newItemModalRef = useRef<HTMLDivElement>(null); // Reference for scrolling to the form
 
     const categories = ["Day Trip", "Overnight", "Weekend Trip"];
+
+    const totalWeight = useMemo(() => {
+        return Object.entries(selectedItems).reduce((sum, [itemId, quantity]) => {
+            const item = state.items.find((item) => item.id === itemId);
+            if (item && item.weight) { // Ensure the item has a 'weight' property
+                return sum + item.weight * quantity;
+            }
+            return sum;
+        }, 0);
+    }, [selectedItems, state.items]);
+
 
     useEffect(() => {
         if (!state.noItems && state.items.length === 0) {
@@ -100,8 +113,8 @@ const NewChecklistPage = () => {
                 return;
             }
             const data = await response.json()
-            dispatch({ type: 'ADD_CHECKLIST', payload: data})
-            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false})
+            dispatch({ type: 'ADD_CHECKLIST', payload: data })
+            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
             router.push("/checklists");
         } catch (err) {
             console.error("Error creating checklist:", err);
@@ -133,7 +146,7 @@ const NewChecklistPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="title" className="block font-semibold text-gray-700">
-                            Title
+                            Item Title
                         </label>
                         <input
                             id="title"
@@ -167,7 +180,19 @@ const NewChecklistPage = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block font-semibold text-gray-700">Add Items</label>
+                        <div className="mb-6 p-4 bg-gray-50 rounded-md shadow-sm">
+                            <label className="block  font-semibold text-gray-800 mb-2">
+                                Weight of Items Selected
+                            </label>
+                            <p className="text-gray-700 text-md">
+                                Total:{" "}
+                                <span className="font-bold text-blue-600">
+                                    {formatWeight(totalWeight.toFixed(2), state.user_settings.weight_unit)}
+                                </span>{" "}
+                                {state.user_settings.weight_unit}
+                            </p>
+                            <hr className="mt-4 border-t-2 border-gray-300" />
+                        </div>
                         <div className="space-y-4">
                             {error ? (
                                 <p className="text-red-500">{error}</p>
