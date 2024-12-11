@@ -70,6 +70,7 @@ const ChecklistsPage = () => {
         // Use existing checklists from AppState if available
         setLoading(false);
       } else {
+        console.log("HERE")
         fetchChecklists();
       }
     }

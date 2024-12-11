@@ -11,6 +11,7 @@ export type ConsentCategories = {
     };
     localStorage: boolean;
     aiDataUsage: boolean;
+    firstSignIn: boolean;
 };
 
 type ConsentKeys = keyof ConsentCategories['cookies'] | keyof Omit<ConsentCategories, 'cookies'>;
@@ -30,6 +31,7 @@ export const defaultConsent: ConsentCategories = {
     },
     localStorage: true, // Enforce localStorage usage
     aiDataUsage: false,
+    firstSignIn: true,
 };
 
 const ConsentContext = createContext<ConsentContextType | undefined>(undefined);
@@ -65,37 +67,41 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Function to transfer consent from localStorage to backend upon sign-in
     useEffect(() => {
         const transferConsentToBackend = async () => {
-            if (user?.id) {
-                const storedConsent = localStorage.getItem('userConsent');
-                if (storedConsent) {
-                    try {
-                        const parsedConsent: ConsentCategories = JSON.parse(storedConsent);
-                        // Post to backend
-                        const response = await fetch('/api/consent', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-user-id': user.id,
-                            },
-                            body: JSON.stringify({
-                                consent: parsedConsent,
-                                privacyPolicyVersion: 'v1.0', // Update as needed
-                            }),
-                        });
+            const storedConsent = localStorage.getItem('userConsent');
+            if (!storedConsent) return
+            const parsedConsent: ConsentCategories = JSON.parse(storedConsent);
+            if (user?.id && parsedConsent.firstSignIn) {
+                try {
+                    const parsedConsent: ConsentCategories = JSON.parse(storedConsent);
+                    parsedConsent.firstSignIn = false
+                    // Post to backend
+                    const response = await fetch('/api/consent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-user-id': user.id,
+                        },
+                        body: JSON.stringify({
+                            consent: parsedConsent,
+                            privacyPolicyVersion: 'v1.0', // Update as needed
+                        }),
+                    });
 
-                        if (response.ok) {
-                            console.log("Consent preferences successfully transferred to backend.");
-                            if (!hasConsent("localStorage")) {
-                                localStorage.removeItem('userConsent') ; // Clear localStorage after successful transfer
-                                localStorage.removeItem('appState')
-                            }
-                        } else {
-                            console.error("Failed to transfer consent preferences to backend.");
+                    if (response.ok) {
+                        const consentObj = await response.json()
+                        updateConsent(consentObj.consent)
+                        console.log("Consent preferences successfully transferred to backend.");
+                        if (!hasConsent("localStorage")) {
+                            localStorage.removeItem('userConsent'); // Clear localStorage after successful transfer
+                            // localStorage.removeItem('appState')
                         }
-                    } catch (error) {
-                        console.error("Error transferring consent to backend:", error);
+                    } else {
+                        console.error("Failed to transfer consent preferences to backend.");
                     }
+                } catch (error) {
+                    console.error("Error transferring consent to backend:", error);
                 }
+
             }
         };
 
@@ -107,7 +113,7 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         localStorage.setItem('userConsent', JSON.stringify(newConsent));
         if (saveToDB && userId) {
             try {
-               
+
                 // Post to backend
                 const response = await fetch('/api/consent', {
                     method: 'POST',
@@ -124,8 +130,8 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 if (response.ok) {
                     console.log("Consent preferences successfully transferred to backend.");
                     if (!hasConsent("localStorage")) {
-                        localStorage.removeItem('userConsent') ; // Clear localStorage after successful transfer
-                        localStorage.removeItem('appState')
+                        localStorage.removeItem('userConsent'); // Clear localStorage after successful transfer
+                        // localStorage.removeItem('appState')
                     }
                 } else {
                     console.error("Failed to transfer consent preferences to backend.");
@@ -148,7 +154,7 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (!consent.cookies.essential) {
             setConsent((prev) => ({
                 ...prev,
-                cookies: { ...prev.cookies, essential: true },
+                cookies: { ...prev.cookies, essential: true, },
             }));
         }
     }, [consent]);

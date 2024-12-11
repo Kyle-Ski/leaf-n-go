@@ -17,8 +17,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     : "flex items-center justify-center min-h-screen";
 
   return (
-    <ConsentProvider>
-      <AppProvider>
+    <AppProvider>
+      <ConsentProvider>
         <SidebarProvider>
           {/* Sidebar for desktop and tablet */}
           {user && (
@@ -37,7 +37,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           {/* Bottom Navigation for mobile */}
           {user && <BottomNav currentPath={pathname} />}
         </SidebarProvider>
-      </AppProvider>
-    </ConsentProvider>
+      </ConsentProvider>
+    </AppProvider>
   );
 }
