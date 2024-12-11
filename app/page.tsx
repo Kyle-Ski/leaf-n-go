@@ -100,7 +100,7 @@ const PlanningHub = () => {
           </button>
         </div>
       )}
-  {hasConsent('aiDataUsage') ? <>WE CAN USE AI</> : <>NO AI FOR YOU</>}
+
       {/* Current Trip Overview */}
       {upcomingTrip && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
