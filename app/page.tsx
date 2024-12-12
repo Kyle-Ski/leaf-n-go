@@ -100,7 +100,22 @@ const PlanningHub = () => {
           </button>
         </div>
       )}
-
+      <button onClick={async () => {
+        console.log("pressing anthropic")
+        try {
+          const request = await fetch("/api/assistant", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content: "Help me pack for a trip to Silverthorne, CO in December"}),
+          })
+          const message = await request.json()
+          console.log("---> ", message)
+        } catch (err) {
+          console.log("ERROR:", err)
+        }
+      }}>ANTHROPIC?</button>
       {/* Current Trip Overview */}
       {upcomingTrip && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">

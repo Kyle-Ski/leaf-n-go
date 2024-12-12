@@ -1,0 +1,13 @@
+{
+    "mcp_servers": {
+      "weather": {
+        "type": "api",
+        "base_url": "https://api.weather.gov",
+        "capabilities": {
+          "current_conditions": true,
+          "forecast": true
+        }
+      }
+    }
+  }
+  
