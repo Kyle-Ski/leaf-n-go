@@ -13,7 +13,6 @@ import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
 import Link from "next/link";
 import ProgressBar from "@/components/progressBar";
-import { Loader } from "@/components/ui/loader";
 
 const TripPage = () => {
     const router = useRouter();
