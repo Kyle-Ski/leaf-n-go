@@ -20,7 +20,6 @@ const PlanningHub = () => {
   const [recentTrips, setRecentTrips] = useState<FrontendTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [anthropicResponse, setAnthropicResponse] = useState("")
 
   useEffect(() => {
     if (user && !state.noTrips && state.trips.length === 0) {
@@ -78,7 +77,7 @@ const PlanningHub = () => {
 
     setLoading(false);
     formatUpcomingTrips();
-  }, [user, state.noTrips, state.trips, dispatch, hasConsent, anthropicResponse]);
+  }, [user, state.noTrips, state.trips, dispatch, hasConsent]);
 
   if (loading) {
     return (
@@ -101,24 +100,7 @@ const PlanningHub = () => {
           </button>
         </div>
       )}
-      <button onClick={async () => {
-        console.log("pressing anthropic")
-        try {
-          const request = await fetch("/api/assistant", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ content: "Help me pack for a trip to Silverthorne, CO in December"}),
-          })
-          const message = await request.json()
-          console.log("---> ", message)
-          setAnthropicResponse(message.message.content[0].text)
-        } catch (err) {
-          console.log("ERROR:", err)
-        }
-      }}>ANTHROPIC?</button>
-      <>{anthropicResponse}</>
+
       {/* Current Trip Overview */}
       {upcomingTrip && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
