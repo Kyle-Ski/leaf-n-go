@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         - Entertainment & Personal Items
         - Fix-it Kit
         - Water Management
-        Include a "Pro Tips" section and, if applicable, a "Specific Location Considerations" section.
+        Include a "Pro Tips" section, "Weather Forecast Insights" section and, if applicable, a "Specific Location Considerations" section.
         Format your output clearly and concisely, matching the categories listed above.
         Important Note: The user already has the following items: ${existingItemsList}. Please avoid recommending these items again unless absolutely necessary.
 `,
@@ -148,7 +148,6 @@ export async function POST(req: NextRequest) {
                 for await (const event of msg) {
                     if (event.type === 'content_block_delta') {
                         const { delta } = event;
-                        console.log("--->", delta)
                         if ('text' in delta) {
                             const text = delta.text;
                             controller.enqueue(encoder.encode(text));
@@ -162,69 +161,6 @@ export async function POST(req: NextRequest) {
         return new Response(readableStream, {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })
-        // const responseContent = msg.content.find((item: MessageContent) => item.type === "text")?.text;
-
-        // if (!responseContent) {
-        //     console.error("Error generating message");
-        //     return NextResponse.json({ error: "An error occurred while processing your request." }, { status: 500 });
-        // }
-
-        // // Parse the text for structured data and detect anomalies
-        // const isWeatherMismatch = responseContent.includes("unusual") || responseContent.includes("might be a system error");
-
-        // // Extract specific sections using refined patterns for all categories
-        // const categories = {
-        //     "Shelter & Sleep System": responseContent.match(/Shelter & Sleep System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Clothing & Layers": responseContent.match(/Clothing & Layers.*?:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Food & Cooking Gear": responseContent.match(/Food & Cooking Gear:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Navigation & Safety": responseContent.match(/Navigation & Safety:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Health & Hygiene": responseContent.match(/Health & Hygiene:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Backpack & Carrying System": responseContent.match(/Backpack & Carrying System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Lighting & Power": responseContent.match(/Lighting & Power:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Entertainment & Personal Items": responseContent.match(/Entertainment & Personal Items:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Fix-it Kit": responseContent.match(/Fix-it Kit:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Water Management": responseContent.match(/Water Management:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Pro Tips": responseContent.match(/Pro Tips:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        //     "Specific Location Considerations": responseContent.match(/Specific Location Considerations:\s*(.*?)(\n\n|$)/s)?.[1]?.trim(),
-        // };
-
-        // // Fallback for unmatched sections
-        // const fallbackRecommendations = responseContent.split("\n\n").reduce((acc, section) => {
-        //     const [header, ...content] = section.split("\n");
-        //     const normalizedHeader = header?.toLowerCase();
-
-        //     if (normalizedHeader.includes("shelter")) acc["Shelter & Sleep System"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("clothing")) acc["Clothing & Layers"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("food") || normalizedHeader.includes("cooking")) acc["Food & Cooking Gear"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("navigation") || normalizedHeader.includes("safety")) acc["Navigation & Safety"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("health") || normalizedHeader.includes("hygiene")) acc["Health & Hygiene"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("backpack") || normalizedHeader.includes("carrying")) acc["Backpack & Carrying System"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("lighting") || normalizedHeader.includes("power")) acc["Lighting & Power"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("entertainment") || normalizedHeader.includes("personal items")) acc["Entertainment & Personal Items"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("fix-it")) acc["Fix-it Kit"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("water")) acc["Water Management"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("tips")) acc["Pro Tips"] = content.join("\n").trim();
-        //     else if (normalizedHeader.includes("considerations")) acc["Specific Location Considerations"] = content.join("\n").trim();
-
-        //     return acc;
-        // }, { ...categories });
-
-        // // Final formatted response
-        // const formattedRecommendations = Object.entries(fallbackRecommendations).reduce((acc, [key, value]) => {
-        //     acc[key] = value ? value.trim() : "No specific recommendations for this category.";
-        //     return acc;
-        // }, {} as Record<string, string>);
-
-        // return NextResponse.json({
-        //     message: {
-        //         location,
-        //         startDate,
-        //         endDate,
-        //         isWeatherMismatch,
-        //         recommendations: formattedRecommendations,
-        //     },
-        // });
-
     } catch (error) {
         console.error("Error generating message:", error);
         return NextResponse.json({ error: "An error occurred while processing your request." }, { status: 500 });
