@@ -29,7 +29,12 @@ const TripPage = () => {
         location: string;
         isWeatherMismatch: boolean;
         recommendations: Record<string, string>;
-    } | null>(null);
+    }>({
+        location: "", // Default to an empty string
+        isWeatherMismatch: false, // Default to false
+        recommendations: {}, // Default to an empty object
+    });
+
     const [loading, setLoading] = useState(false);
 
     // Find the trip in the app state
@@ -38,17 +43,22 @@ const TripPage = () => {
     const getAssistantHelp = async () => {
         setLoading(true);
         setError(null); // Clear previous errors
-        setRecommendations(null); // Clear previous recommendations
+
+        // Reset recommendations to an empty state
+        setRecommendations({
+            location: "",
+            isWeatherMismatch: false,
+            recommendations: {},
+        });
 
         if (!trip) {
-            setLoading(false)
-            setError("Trip data is missing, please try again later.")
-            return
+            setLoading(false);
+            setError("Trip data is missing, please try again later.");
+            return;
         }
-        try {
 
+        try {
             const getExistingItems = (tripId: string) => {
-                // Find the trip in the state by trip ID
                 const trip = state.trips.find((t) => t.id === tripId);
 
                 if (!trip) {
@@ -56,16 +66,12 @@ const TripPage = () => {
                     return [];
                 }
 
-                // Extract checklist IDs from the trip
                 const checklistIds = trip.trip_checklists.map((tc) => tc.checklist_id);
-
-                // Find the corresponding checklists in the state
                 const relatedChecklists = state.checklists.filter((checklist) =>
                     checklistIds.includes(checklist.id)
                 );
 
-                // Extract item names from the checklists
-                const existingItems = relatedChecklists.flatMap((checklist) =>
+                return relatedChecklists.flatMap((checklist) =>
                     checklist.items.map((item) => {
                         const itemDetails = state.items.find((i) => i.id === item.item_id);
                         return {
@@ -74,10 +80,9 @@ const TripPage = () => {
                         };
                     })
                 );
-
-                return existingItems;
             };
-            const existingItems = getExistingItems(trip.id)
+
+            const existingItems = getExistingItems(trip.id);
 
             const response = await fetch(`/api/assistant/recommendations`, {
                 method: "POST",
@@ -88,21 +93,54 @@ const TripPage = () => {
                     location: trip.location,
                     startDate: trip.start_date,
                     endDate: trip.end_date,
-                    existingItems
+                    existingItems,
                 }),
             });
 
-            if (!response.ok) {
+            if (!response.ok || !response.body) {
                 throw new Error("Failed to get recommendations. Please try again.");
             }
 
-            const data = await response.json();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let streamedText = "";
+            let isWeatherMismatch = false;
 
-            setRecommendations({
-                location: data.message.location,
-                isWeatherMismatch: data.message.isWeatherMismatch,
-                recommendations: data.message.recommendations,
-            });
+            // Read the stream
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                streamedText += decoder.decode(value, { stream: true });
+
+                // Check for weather mismatch
+                if (streamedText.includes("unusual") || streamedText.includes("might be a system error")) {
+                    isWeatherMismatch = true;
+                }
+
+                // Parse categories dynamically
+                const categories: Record<string, string> = {
+                    "Shelter & Sleep System": streamedText.match(/Shelter & Sleep System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Clothing & Layers": streamedText.match(/Clothing & Layers:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Food & Cooking Gear": streamedText.match(/Food & Cooking Gear:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Navigation & Safety": streamedText.match(/Navigation & Safety:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Health & Hygiene": streamedText.match(/Health & Hygiene:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Backpack & Carrying System": streamedText.match(/Backpack & Carrying System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Lighting & Power": streamedText.match(/Lighting & Power:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Entertainment & Personal Items": streamedText.match(/Entertainment & Personal Items:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Fix-it Kit": streamedText.match(/Fix-it Kit:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Water Management": streamedText.match(/Water Management:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Pro Tips": streamedText.match(/Pro Tips:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                    "Specific Location Considerations": streamedText.match(/Specific Location Considerations:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
+                };
+
+                // Update recommendations incrementally
+                setRecommendations((prev) => ({
+                    location: trip.location || "",
+                    isWeatherMismatch,
+                    recommendations: { ...prev.recommendations, ...categories },
+                }));
+            }
         } catch (err) {
             console.error("Error fetching recommendations:", err);
             setError("Something went wrong. Please try again.");
@@ -301,62 +339,66 @@ const TripPage = () => {
                 >
                     {loading ? "Loading..." : "Get Recommendations"}
                 </Button>
-                {loading ? (
-                    <div className="flex justify-center items-center min-h-screen">
-                        <Loader className="h-12 w-12 text-blue-500" />
-                    </div>) : <></>}
                 {recommendations && (
-                    <div className="recommendations">
+                    // <div className="recommendations">
+                    //     <h2 className="text-xl font-bold mb-4">Packing Recommendations for {recommendations.location}</h2>
+
+                    //     {recommendations.isWeatherMismatch && (
+                    //         <p className="text-red-500">
+                    //             Note: Weather data might be inaccurate for this location, or we couldn&apos;t find any data.
+                    //         </p>
+                    //     )}
+
+                    //     <div className="packing-list">
+                    //         {Object.entries(recommendations.recommendations)
+                    //             // Filter out sections with no specific recommendations
+                    //             .filter(([category, items]) =>
+                    //                 items !== "No specific recommendations for this category." &&
+                    //                 category !== "Pro Tips" &&
+                    //                 category !== "Specific Location Considerations" // Exclude Pro Tips and Specific Location Considerations
+                    //             )
+                    //             // Ensure no duplicate sections are rendered
+                    //             .reduce((uniqueSections, [category, items]) => {
+                    //                 if (!uniqueSections.find(([existingCategory]) => existingCategory === category)) {
+                    //                     uniqueSections.push([category, items]);
+                    //                 }
+                    //                 return uniqueSections;
+                    //             }, [] as [string, string][])
+                    //             .map(([category, items]) => (
+                    //                 <div key={category} className="mb-4">
+                    //                     <h3 className="font-semibold text-lg">{category}</h3>
+                    //                     <p className="text-gray-700 whitespace-pre-line">{items}</p>
+                    //                 </div>
+                    //             ))}
+                    //     </div>
+
+                    //     {recommendations.recommendations["Pro Tips"] &&
+                    //         recommendations.recommendations["Pro Tips"] !== "No specific recommendations for this category." && (
+                    //             <div className="pro-tips mt-6">
+                    //                 <h3 className="text-lg font-semibold">Pro Tips</h3>
+                    //                 <p className="text-gray-800 whitespace-pre-line">{recommendations.recommendations["Pro Tips"]}</p>
+                    //             </div>
+                    //         )}
+
+                    //     {recommendations.recommendations["Specific Location Considerations"] &&
+                    //         recommendations.recommendations["Specific Location Considerations"] !== "No specific recommendations for this category." && (
+                    //             <div className="specific-considerations mt-6">
+                    //                 <h3 className="text-lg font-semibold">Specific Location Considerations</h3>
+                    //                 <p className="text-gray-800 whitespace-pre-line">
+                    //                     {recommendations.recommendations["Specific Location Considerations"]}
+                    //                 </p>
+                    //             </div>
+                    //         )}
+                    // </div>
+                    <section className="recommendations">
                         <h2 className="text-xl font-bold mb-4">Packing Recommendations for {recommendations.location}</h2>
-
-                        {recommendations.isWeatherMismatch && (
-                            <p className="text-red-500">
-                                Note: Weather data might be inaccurate for this location, or we couldn&apos;t find any data.
-                            </p>
-                        )}
-
-                        <div className="packing-list">
-                            {Object.entries(recommendations.recommendations)
-                                // Filter out sections with no specific recommendations
-                                .filter(([category, items]) =>
-                                    items !== "No specific recommendations for this category." &&
-                                    category !== "Pro Tips" &&
-                                    category !== "Specific Location Considerations" // Exclude Pro Tips and Specific Location Considerations
-                                )
-                                // Ensure no duplicate sections are rendered
-                                .reduce((uniqueSections, [category, items]) => {
-                                    if (!uniqueSections.find(([existingCategory]) => existingCategory === category)) {
-                                        uniqueSections.push([category, items]);
-                                    }
-                                    return uniqueSections;
-                                }, [] as [string, string][])
-                                .map(([category, items]) => (
-                                    <div key={category} className="mb-4">
-                                        <h3 className="font-semibold text-lg">{category}</h3>
-                                        <p className="text-gray-700 whitespace-pre-line">{items}</p>
-                                    </div>
-                                ))}
-                        </div>
-
-                        {recommendations.recommendations["Pro Tips"] &&
-                            recommendations.recommendations["Pro Tips"] !== "No specific recommendations for this category." && (
-                                <div className="pro-tips mt-6">
-                                    <h3 className="text-lg font-semibold">Pro Tips</h3>
-                                    <p className="text-gray-800 whitespace-pre-line">{recommendations.recommendations["Pro Tips"]}</p>
-                                </div>
-                            )}
-
-                        {recommendations.recommendations["Specific Location Considerations"] &&
-                            recommendations.recommendations["Specific Location Considerations"] !== "No specific recommendations for this category." && (
-                                <div className="specific-considerations mt-6">
-                                    <h3 className="text-lg font-semibold">Specific Location Considerations</h3>
-                                    <p className="text-gray-800 whitespace-pre-line">
-                                        {recommendations.recommendations["Specific Location Considerations"]}
-                                    </p>
-                                </div>
-                            )}
-                    </div>
-
+                        {Object.entries(recommendations.recommendations).map(([category, items]) => (
+                            <div key={category} className="mb-4">
+                                <h3 className="font-semibold text-lg">{category}</h3>
+                                <p className="text-gray-700 whitespace-pre-line">{items}</p>
+                            </div>
+                        ))}
+                    </section>
                 )}
                 {error && <p className="text-red-500 mt-4">{error}</p>}
             </section>
