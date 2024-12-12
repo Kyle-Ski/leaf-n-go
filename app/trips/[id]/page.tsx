@@ -78,7 +78,7 @@ const TripPage = () => {
                 return existingItems;
             };
             const existingItems = getExistingItems(trip.id)
-            
+
             const response = await fetch(`/api/assistant/recommendations`, {
                 method: "POST",
                 headers: {
@@ -103,9 +103,9 @@ const TripPage = () => {
                 isWeatherMismatch: data.message.isWeatherMismatch,
                 recommendations: data.message.recommendations,
             });
-        } catch (err: any) {
+        } catch (err) {
             console.error("Error fetching recommendations:", err);
-            setError(err.message || "Something went wrong. Please try again.");
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -311,7 +311,7 @@ const TripPage = () => {
 
                         {recommendations.isWeatherMismatch && (
                             <p className="text-red-500">
-                                Note: Weather data might be inaccurate for this location, or we couldn't find any data.
+                                Note: Weather data might be inaccurate for this location, or we couldn&apos;t find any data.
                             </p>
                         )}
 
