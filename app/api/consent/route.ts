@@ -1,6 +1,6 @@
 // app/api/consent/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient'; // Ensure correct path
+import { supabaseServer } from '@/lib/supabaseServer'; // Ensure correct path
 
 // Define the structure of consent categories
 export type ConsentCategories = {

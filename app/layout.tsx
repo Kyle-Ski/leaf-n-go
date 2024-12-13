@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ClientLayout from "@/components/clientLayout"; // Import ClientLayout
-import { supabaseServer } from "@/lib/supbaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 import { AuthProvider } from "@/lib/auth-Context";
 import { cookies } from 'next/headers';
 

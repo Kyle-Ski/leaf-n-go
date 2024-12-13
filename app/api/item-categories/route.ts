@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 // GET: Fetch all item categories visible to the user
 // This includes global categories (user_id IS NULL) and any categories owned by this user

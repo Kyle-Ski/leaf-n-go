@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supbaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     try {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supbaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 import { FrontendTrip } from "@/types/projectTypes";
 
 // GET: Fetch details for a specific trip

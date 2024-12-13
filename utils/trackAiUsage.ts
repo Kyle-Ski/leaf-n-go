@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function trackAiUsage(userId: string) {
     try {
