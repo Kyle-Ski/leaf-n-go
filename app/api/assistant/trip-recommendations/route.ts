@@ -1,23 +1,22 @@
 import anthropic from "@/lib/anthropicClient";
+import { trackAiUsage } from "@/utils/trackAiUsage";
 import { NextRequest, NextResponse } from "next/server";
-
-// type ContentBlock = { type: 'text'; text: string };
-// // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// type ToolUseBlock = { type: 'tool_use'; name: string; input: any };
-
-// type MessageContent = ContentBlock | ToolUseBlock;
 
 export async function POST(req: NextRequest) {
     console.log("API /assistant/recommendations")
     try {
         // Parse request body
         const body = await req.json();
-        const { location, startDate, endDate, existingItems } = body;
+        const userId = req.headers.get('x-user-id');
+        const { location, startDate, endDate, existingItems, tripId } = body;
 
         // Validate user input
-        if (!location || !startDate || !endDate) {
+        if (!location || !startDate || !endDate || !userId || !tripId) {
             return NextResponse.json({ error: "Missing required fields: location, startDate, or endDate" }, { status: 400 });
         }
+
+        // Track AI usage
+        trackAiUsage(userId)
 
         // Format existing items as a comma-separated string for inclusion in the prompt
         const existingItemsList = existingItems?.map((item: { id: string, name: string }) => item.name).join(", ") || "None";
@@ -26,14 +25,14 @@ export async function POST(req: NextRequest) {
         const msg = await anthropic.messages.create({
             model: "claude-3-5-haiku-20241022",
             max_tokens: 1000,
-            temperature: 0.4,
+            temperature: 0,
             stream: true,
             system: `You are an expert in hiking, backpacking, climbing, and trail running. 
         Your role is to help users pack and prepare for outdoor adventures. Provide thoughtful, practical suggestions 
         and share best practices tailored to each trip's unique details. Offer guidance in a friendly, supportive tone 
         without being overly prescriptive or pushy.
 
-        Please structure your packing recommendations using the following categories:
+        Please structure your packing recommendations using the following categories exactly (Example: "Pro Tips:"):
         - Shelter & Sleep System
         - Clothing & Layers
         - Food & Cooking Gear
@@ -44,9 +43,13 @@ export async function POST(req: NextRequest) {
         - Entertainment & Personal Items
         - Fix-it Kit
         - Water Management
-        Include a "Pro Tips" section, "Weather Forecast Insights" section and, if applicable, a "Specific Location Considerations" section.
+        - Pro Tips
+        - Weather Forecast Insights
+        - (if applicable) Specific Location Considerations
+        - (if applicable) Additional Recommendations
         Format your output clearly and concisely, matching the categories listed above.
-        Important Note: The user already has the following items: ${existingItemsList}. Please avoid recommending these items again unless absolutely necessary.
+        If you have anything other headings to add, or other insights, do not make another heading. Instead please add them to "Additional Recommendations"
+        Important Note: The user already has the following items: ${existingItemsList}. Please do not include these items in your response unless absolutely necessary.
 `,
             tools: [
                 {

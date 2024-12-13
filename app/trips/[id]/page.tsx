@@ -11,8 +11,11 @@ import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
-import Link from "next/link";
-import ProgressBar from "@/components/progressBar";
+import TripRecommendations from "@/components/tripRecommendations";
+import parseRecommendations from "@/utils/parseTripRecommendations";
+import getExistingItems from "@/utils/getItemNamesInTrip";
+import TripDetails from "@/components/tripDetails";
+import TripChecklists from "@/components/tripChecklists";
 
 const TripPage = () => {
     const router = useRouter();
@@ -56,37 +59,16 @@ const TripPage = () => {
         }
 
         try {
-            const getExistingItems = (tripId: string) => {
-                const trip = state.trips.find((t) => t.id === tripId);
-                if (!trip) {
-                    console.error("Trip not found");
-                    return [];
-                }
+            const existingItems = getExistingItems(trip.id, state);
 
-                const checklistIds = trip.trip_checklists.map((tc) => tc.checklist_id);
-                const relatedChecklists = state.checklists.filter((checklist) =>
-                    checklistIds.includes(checklist.id)
-                );
-
-                return relatedChecklists.flatMap((checklist) =>
-                    checklist.items.map((item) => {
-                        const itemDetails = state.items.find((i) => i.id === item.item_id);
-                        return {
-                            id: item.item_id,
-                            name: itemDetails?.name || "Unknown Item",
-                        };
-                    })
-                );
-            };
-
-            const existingItems = getExistingItems(trip.id);
-
-            const response = await fetch(`/api/assistant/recommendations`, {
+            const response = await fetch(`/api/assistant/trip-recommendations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "x-user-id": user?.id || ""
                 },
                 body: JSON.stringify({
+                    tripId: trip.id,
                     location: trip.location,
                     startDate: trip.start_date,
                     endDate: trip.end_date,
@@ -115,21 +97,7 @@ const TripPage = () => {
                 }
 
                 // Extract categories dynamically
-                const categories: Record<string, string> = {
-                    "Shelter & Sleep System": streamedText.match(/Shelter & Sleep System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Clothing & Layers": streamedText.match(/Clothing & Layers:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Food & Cooking Gear": streamedText.match(/Food & Cooking Gear:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Navigation & Safety": streamedText.match(/Navigation & Safety:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Health & Hygiene": streamedText.match(/Health & Hygiene:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Backpack & Carrying System": streamedText.match(/Backpack & Carrying System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Lighting & Power": streamedText.match(/Lighting & Power:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Entertainment & Personal Items": streamedText.match(/Entertainment & Personal Items:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Fix-it Kit": streamedText.match(/Fix-it Kit:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Water Management": streamedText.match(/Water Management:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Pro Tips": streamedText.match(/Pro Tips:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Specific Location Considerations": streamedText.match(/Specific Location Considerations.*?:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                    "Weather Forecast Insights": streamedText.match(/Weather Forecast Insights:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                };
+                const categories = parseRecommendations(streamedText);
 
                 setRecommendations((prev) => ({
                     location: trip.location || "",
@@ -138,27 +106,25 @@ const TripPage = () => {
                 }));
             }
             // Final pass for the last chunk of data after the loop
-            const finalCategories: Record<string, string> = {
-                "Shelter & Sleep System": streamedText.match(/Shelter & Sleep System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Clothing & Layers": streamedText.match(/Clothing & Layers:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Food & Cooking Gear": streamedText.match(/Food & Cooking Gear:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Navigation & Safety": streamedText.match(/Navigation & Safety:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Health & Hygiene": streamedText.match(/Health & Hygiene:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Backpack & Carrying System": streamedText.match(/Backpack & Carrying System:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Lighting & Power": streamedText.match(/Lighting & Power:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Entertainment & Personal Items": streamedText.match(/Entertainment & Personal Items:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Fix-it Kit": streamedText.match(/Fix-it Kit:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Water Management": streamedText.match(/Water Management:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Pro Tips": streamedText.match(/Pro Tips:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Specific Location Considerations": streamedText.match(/Specific Location Considerations.*?:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-                "Weather Forecast Insights": streamedText.match(/Weather Forecast Insights:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
-            };
+            const finalCategories = parseRecommendations(streamedText);
 
             setRecommendations((prev) => ({
                 location: trip.location || "",
                 isWeatherMismatch,
                 recommendations: { ...prev.recommendations, ...finalCategories },
             }));
+
+            dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: finalCategories } })
+
+            await fetch(`/api/assistant/trip-recommendations/${trip.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || ""
+                },
+                body: JSON.stringify({ ai_recommendation: finalCategories }),
+            });
+
         } catch (err) {
             console.error("Error fetching recommendations:", err);
             setError("Something went wrong. Please try again.");
@@ -280,146 +246,27 @@ const TripPage = () => {
             </header>
 
             {/* Trip Details */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Trip Details</h2>
-                <p>
-                    <strong>Start Date:</strong> {trip.start_date || "N/A"}
-                </p>
-                <p>
-                    <strong>End Date:</strong> {trip.end_date || "N/A"}
-                </p>
-                <p>
-                    <strong>Location:</strong> {trip.location || "N/A"}
-                </p>
-                <p>
-                    <strong>Notes:</strong> {trip.notes || "No additional notes provided."}
-                </p>
-            </section>
+            <TripDetails trip={trip} />
 
             {/* Checklists */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Checklists</h2>
-                {state.checklists.length === 0 ? (
-                    <div className="text-center">
-                        <p className="text-gray-600 mb-4">
-                            You don&apos;t have any checklists created yet. You can make one by going here:
-                        </p>
-                        <Link
-                            href="/checklists/new"
-                            className="text-blue-500 underline hover:text-blue-700"
-                        >
-                            Create a New Checklist
-                        </Link>
-                    </div>
-                ) : trip.trip_checklists.length === 0 ? (
-                    <p className="text-gray-600">No checklists linked to this trip.</p>
-                ) : (
-                    <ul className="space-y-4">
-                        {trip.trip_checklists.map((checklist) => {
-                            return (
-                                <li
-                                    key={checklist.checklist_id}
-                                    className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
-                                >
-                                    <div>
-                                        <h3 className="font-semibold">
-                                            {checklist.checklists[0]?.title || "Untitled Checklist"}
-                                        </h3>
-                                        <ProgressBar label="" percentage={checklist.totalItems !== 0 ? (checklist.completedItems / checklist.totalItems) * 100 : 0} color="green" description={`${checklist.completedItems} of ${checklist.totalItems} items completed`} />
-                                    </div>
-                                    {/* Replace Link with a button that opens the dialog */}
-                                    <Button
-                                        className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSelectedChecklistId(checklist.checklist_id);
-                                            setIsChecklistDialogOpen(true);
-                                        }}
-                                    >
-                                        View
-                                    </Button>
-                                </li>
-                            )
-                        })}
-                    </ul>
-                )}
-
-            </section>
+            <TripChecklists
+                state={state}
+                trip={trip}
+                setIsChecklistDialogOpen={setIsChecklistDialogOpen}
+                setSelectedChecklistId={setSelectedChecklistId}
+            />
 
             {/* AI Assistant */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Assistant Recommendations</h2>
-                <Button
-                    className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                    variant="outline"
-                    onClick={getAssistantHelp}
-                    disabled={loading}
-                >
-                    {loading ? "Loading..." : "Get Recommendations"}
-                </Button>
-                <Button
-                    className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                    variant="outline"
-                    onClick={() => console.log("Rec state:", recommendations)}
-                    disabled={loading}
-                >
-                    {loading ? "Loading..." : "Show State"}
-                </Button>
-                {recommendations && (
-                    <div className="recommendations">
-                        <h2 className="text-xl font-bold mb-4">Packing Recommendations for {recommendations.location}</h2>
+            <TripRecommendations
+                recommendations={recommendations}
+                loading={loading}
+                error={error}
+                getAssistantHelp={getAssistantHelp}
+                aiRecommendationFromState={trip.ai_recommendation}
+                location={trip.location || "Unknown"}
+            />
 
-                        {recommendations.isWeatherMismatch && (
-                            <p className="text-red-500">
-                                Note: Weather data might be inaccurate for this location, or we couldn&apos;t find any data.
-                            </p>
-                        )}
-
-                        <div className="packing-list">
-                            {Object.entries(recommendations.recommendations)
-                                .filter(([category, items]) =>
-                                    items !== "No specific recommendations for this category." &&
-                                    category !== "Pro Tips" &&
-                                    category !== "Specific Location Considerations" &&
-                                    category !== "Weather Forecast Insights"
-                                )
-                                .map(([category, items]) => (
-                                    <div key={category} className="mb-4">
-                                        <h3 className="font-semibold text-lg">{category}</h3>
-                                        <p className="text-gray-700 whitespace-pre-line">{items}</p>
-                                    </div>
-                                ))}
-                        </div>
-
-                        {recommendations.recommendations["Pro Tips"] && (
-                            <div className="pro-tips mt-6">
-                                <h3 className="text-lg font-semibold">Pro Tips</h3>
-                                <p className="text-gray-800 whitespace-pre-line">{recommendations.recommendations["Pro Tips"]}</p>
-                            </div>
-                        )}
-
-                        {recommendations.recommendations["Specific Location Considerations"] && (
-                            <div className="specific-considerations mt-6">
-                                <h3 className="text-lg font-semibold">Specific Location Considerations</h3>
-                                <p className="text-gray-800 whitespace-pre-line">
-                                    {recommendations.recommendations["Specific Location Considerations"]}
-                                </p>
-                            </div>
-                        )}
-
-                        {recommendations.recommendations["Weather Forecast Insights"] && (
-                            <div className="weather-insights mt-6">
-                                <h3 className="text-lg font-semibold">Weather Forecast Insights</h3>
-                                <p className="text-gray-800 whitespace-pre-line">
-                                    {recommendations.recommendations["Weather Forecast Insights"]}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {error && <p className="text-red-500 mt-4">{error}</p>}
-            </section>
+            {/* Edit Trip Button */}
             <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
                 Edit Trip
             </Button>
