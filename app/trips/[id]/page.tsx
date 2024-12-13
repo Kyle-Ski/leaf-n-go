@@ -11,8 +11,11 @@ import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
-import Link from "next/link";
-import ProgressBar from "@/components/progressBar";
+import TripRecommendations from "@/components/tripRecommendations";
+import parseRecommendations from "@/utils/parseTripRecommendations";
+import getExistingItems from "@/utils/getItemNamesInTrip";
+import TripDetails from "@/components/tripDetails";
+import TripChecklists from "@/components/tripChecklists";
 
 const TripPage = () => {
     const router = useRouter();
@@ -22,13 +25,113 @@ const TripPage = () => {
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-    // New states for showing checklist details in a dialog
     const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
     const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
+    const [recommendations, setRecommendations] = useState<{
+        location: string;
+        isWeatherMismatch: boolean;
+        recommendations: Record<string, string>;
+    }>({
+        location: "", // Default to an empty string
+        isWeatherMismatch: false, // Default to false
+        recommendations: {}, // Default to an empty object
+    });
+
+    const [loading, setLoading] = useState(false);
 
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
+
+    const getAssistantHelp = async () => {
+        setLoading(true);
+        setError(null);
+
+        setRecommendations({
+            location: "",
+            isWeatherMismatch: false,
+            recommendations: {},
+        });
+
+        if (!trip) {
+            setLoading(false);
+            setError("Trip data is missing, please try again later.");
+            return;
+        }
+
+        try {
+            const existingItems = getExistingItems(trip.id, state);
+
+            const response = await fetch(`/api/assistant/trip-recommendations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || ""
+                },
+                body: JSON.stringify({
+                    tripId: trip.id,
+                    location: trip.location,
+                    startDate: trip.start_date,
+                    endDate: trip.end_date,
+                    existingItems,
+                }),
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error("Failed to get recommendations. Please try again.");
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let streamedText = "";
+            let isWeatherMismatch = false;
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                streamedText += decoder.decode(value, { stream: true });
+
+                // Detect weather mismatch
+                if (streamedText.includes("unusual") || streamedText.includes("might be a system error")) {
+                    isWeatherMismatch = true;
+                }
+
+                // Extract categories dynamically
+                const categories = parseRecommendations(streamedText);
+
+                setRecommendations((prev) => ({
+                    location: trip.location || "",
+                    isWeatherMismatch,
+                    recommendations: { ...prev.recommendations, ...categories },
+                }));
+            }
+            // Final pass for the last chunk of data after the loop
+            const finalCategories = parseRecommendations(streamedText);
+
+            setRecommendations((prev) => ({
+                location: trip.location || "",
+                isWeatherMismatch,
+                recommendations: { ...prev.recommendations, ...finalCategories },
+            }));
+
+            dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: finalCategories } })
+
+            await fetch(`/api/assistant/trip-recommendations/${trip.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || ""
+                },
+                body: JSON.stringify({ ai_recommendation: finalCategories }),
+            });
+
+        } catch (err) {
+            console.error("Error fetching recommendations:", err);
+            setError("Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchAllChecklists = async () => {
         try {
@@ -143,71 +246,27 @@ const TripPage = () => {
             </header>
 
             {/* Trip Details */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Trip Details</h2>
-                <p>
-                    <strong>Start Date:</strong> {trip.start_date || "N/A"}
-                </p>
-                <p>
-                    <strong>End Date:</strong> {trip.end_date || "N/A"}
-                </p>
-                <p>
-                    <strong>Location:</strong> {trip.location || "N/A"}
-                </p>
-                <p>
-                    <strong>Notes:</strong> {trip.notes || "No additional notes provided."}
-                </p>
-            </section>
+            <TripDetails trip={trip} />
 
             {/* Checklists */}
-            <section className="w-full bg-white shadow-md rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Checklists</h2>
-                {state.checklists.length === 0 ? (
-                    <div className="text-center">
-                        <p className="text-gray-600 mb-4">
-                            You don&apos;t have any checklists created yet. You can make one by going here:
-                        </p>
-                        <Link
-                            href="/checklists/new"
-                            className="text-blue-500 underline hover:text-blue-700"
-                        >
-                            Create a New Checklist
-                        </Link>
-                    </div>
-                ) : trip.trip_checklists.length === 0 ? (
-                    <p className="text-gray-600">No checklists linked to this trip.</p>
-                ) : (
-                    <ul className="space-y-4">
-                        {trip.trip_checklists.map((checklist) => {
-                            return (
-                                <li
-                                    key={checklist.checklist_id}
-                                    className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
-                                >
-                                    <div>
-                                        <h3 className="font-semibold">
-                                            {checklist.checklists[0]?.title || "Untitled Checklist"}
-                                        </h3>
-                                        <ProgressBar label="" percentage={checklist.totalItems !== 0 ? (checklist.completedItems / checklist.totalItems) * 100 : 0} color="green" description={`${checklist.completedItems} of ${checklist.totalItems} items completed`} />
-                                    </div>
-                                    {/* Replace Link with a button that opens the dialog */}
-                                    <Button
-                                        className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSelectedChecklistId(checklist.checklist_id);
-                                            setIsChecklistDialogOpen(true);
-                                        }}
-                                    >
-                                        View
-                                    </Button>
-                                </li>
-                            )
-                        })}
-                    </ul>
-                )}
+            <TripChecklists
+                state={state}
+                trip={trip}
+                setIsChecklistDialogOpen={setIsChecklistDialogOpen}
+                setSelectedChecklistId={setSelectedChecklistId}
+            />
 
-            </section>
+            {/* AI Assistant */}
+            <TripRecommendations
+                recommendations={recommendations}
+                loading={loading}
+                error={error}
+                getAssistantHelp={getAssistantHelp}
+                aiRecommendationFromState={trip.ai_recommendation}
+                location={trip.location || "Unknown"}
+            />
+
+            {/* Edit Trip Button */}
             <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
                 Edit Trip
             </Button>

@@ -71,6 +71,7 @@ export interface FrontendTrip {
   end_date: string | null;
   location: string | null;
   notes: string | null;
+  ai_recommendation: Record<string, string>;
   created_at: string;
   updated_at: string;
   trip_checklists: {

@@ -260,31 +260,9 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             setError("Error updating checklist, try again later.");
             return;
         }
-        const response = await fetch(
-            `/api/checklists/${id}/items/${item.id}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
-                },
-                body: JSON.stringify({
-                    checklistId: id,
-                    itemId: item.item_id,
-                    completed: value,
-                    id: item.id,
-                }),
-            }
-        );
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Failed to update item status: ${errorMessage}`);
-        }
-        dispatch({
-            type: "CHECK_ITEM_IN_CHECKLIST",
-            payload: { checkedState: value, checklistId: id, itemId: item.id },
-        });
-        // Optimistically update the checklist UI
+
+        // Optimistically update the checklist state
+        const previousChecklist = checklist; // Keep a copy for rollback
         setChecklist((prev) => {
             if (!prev || !prev.items) return prev;
             return {
@@ -294,7 +272,44 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 ),
             };
         });
-    }
+
+        try {
+            // Make the API call
+            const response = await fetch(
+                `/api/checklists/${id}/items/${item.id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-user-id": user?.id || "",
+                    },
+                    body: JSON.stringify({
+                        checklistId: id,
+                        itemId: item.item_id,
+                        completed: value,
+                        id: item.id,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(`Failed to update item status: ${errorMessage}`);
+            }
+
+            // Update the checklist in the global state after a successful API call
+            dispatch({
+                type: "CHECK_ITEM_IN_CHECKLIST",
+                payload: { checkedState: value, checklistId: id, itemId: item.id },
+            });
+        } catch (error) {
+            console.error("Error updating item:", error);
+
+            // Revert the optimistic update on error
+            setChecklist(previousChecklist);
+            setError("Error updating checklist item. Changes reverted.");
+        }
+    };
 
     if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
     if (error) return <p className="text-red-500">{error}</p>;
