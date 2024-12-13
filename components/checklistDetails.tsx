@@ -58,23 +58,6 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             completed: false, // Assuming new items are added as incomplete
         }));
 
-        // Optimistically update the local checklist
-        const optimisticallyUpdatedItems = itemsToAdd.map((item) => ({
-            id: `${item.item_id}-${Math.random()}`, // Temporary unique ID for the item
-            item_id: item.item_id, // Ensure item_id is included
-            quantity: item.quantity, // Include quantity
-            completed: item.completed, // Include completed status
-        }));
-
-        setChecklist((prev) =>
-            prev
-                ? ({
-                    ...prev,
-                    items: [...prev.items, ...optimisticallyUpdatedItems],
-                } as ChecklistWithItems)
-                : null
-        );
-
         try {
             // Make the API call to add multiple items
             const response = await fetch(`/api/checklists/${id}`, {
@@ -95,43 +78,18 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             // Parse the response data
             const addedItems: ChecklistItem[] = await response.json();
 
-            // Replace optimistic items with actual API response
-            setChecklist((prev) =>
-                prev
-                    ? {
-                        ...prev,
-                        items: [
-                            ...prev.items.filter(
-                                (item) =>
-                                    !optimisticallyUpdatedItems.find(
-                                        (opt) => opt.id === item.id
-                                    )
-                            ),
-                            ...addedItems,
-                        ],
-                    }
-                    : null
-            );
-
             // Dispatch each added item to the state
             dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItems });
-        } catch (err) {
-            console.error("Error adding items:", err);
 
-            // Revert optimistic update in case of error
+            // Update the local checklist state
             setChecklist((prev) =>
                 prev
-                    ? {
-                        ...prev,
-                        items: prev.items.filter(
-                            (item) =>
-                                !optimisticallyUpdatedItems.find(
-                                    (opt) => opt.id === item.id
-                                )
-                        ),
-                    }
-                    : null
+                    ? { ...prev, items: [...prev.items, ...addedItems] }
+                    : prev
             );
+
+        } catch (err) {
+            console.error("Error adding items:", err);
         } finally {
             // Close the modal after adding
             setIsAddModalOpen(false);
@@ -302,31 +260,9 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             setError("Error updating checklist, try again later.");
             return;
         }
-        const response = await fetch(
-            `/api/checklists/${id}/items/${item.id}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
-                },
-                body: JSON.stringify({
-                    checklistId: id,
-                    itemId: item.item_id,
-                    completed: value,
-                    id: item.id,
-                }),
-            }
-        );
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Failed to update item status: ${errorMessage}`);
-        }
-        dispatch({
-            type: "CHECK_ITEM_IN_CHECKLIST",
-            payload: { checkedState: value, checklistId: id, itemId: item.id },
-        });
-        // Optimistically update the checklist UI
+
+        // Optimistically update the checklist state
+        const previousChecklist = checklist; // Keep a copy for rollback
         setChecklist((prev) => {
             if (!prev || !prev.items) return prev;
             return {
@@ -336,7 +272,44 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 ),
             };
         });
-    }
+
+        try {
+            // Make the API call
+            const response = await fetch(
+                `/api/checklists/${id}/items/${item.id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-user-id": user?.id || "",
+                    },
+                    body: JSON.stringify({
+                        checklistId: id,
+                        itemId: item.item_id,
+                        completed: value,
+                        id: item.id,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(`Failed to update item status: ${errorMessage}`);
+            }
+
+            // Update the checklist in the global state after a successful API call
+            dispatch({
+                type: "CHECK_ITEM_IN_CHECKLIST",
+                payload: { checkedState: value, checklistId: id, itemId: item.id },
+            });
+        } catch (error) {
+            console.error("Error updating item:", error);
+
+            // Revert the optimistic update on error
+            setChecklist(previousChecklist);
+            setError("Error updating checklist item. Changes reverted.");
+        }
+    };
 
     if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
     if (error) return <p className="text-red-500">{error}</p>;
