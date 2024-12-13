@@ -11,6 +11,8 @@ import { useAppContext } from "@/lib/appContext";
 import { useAuth } from "@/lib/auth-Context";
 import DetailedItemView from "@/components/itemDetails";
 import { formatWeight } from "@/utils/convertWeight";
+import Link from "next/link";
+import { toast } from "react-toastify";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -47,10 +49,12 @@ const ItemsPage = () => {
                             dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false }); // Reset noItems if items exist
                         }
                     } else {
+                        toast.error("Failed to load items.");
                         console.error("Failed to fetch items:", response.statusText);
                     }
                 } catch (err) {
                     console.error("Failed to fetch items:", err);
+                    toast.error("An error occurred while fetching items.");
                 }
             };
 
@@ -119,6 +123,11 @@ const ItemsPage = () => {
                     >
                         Create New Item
                     </Button>
+                    <Link href="/items/bulk" passHref>
+                        <Button className="bg-blue-500 text-white">
+                            Bulk Upload Items
+                        </Button>
+                    </Link>
                 </div>
             ) : (
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
@@ -130,6 +139,11 @@ const ItemsPage = () => {
                         >
                             Create New Item
                         </Button>
+                        <Link href="/items/bulk" passHref>
+                            <Button className="bg-blue-500 text-white">
+                                Bulk Upload Items
+                            </Button>
+                        </Link>
                         <div className="flex flex-col space-y-1 sm:space-y-0">
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By
@@ -238,4 +252,4 @@ const ItemsPage = () => {
         </>
     );
 }
-    export default withAuth(ItemsPage);
+export default withAuth(ItemsPage);
