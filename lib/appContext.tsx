@@ -28,7 +28,12 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "ADD_ITEM":
             return { ...state, items: [...state.items, action.payload] };
-
+        case 'ADD_BULK_ITEMS': {
+            return {
+                ...state,
+                items: [...state.items, ...action.payload],
+            };
+        }
         case "UPDATE_ITEM": {
             // Update the items array in the global state
             const updatedItems = state.items.map((item) =>
