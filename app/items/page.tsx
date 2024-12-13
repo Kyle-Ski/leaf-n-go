@@ -132,18 +132,20 @@ const ItemsPage = () => {
             ) : (
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
                     <h1 className="text-2xl font-semibold">Your Items</h1>
-                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center">
-                        <Button
-                            onClick={() => setIsCreateItemModalOpen(true)}
-                            className="bg-green-500 text-white"
-                        >
-                            Create New Item
-                        </Button>
-                        <Link href="/items/bulk" passHref>
-                            <Button className="bg-blue-500 text-white">
-                                Bulk Upload Items
+                    <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex flex-col space-y-2 sm:space-y-0">
+                            <Button
+                                onClick={() => setIsCreateItemModalOpen(true)}
+                                className="bg-green-500 text-white mb-2"
+                            >
+                                Create New Item
                             </Button>
-                        </Link>
+                            <Link href="/items/bulk" passHref>
+                                <Button className="bg-blue-500 text-white w-full">
+                                    Bulk Upload Items
+                                </Button>
+                            </Link>
+                        </div>
                         <div className="flex flex-col space-y-1 sm:space-y-0">
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By

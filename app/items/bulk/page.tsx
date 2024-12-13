@@ -7,6 +7,7 @@ import { ItemCategory, AppState, ItemDetails } from "@/types/projectTypes";
 import { kgToLbs } from "@/utils/convertWeight";
 import { useAuth } from "@/lib/auth-Context";
 import { toast } from "react-toastify";
+import BulkItemCsvUpload from "@/components/bulkItemCsvUpload";
 
 interface BulkUploadRow {
     name: string;
@@ -25,6 +26,7 @@ const BulkUpload = () => {
     const [weightUnit, setWeightUnit] = useState<AppState["user_settings"]["weight_unit"]>(state.user_settings.weight_unit);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [selectAll, setSelectAll] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // Loading state
 
     const addRow = () => {
         setRows([
@@ -69,8 +71,8 @@ const BulkUpload = () => {
     };
 
     const handleSubmit = async () => {
+        setIsUploading(true); // Set loading state to true
         try {
-            // Convert weights to lbs before submitting
             const sanitizedRows = rows
                 .filter((row) => row.name.trim() !== "") // Remove rows with an empty name
                 .map((row) => {
@@ -90,40 +92,17 @@ const BulkUpload = () => {
 
             if (response.ok) {
                 const data: { insertedItems: ItemDetails[] } = await response.json();
-                console.log("bulk data:", data);
-                dispatch({ type: "ADD_BULK_ITEMS", payload: data.insertedItems })
-                toast.success("Items uploaded successfully!", {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
-                setRows([])
+                dispatch({ type: "ADD_BULK_ITEMS", payload: data.insertedItems });
+                toast.success("Items uploaded successfully!");
+                setRows([]);
             } else {
-                toast.error("Failed to upload items.", {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
+                toast.error("Failed to upload items.");
             }
         } catch (error) {
             console.error("Error uploading items:", error);
-            toast.error("An error occurred while uploading items.", {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
+            toast.error("An error occurred while uploading items.");
+        } finally {
+            setIsUploading(false); // Reset loading state
         }
     };
 
@@ -136,6 +115,7 @@ const BulkUpload = () => {
                         className={`px-3 py-1 rounded ${weightUnit === "kg" ? "bg-blue-500 text-white" : "bg-gray-200"
                             }`}
                         onClick={() => handleWeightUnitToggle("kg")}
+                        disabled={isUploading} // Disable button while uploading
                     >
                         kg
                     </button>
@@ -143,6 +123,7 @@ const BulkUpload = () => {
                         className={`px-3 py-1 rounded ${weightUnit === "lbs" ? "bg-blue-500 text-white" : "bg-gray-200"
                             }`}
                         onClick={() => handleWeightUnitToggle("lbs")}
+                        disabled={isUploading} // Disable button while uploading
                     >
                         lbs
                     </button>
@@ -156,9 +137,9 @@ const BulkUpload = () => {
                                 type="checkbox"
                                 checked={selectAll}
                                 onChange={handleSelectAll}
+                                disabled={isUploading} // Disable checkbox while uploading
                                 className="appearance-none h-5 w-5 border border-gray-300 rounded bg-white checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
            checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px]"
-
                             />
                         </th>
                         <th className="border border-gray-300 px-2 py-2 bg-gray-100">Item Name</th>
@@ -176,19 +157,17 @@ const BulkUpload = () => {
                                     type="checkbox"
                                     checked={selectedRows.includes(index)}
                                     onChange={() => handleSelectRow(index)}
+                                    disabled={isUploading} // Disable checkbox while uploading
                                     className="appearance-none h-5 w-5 border border-gray-300 rounded bg-white checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
            checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px]"
-
                                 />
-
                             </td>
                             <td className="border border-gray-300 px-2 py-1">
                                 <input
                                     type="text"
                                     value={row.name}
-                                    onChange={(e) =>
-                                        handleInputChange(index, "name", e.target.value)
-                                    }
+                                    onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                                    disabled={isUploading} // Disable input while uploading
                                     className="w-full px-2 py-1 border rounded bg-white text-black"
                                 />
                             </td>
@@ -196,9 +175,8 @@ const BulkUpload = () => {
                                 <input
                                     type="number"
                                     value={row.quantity}
-                                    onChange={(e) =>
-                                        handleInputChange(index, "quantity", Number(e.target.value))
-                                    }
+                                    onChange={(e) => handleInputChange(index, "quantity", Number(e.target.value))}
+                                    disabled={isUploading} // Disable input while uploading
                                     className="w-full px-2 py-1 border rounded bg-white text-black"
                                 />
                             </td>
@@ -206,9 +184,8 @@ const BulkUpload = () => {
                                 <input
                                     type="number"
                                     value={row.weight}
-                                    onChange={(e) =>
-                                        handleInputChange(index, "weight", Number(e.target.value))
-                                    }
+                                    onChange={(e) => handleInputChange(index, "weight", Number(e.target.value))}
+                                    disabled={isUploading} // Disable input while uploading
                                     className="w-full px-2 py-1 border rounded bg-white text-black"
                                 />
                             </td>
@@ -216,18 +193,17 @@ const BulkUpload = () => {
                                 <input
                                     type="text"
                                     value={row.notes}
-                                    onChange={(e) =>
-                                        handleInputChange(index, "notes", e.target.value)
-                                    }
+                                    onChange={(e) => handleInputChange(index, "notes", e.target.value)}
+                                    disabled={isUploading} // Disable input while uploading
                                     className="w-full px-2 py-1 border rounded bg-white text-black"
                                 />
                             </td>
                             <td className="border border-gray-300 px-2 py-1">
                                 <select
                                     value={row.category_id}
-                                    onChange={(e) =>
-                                        handleInputChange(index, "category_id", e.target.value)
-                                    }
+                                    onChange={(e) => handleInputChange(index, "category_id", e.target.value)}
+                                    disabled={isUploading}
+
                                     className="w-full px-2 py-1 border rounded bg-white text-black"
                                 >
                                     <option value="">Select Category</option>
@@ -243,19 +219,21 @@ const BulkUpload = () => {
                 </tbody>
             </table>
             <div className="flex justify-between mt-4">
-                <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={addRow}>
+                <button disabled={isUploading} className="bg-green-500 text-white px-3 py-1 rounded" onClick={addRow}>
                     + Add Row
                 </button>
                 <button
+                    disabled={isUploading}
                     className="bg-red-500 text-white px-3 py-1 rounded"
                     onClick={handleRemoveSelectedRows}
                 >
                     Remove ✔ Item(s)
                 </button>
-                <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={handleSubmit}>
-                    Add All Items
+                <button disabled={isUploading} className="bg-blue-500 text-white px-3 py-1 rounded" onClick={handleSubmit}>
+                   {isUploading ? `Uploading...` : `Add All Items`}
                 </button>
             </div>
+            <BulkItemCsvUpload />
         </div>
     );
 };
