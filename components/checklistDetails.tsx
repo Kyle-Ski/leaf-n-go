@@ -58,6 +58,23 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             completed: false, // Assuming new items are added as incomplete
         }));
 
+        // Optimistically update the local checklist
+        const optimisticallyUpdatedItems = itemsToAdd.map((item) => ({
+            id: `${item.item_id}-${Math.random()}`, // Temporary unique ID for the item
+            item_id: item.item_id, // Ensure item_id is included
+            quantity: item.quantity, // Include quantity
+            completed: item.completed, // Include completed status
+        }));
+
+        setChecklist((prev) =>
+            prev
+                ? ({
+                    ...prev,
+                    items: [...prev.items, ...optimisticallyUpdatedItems],
+                } as ChecklistWithItems)
+                : null
+        );
+
         try {
             // Make the API call to add multiple items
             const response = await fetch(`/api/checklists/${id}`, {
@@ -78,18 +95,43 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             // Parse the response data
             const addedItems: ChecklistItem[] = await response.json();
 
-            // Dispatch each added item to the state
-            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItems });
-
-            // Update the local checklist state
+            // Replace optimistic items with actual API response
             setChecklist((prev) =>
                 prev
-                    ? { ...prev, items: [...prev.items, ...addedItems] }
-                    : prev
+                    ? {
+                        ...prev,
+                        items: [
+                            ...prev.items.filter(
+                                (item) =>
+                                    !optimisticallyUpdatedItems.find(
+                                        (opt) => opt.id === item.id
+                                    )
+                            ),
+                            ...addedItems,
+                        ],
+                    }
+                    : null
             );
 
+            // Dispatch each added item to the state
+            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: addedItems });
         } catch (err) {
             console.error("Error adding items:", err);
+
+            // Revert optimistic update in case of error
+            setChecklist((prev) =>
+                prev
+                    ? {
+                        ...prev,
+                        items: prev.items.filter(
+                            (item) =>
+                                !optimisticallyUpdatedItems.find(
+                                    (opt) => opt.id === item.id
+                                )
+                        ),
+                    }
+                    : null
+            );
         } finally {
             // Close the modal after adding
             setIsAddModalOpen(false);
