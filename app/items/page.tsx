@@ -132,7 +132,7 @@ const ItemsPage = () => {
             ) : (
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
                     <h1 className="text-2xl font-semibold">Your Items</h1>
-                    <div className="flex flex-col space-y-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-col space-y-2 sm:space-y-0">
                             <Button
                                 onClick={() => setIsCreateItemModalOpen(true)}
@@ -141,12 +141,19 @@ const ItemsPage = () => {
                                 Create New Item
                             </Button>
                             <Link href="/items/bulk" passHref>
-                                <Button className="bg-blue-500 text-white w-full">
+                                <Button className="bg-blue-500 text-white w-full mb-4">
                                     Bulk Upload Items
                                 </Button>
                             </Link>
+                            <Button
+                                disabled={false}
+                                className="bg-red-500 text-white rounded"
+                                onClick={() => console.log("REMOVE ALL CHECKED ITEMS")}
+                            >
+                                Remove ✔ Item(s)
+                            </Button>
                         </div>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
+                        <div className="flex flex-col mt-2">
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By
                             </label>
@@ -186,13 +193,21 @@ const ItemsPage = () => {
                         {filteredItems.map((item) => (
                             <li
                                 key={item.id}
-                                className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                onClick={() => {
-                                    setSelectedItemId(item.id);
-                                    setIsItemModalOpen(true);
-                                }}
+                                className="p-4 bg-white rounded-lg shadow-md flex items-center space-x-4"
                             >
-                                <div className="flex justify-between items-start md:items-center">
+                                {/* Checkbox */}
+                                <input
+                                    type="checkbox"
+                                    checked={true}
+                                    onChange={() => console.log(item.id)}
+                                    disabled={false}
+                                    className="appearance-none h-5 w-5 border border-gray-300 rounded bg-white checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                                    checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px]"
+                                />
+
+                                {/* Item Details */}
+                                <div className="flex justify-between flex-1 items-start md:items-center">
+                                    {/* Left Column */}
                                     <div className="flex flex-col space-y-1">
                                         <p className="font-semibold">{item.name}</p>
                                         {item.item_categories?.name && (
@@ -202,9 +217,24 @@ const ItemsPage = () => {
                                         )}
                                         <p className="text-sm text-gray-500">Notes: {item.notes || "N/A"}</p>
                                     </div>
+
+                                    {/* Right Column */}
                                     <div className="flex flex-col text-right space-y-1">
+                                        <Button
+                                            className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSelectedItemId(item.id);
+                                                setIsItemModalOpen(true);
+                                            }}
+                                        >
+                                            View
+                                        </Button>
                                         <p className="text-sm">Quantity: {item.quantity}</p>
-                                        <p className="text-sm">Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}{state.user_settings.weight_unit}</p>
+                                        <p className="text-sm">
+                                            Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}
+                                            {state.user_settings.weight_unit}
+                                        </p>
                                     </div>
                                 </div>
                             </li>

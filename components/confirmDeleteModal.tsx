@@ -9,6 +9,7 @@ interface ConfirmDeleteModalProps {
     description?: string;
     deleteButtonText?: string;
     cancelButtonText?: string;
+    thingsToDelete?: any[]
 }
 
 const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
@@ -19,13 +20,16 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     description = "Are you sure you want to delete this? This action cannot be undone.",
     deleteButtonText = "Delete",
     cancelButtonText = "Cancel",
+    thingsToDelete
 }) => {
+    console.log("things to delete",thingsToDelete)
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
+                    <DialogDescription>{}</DialogDescription>
                 </DialogHeader>
                 <div className="flex space-x-4 mt-4">
                     <Button onClick={onDelete} className="bg-red-500 text-white">
