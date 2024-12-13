@@ -13,6 +13,7 @@ import DetailedItemView from "@/components/itemDetails";
 import { formatWeight } from "@/utils/convertWeight";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -24,6 +25,47 @@ const ItemsPage = () => {
     // State to manage the selected item for the modal
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]); // Array of selected item IDs
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleSelectRow = (id: string) => {
+        setSelectedRows((prevSelected) =>
+            prevSelected.includes(id) ? prevSelected.filter((rowId) => rowId !== id) : [...prevSelected, id]
+        );
+    };
+
+    const handleRemoveSelectedRows = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDelete = async () => {
+        try {
+            setIsUploading(true);
+            const response = await fetch("/api/items/bulk-delete", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": user?.id || "",
+                },
+                body: JSON.stringify({ itemIds: selectedRows }),
+            });
+
+            if (response.ok) {
+                // dispatch({ type: "DELETE_BULK_ITEMS", payload: selectedRows });
+                toast.success("Selected items deleted successfully!");
+                setSelectedRows([]);
+            } else {
+                toast.error("Failed to delete selected items.");
+            }
+        } catch (error) {
+            console.error("Error deleting items:", error);
+            toast.error("An error occurred while deleting items.");
+        } finally {
+            setIsUploading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
 
     useEffect(() => {
         if (!state.noItems && state.items.length === 0) {
@@ -146,9 +188,9 @@ const ItemsPage = () => {
                                 </Button>
                             </Link>
                             <Button
-                                disabled={false}
+                                disabled={isUploading}
                                 className="bg-red-500 text-white rounded"
-                                onClick={() => console.log("REMOVE ALL CHECKED ITEMS")}
+                                onClick={handleRemoveSelectedRows}
                             >
                                 Remove ✔ Item(s)
                             </Button>
@@ -198,11 +240,11 @@ const ItemsPage = () => {
                                 {/* Checkbox */}
                                 <input
                                     type="checkbox"
-                                    checked={true}
-                                    onChange={() => console.log(item.id)}
-                                    disabled={false}
+                                    checked={selectedRows.includes(item.id)}
+                                    onChange={() => handleSelectRow(item.id)}
+                                    disabled={isUploading}
                                     className="appearance-none h-5 w-5 border border-gray-300 rounded bg-white checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
-                                    checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px]"
+                                    checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px] cursor-pointer"
                                 />
 
                                 {/* Item Details */}
@@ -242,6 +284,18 @@ const ItemsPage = () => {
                     </ul>
                 </div>
             )}
+
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+                title="Confirm Delete Items"
+                description="Are you sure you want to delete these items? This action cannot be undone."
+                thingsToDelete={selectedRows.map((id) => ({
+                    name: items.find((item) => item.id === id)?.name || "Unknown Item",
+                }))}
+            />
+
             {/* Create New Item Modal */}
             <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
                 <DialogContent>
