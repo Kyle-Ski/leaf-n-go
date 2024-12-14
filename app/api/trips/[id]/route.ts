@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
 import { FrontendTrip } from "@/types/projectTypes";
-import { validateAccessToken } from "@/utils/auth/validateAccessToken";
+import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 // GET: Fetch details for a specific trip
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const tripId = await params.id;
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -23,38 +26,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   }
 
   try {
-    const { data: trip, error } = await supabaseServer
-      .from("trips")
-      .select(`
-        id,
-        title,
-        start_date,
-        end_date,
-        location,
-        notes,
-        created_at,
-        updated_at,
-        trip_checklists (
-          checklist_id,
-          checklists (
-            title,
-            checklist_items (
-              id,
-              completed
-            )
-          )
-        ),
-        trip_participants (
-          user_id,
-          role
-        )
-      `)
-      .eq("id", tripId)
-      .single();
-
-    if (error) {
-      throw error;
-    }
+    const trip = await databaseService.getTripDetails(tripId);
 
     // Transform the trip_checklists to include totalItems and completedItems
     if (trip.trip_checklists) {
@@ -95,7 +67,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   const params = await props.params;
   const tripId = await params.id;
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -125,9 +97,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     // }
 
     // Delete the trip
-    const { error: tripError } = await supabaseServer.from("trips").delete().eq("id", tripId);
-
-    if (tripError) throw tripError;
+    await databaseService.deleteTrip(tripId)
 
     return NextResponse.json({ message: "Trip deleted successfully" }, { status: 200 });
   } catch (err) {
@@ -141,7 +111,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
   const params = await props.params;
   const tripId = await params.id;
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -173,24 +143,12 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     // }
 
     // Update the trip details
-    const { error: updateError } = await supabaseServer
-      .from("trips")
-      .update({ title, start_date, end_date, location, notes })
-      .eq("id", tripId)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
+    await databaseService.updateTripDetails(tripId, title, start_date, end_date, location, notes)
 
     // Update trip checklists
     if (trip_checklists) {
       // Remove existing trip checklists
-      const { error: deleteError } = await supabaseServer
-        .from("trip_checklists")
-        .delete()
-        .eq("trip_id", tripId);
-
-      if (deleteError) throw deleteError;
+      await databaseService.deleteTripChecklist(tripId);
 
       // Add updated trip checklists
       const newTripChecklists = trip_checklists.map((checklist: { checklist_id: string }) => ({
@@ -198,40 +156,11 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         checklist_id: checklist.checklist_id,
       }));
 
-      const { error: insertError } = await supabaseServer
-        .from("trip_checklists")
-        .insert(newTripChecklists);
-
-      if (insertError) throw insertError;
+      await databaseService.addChecklistsToTrip(newTripChecklists)
     }
 
     // Fetch the updated trip with its related data, including totalItems and completedItems
-    const { data: fullTrip, error: fetchError } = await supabaseServer
-      .from("trips")
-      .select(`
-        id,
-        title,
-        start_date,
-        end_date,
-        location,
-        notes,
-        created_at,
-        updated_at,
-        trip_checklists (
-          checklist_id,
-          checklists (
-            title,
-            checklist_items (
-              id,
-              completed
-            )
-          )
-        )
-      `)
-      .eq("id", tripId)
-      .single();
-
-    if (fetchError) throw fetchError;
+    const fullTrip = await databaseService.getTripDetails(tripId)
 
     // Add totalItems and completedItems to the checklists
     if (fullTrip.trip_checklists) {

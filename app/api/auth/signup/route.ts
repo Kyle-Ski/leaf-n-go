@@ -1,19 +1,35 @@
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { NextRequest, NextResponse } from "next/server";
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
 
-export async function POST(request: Request) {
-  const body = await request.json();
-  const { email, password } = body;
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
-  const { error } = await supabaseServer.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
-  });
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { email, password } = body;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    // Use the database service to sign up the user
+    const { error } = await databaseService.signUp(email, password);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      {
+        message:
+          "A confirmation email has been sent. Please check your inbox to verify your account.",
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error during signup:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      console.error("Unexpected error during signup:", error);
+      return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
+    }
   }
-
-  return NextResponse.json({ message: 'A confirmation email has been sent. Please check your inbox to verify your account.' }, { status: 200 });
 }

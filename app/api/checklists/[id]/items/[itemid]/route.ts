@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
-import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function PUT(request: NextRequest) {
   try {
-    const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
+    const { user, error: validateError } = await validateAccessTokenDI(request, databaseService);
 
     if (validateError) {
       return NextResponse.json({ validateError }, { status: 401 });
@@ -28,12 +31,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate checklist ownership
-    const { data: checklist, error: checklistError } = await supabaseServer
-      .from('checklists')
-      .select('id')
-      .eq('id', checklistId)
-      .eq('user_id', userId)
-      .single();
+    const { data: checklist, error: checklistError } = await databaseService.validateChecklistOwnership(checklistId, userId)
 
     if (checklistError || !checklist) {
       return NextResponse.json(
@@ -43,13 +41,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the "completed" status of the item
-    const { data: updatedItem, error: itemError } = await supabaseServer
-      .from('checklist_items')
-      .update({ completed })
-      .eq('id', id) // Use 'item_id' if that's the correct column
-      .eq('checklist_id', checklistId)
-      .select('*')
-      .single();
+    const { data: updatedItem, error: itemError } = await databaseService.updateCompletedChecklistItem(completed, id, checklistId)
 
 
     if (itemError || !updatedItem) {

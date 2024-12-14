@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
 import { UserSettings } from '@/types/projectTypes';
-import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function GET(request: NextRequest) {
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(request, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -17,14 +20,10 @@ export async function GET(request: NextRequest) {
 
   const userId = user.id
 
-  const { data, error } = await supabaseServer
-    .from('user_settings')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+  const { data, error } = await databaseService.getUserSettingsForUser(userId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Error getting User Settings." }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -32,7 +31,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(request, databaseService);
   
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -63,10 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Perform the update operation
-  const { error } = await supabaseServer
-    .from('user_settings')
-    .update(updatedFields)
-    .eq('user_id', userId);
+  const { error } = await databaseService.updateUserSettings(userId, updatedFields)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

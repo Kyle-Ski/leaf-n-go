@@ -1,11 +1,11 @@
-import { supabaseServer } from '@/lib/supabaseServer';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function trackAiUsage(userId: string) {
     try {
-        const { data, error } = await supabaseServer.rpc('increment_usage_count', {
-            user_id: userId,
-            increment_by: 1, // Optional, defaults to 1
-        });
+        const { data, error } = await databaseService.trackAiUsage(userId)
 
         if (error) {
             console.error("Error tracking AI usage:", error);

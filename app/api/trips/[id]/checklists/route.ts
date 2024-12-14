@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { validateAccessToken } from "@/utils/auth/validateAccessToken";
+import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const tripId = await params.id;
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -25,21 +28,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
   try {
     // Fetch checklists associated with the trip
-    const { data: checklists, error } = await supabaseServer
-      .from("trip_checklists")
-      .select(`
-          checklist_id,
-          checklists (
-            title,
-            checklist_items (
-              id,
-              completed
-            )
-          )
-        `)
-      .eq("trip_id", tripId);
-
-    if (error) throw error;
+    const { data: checklists } = await databaseService.getTripChecklistsAndItems(tripId)
 
     // Transform the data to include progress and total counts
     const transformedChecklists = checklists.map((tripChecklist) => {

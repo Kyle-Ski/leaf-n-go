@@ -60,7 +60,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 category_id: (item as any).category_id || null,
             });
         }
-    }, [item, state.user_settings.weight_unit]);
+    }, [item, state.user_settings]);
 
     // Fetch item details if not available in the global state
     useEffect(() => {
