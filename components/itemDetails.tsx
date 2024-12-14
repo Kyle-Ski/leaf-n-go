@@ -15,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { ItemDetails, Item } from "@/types/projectTypes";
-import { useAuth } from "@/lib/auth-Context";
 import { formatWeight, kgToLbs, lbsToKg } from "@/utils/convertWeight";
 
 interface DetailedItemViewProps {
@@ -27,7 +26,6 @@ interface DetailedItemViewProps {
 const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const router = useRouter();
     const { state, dispatch } = useAppContext();
-    const { user } = useAuth();
     const item = state.items.find((i) => i.id === itemId);
     const [loading, setLoading] = useState(!item);
     const [error, setError] = useState<string | null>(null);
@@ -72,7 +70,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             setLoading(true);
             try {
                 const response = await fetch(`/api/items/${itemId}`, {
-                    headers: { "x-user-id": user?.id || "" },
+                    headers: { "Content-Type": "application/json", },
                 });
                 if (!response.ok) {
                     throw new Error("Failed to fetch item details.");
@@ -88,7 +86,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
         };
 
         fetchItem();
-    }, [item, itemId, isDeleted, dispatch, state.items, user?.id]);
+    }, [item, itemId, isDeleted, dispatch, state.items]);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -122,7 +120,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
                 },
                 body: JSON.stringify(updatedItemData),
             });
@@ -149,7 +146,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             const response = await fetch(`/api/items/${itemId}`, {
                 method: "DELETE",
                 headers: {
-                    "x-user-id": user?.id || "",
+                   "Content-Type": "application/json",
                 },
             });
 
