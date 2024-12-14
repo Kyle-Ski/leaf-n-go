@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function PUT(request: NextRequest) {
   try {

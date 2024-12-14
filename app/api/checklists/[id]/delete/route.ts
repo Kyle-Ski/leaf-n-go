@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { validateAccessToken } from "@/utils/auth/validateAccessToken";
+import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -27,38 +30,27 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 
   try {
     // Verify the checklist belongs to the user
-    const { data: checklist, error: fetchError } = await supabaseServer
-      .from("checklists")
-      .select("id")
-      .eq("id", checklistId)
-      .eq("user_id", userId)
-      .single();
+    const checklist = await databaseService.getChecklistByIdAndUserId(checklistId, userId);
 
-    if (fetchError || !checklist) {
+    if (!checklist) {
       return NextResponse.json({ error: "Checklist not found or unauthorized" }, { status: 404 });
     }
 
     // Delete the checklist and associated items
-    const { error: deleteItemsError } = await supabaseServer
-      .from("checklist_items")
-      .delete()
-      .eq("checklist_id", checklistId);
+    const deleteItemsResult = await databaseService.deleteChecklistItemsByChecklistId(checklistId);
 
-    if (deleteItemsError) {
-      console.error("Error deleting checklist items:", deleteItemsError);
+    if (!deleteItemsResult) {
+      console.error("Error deleting checklist items");
       return NextResponse.json(
         { error: "Failed to delete checklist items" },
         { status: 500 }
       );
     }
 
-    const { error: deleteChecklistError } = await supabaseServer
-      .from("checklists")
-      .delete()
-      .eq("id", checklistId);
+    const deleteChecklistResult = await databaseService.deleteChecklistById(checklistId);
 
-    if (deleteChecklistError) {
-      console.error("Error deleting checklist:", deleteChecklistError);
+    if (!deleteChecklistResult) {
+      console.error("Error deleting checklist");
       return NextResponse.json({ error: "Failed to delete checklist" }, { status: 500 });
     }
 
@@ -67,4 +59,5 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     console.error("Unexpected error:", error);
     return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
+
 }

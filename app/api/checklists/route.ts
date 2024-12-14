@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
-import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
 import { DatabaseService } from '@/di/services/databaseService';
 import serviceContainer from '@/di/containers/serviceContainer';
 
 const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function GET(req: NextRequest) {
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -91,7 +90,7 @@ export async function POST(req: NextRequest) {
     completed: boolean;
     items: InventoryItem;
   }
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });

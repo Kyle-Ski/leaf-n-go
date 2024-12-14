@@ -307,6 +307,12 @@ export class DatabaseService {
     return { error };
   }
 
+  /* CHECKLIST METHODS */
+  /**
+   * Get all checklists for user
+   * @param userId 
+   * @returns 
+   */
   async fetchChecklistsByUser(userId: string) {
     const { data, error } = await this.databaseClient
       .from('checklists')
@@ -321,6 +327,11 @@ export class DatabaseService {
     return data || [];
   }
 
+  /**
+   * Get all items in a checklist using our join table
+   * @param checklistIds 
+   * @returns 
+   */
   async fetchChecklistItemsByChecklistIds(checklistIds: string[]) {
     const { data, error } = await this.databaseClient
       .from('checklist_items')
@@ -335,6 +346,11 @@ export class DatabaseService {
     return data || [];
   }
 
+  /**
+   * Create a new checklist
+   * @param checklist 
+   * @returns 
+   */
   async createChecklist(checklist: { title: string; category: string; user_id: string }) {
     const { data, error } = await this.databaseClient
       .from("checklists")
@@ -350,6 +366,12 @@ export class DatabaseService {
     return data;
   }
 
+  /**
+   * Gets items and category names for those items
+   * @param userId 
+   * @param itemIds 
+   * @returns 
+   */
   async fetchInventoryItemsByIds(userId: string, itemIds: string[]) {
     const { data, error } = await this.databaseClient
       .from("items")
@@ -365,6 +387,11 @@ export class DatabaseService {
     return data || [];
   }
 
+  /**
+   * Adds an item to a checklist using the join table
+   * @param checklistItems 
+   * @returns 
+   */
   async insertChecklistItems(checklistItems: { checklist_id: string; item_id: string; completed: boolean }[]) {
     const { error, data } = await this.databaseClient
       .from("checklist_items")
@@ -376,6 +403,154 @@ export class DatabaseService {
       throw new Error(error.message || "Failed to insert checklist items.");
     }
     return data
+  }
+
+  /**
+   * Get single checklist from a user
+   * @param checklistId 
+   * @param userId 
+   * @returns 
+   */
+  async getChecklistByIdAndUserId(checklistId: string, userId: string) {
+    const { data, error } = await this.databaseClient
+      .from("checklists")
+      .select("id")
+      .eq("id", checklistId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching checklist:", error);
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
+   * Remove item from checklist
+   * @param checklistId 
+   * @returns 
+   */
+  async deleteChecklistItemsByChecklistId(checklistId: string) {
+    const { error } = await this.databaseClient
+      .from("checklist_items")
+      .delete()
+      .eq("checklist_id", checklistId);
+
+    if (error) {
+      console.error("Error deleting checklist items:", error);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Deletes checklist by id
+   * @param checklistId 
+   * @returns 
+   */
+  async deleteChecklistById(checklistId: string) {
+    const { error } = await this.databaseClient
+      .from("checklists")
+      .delete()
+      .eq("id", checklistId);
+
+    if (error) {
+      console.error("Error deleting checklist:", error);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get single checklist by id for user
+   * @param checklistId 
+   * @param userId 
+   * @returns 
+   */
+  async getChecklistByIdForUser(checklistId: string, userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklists')
+      .select('*')
+      .eq('id', checklistId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.error("Permission denied error fetching checklist:", error);
+        return null;
+      }
+      console.error("Error fetching checklist:", error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  /**
+   * Get checklist items with all details for checklist
+   * @param checklistId 
+   * @returns 
+   */
+  async getChecklistItemsWithDetails(checklistId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .select('*, items(*, item_categories(name))')
+      .eq('checklist_id', checklistId);
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.error("Permission denied error fetching checklist items:", error);
+        return null;
+      }
+      console.error("Error fetching checklist items:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  }
+
+  /**
+   * Adds items to checklist and returns item details
+   * @param expandedItems 
+   * @returns 
+   */
+  async insertChecklistItemsAndReturn(expandedItems: any[]) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .insert(expandedItems)
+      .select(
+        `
+            id,
+            checklist_id,
+            item_id,
+            completed,
+            quantity,
+            items (
+                id,
+                name,
+                notes,
+                weight,
+                user_id,
+                quantity,
+                category_id,
+                item_categories (
+                    name
+                )
+            )
+        `
+      );
+
+    if (error) {
+      console.error("Error inserting checklist items:", error);
+      throw new Error(error.message);
+    }
+
+    return data;
   }
 
 
