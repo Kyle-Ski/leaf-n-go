@@ -79,7 +79,6 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'x-user-id': user.id,
                         },
                         body: JSON.stringify({
                             consent: parsedConsent,
@@ -119,7 +118,6 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-user-id': userId,
                     },
                     body: JSON.stringify({
                         consent: newConsent,

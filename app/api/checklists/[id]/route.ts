@@ -20,8 +20,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   if (!checklistId) {
@@ -98,8 +97,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const userId = user.id
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   const body = await req.json();
@@ -189,8 +187,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   const { item_id } = await req.json();
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   if (!item_id) {
