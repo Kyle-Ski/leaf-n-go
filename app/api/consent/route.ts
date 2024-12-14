@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer'; // Ensure correct path
-import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 // Define the structure of consent categories
 export type ConsentCategories = {
@@ -15,18 +19,18 @@ export type ConsentCategories = {
 
 // GET: Fetch user consent preferences
 export async function GET(req: NextRequest) {
-    const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+    const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
     if (validateError) {
-      return NextResponse.json({ validateError }, { status: 401 });
+        return NextResponse.json({ validateError }, { status: 401 });
     }
-  
+
     if (!user) {
-      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+        return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
     }
-  
+
     const userId = user.id
-  
+
     const referrer = req.headers.get('referer'); // For debugging
 
     if (!userId) {
@@ -35,42 +39,38 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { data, error } = await supabaseServer
-            .from('user_consent')
-            .select('consent, privacy_policy_version')
-            .eq('user_id', userId)
-            .single();
+        const consentRecord = await databaseService.getUserConsent(userId);
 
-        if (error) {
-            if (error.code === 'PGRST116') { // Supabase error code for no data
-                console.log('No consent record found for user ID:', userId, 'Referrer:', referrer);
-                return NextResponse.json({ error: 'Consent not found' }, { status: 404 });
-            }
-            console.error('Error fetching consent:', error, 'Referrer:', referrer);
-            return NextResponse.json({ error: 'Failed to fetch consent preferences' }, { status: 500 });
+        if (!consentRecord) {
+            console.log('No consent record found for user ID:', userId, 'Referrer:', referrer);
+            return NextResponse.json({ error: 'Consent not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ consent: data.consent, privacyPolicyVersion: data.privacy_policy_version }, { status: 200 });
+        return NextResponse.json(
+            { consent: consentRecord.consent, privacyPolicyVersion: consentRecord.privacyPolicyVersion },
+            { status: 200 }
+        );
     } catch (error) {
         console.error('Unexpected error fetching consent:', error, 'Referrer:', referrer);
         return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
     }
+
 }
 
 // POST: Save or update user consent preferences
 export async function POST(req: NextRequest) {
-    const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+    const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
     if (validateError) {
-      return NextResponse.json({ validateError }, { status: 401 });
+        return NextResponse.json({ validateError }, { status: 401 });
     }
-  
+
     if (!user) {
-      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+        return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
     }
-  
+
     const userId = user.id
-  
+
     const referrer = req.headers.get('referer'); // For debugging
 
     if (!userId) {
@@ -107,24 +107,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Upsert the consent data
-        const { data, error } = await supabaseServer
-            .from('user_consent')
-            .upsert([
-                {
-                    user_id: userId,
-                    consent,
-                    privacy_policy_version: privacyPolicyVersion,
-                },
-            ], { onConflict: 'user_id' }) // Specify the conflict target
-            .select('consent, privacy_policy_version')
-            .single();
+        const { data } = await databaseService.updateUserConsent(userId, consent, privacyPolicyVersion)
 
-        if (error) {
-            console.error('Error saving consent preferences:', error, 'Referrer:', referrer);
-            return NextResponse.json({ error: 'Failed to save consent preferences' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true, consent: data.consent, privacyPolicyVersion: data.privacy_policy_version }, { status: 200 });
+        return NextResponse.json({ success: true, consent: data, privacyPolicyVersion: data.privacy_policy_version }, { status: 200 });
     } catch (error) {
         console.error('Unexpected error saving consent:', error, 'Referrer:', referrer);
         return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });

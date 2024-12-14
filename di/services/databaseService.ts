@@ -553,5 +553,67 @@ export class DatabaseService {
     return data;
   }
 
+  /* CONSENT METHODS */
+
+  /**
+   * Gets the user's consent from our database if any.
+   * @param userId 
+   * @returns 
+   */
+  async getUserConsent(userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('user_consent')
+      .select('consent, privacy_policy_version')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') { // Supabase error code for no data
+        return null;
+      }
+      console.error('Error fetching user consent:', error);
+      throw new Error('Failed to fetch consent preferences');
+    }
+
+    return {
+      consent: data.consent,
+      privacyPolicyVersion: data.privacy_policy_version,
+    };
+  }
+
+  /**
+   * Update user Consent
+   * @param userId 
+   * @param consent 
+   * @param privacyPolicyVersion 
+   * @returns 
+   */
+  async updateUserConsent(userId: string, consent: boolean, privacyPolicyVersion: string) {
+    const { data, error } = await this.databaseClient
+      .from('user_consent')
+      .upsert(
+        [
+          {
+            user_id: userId,
+            consent,
+            privacy_policy_version: privacyPolicyVersion,
+          },
+        ],
+        { onConflict: 'user_id' } // Specify the conflict target
+      )
+      .select('consent, privacy_policy_version')
+      .single();
+
+    if (error) {
+      console.error('Error upserting user consent:', error);
+      throw new Error('Failed to upsert consent preferences');
+    }
+
+    return {
+      data: data.consent,
+      privacyPolicyVersion: data.privacy_policy_version,
+    };
+  }
+
 
 }
