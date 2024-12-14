@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { FrontendTrip } from "@/types/projectTypes";
+import { validateAccessToken } from "@/utils/auth/validateAccessToken";
 
 // GET: Fetch details for a specific trip
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const tripId = await params.id;
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
 
   if (!tripId) {
     return NextResponse.json({ error: "Trip ID is required." }, { status: 400 });
@@ -53,7 +64,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         const totalItems = checklist?.checklist_items?.length || 0;
         const completedItems =
           checklist?.checklist_items?.filter((item: { completed: boolean }) => item.completed).length || 0;
-    
+
         return {
           checklist_id: tripChecklist.checklist_id,
           checklists: [
@@ -67,7 +78,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         };
       }) as FrontendTrip["trip_checklists"];
     }
-        
+
     // Cast the trip to the new type
     const frontendTrip = trip as FrontendTrip;
 
@@ -83,10 +94,21 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const tripId = await params.id;
-  const userId = req.headers.get("x-user-id");
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
 
-  if (!tripId || !userId) {
-    return NextResponse.json({ error: "Trip ID and User ID are required" }, { status: 400 });
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  // const userId = user.id
+
+  if (!tripId) {
+    return NextResponse.json({ error: "Trip ID is required" }, { status: 400 });
   }
 
   try {
@@ -118,7 +140,19 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const tripId = await params.id;
-  const userId = req.headers.get("x-user-id");
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
   const { title, start_date, end_date, location, notes, trip_checklists } = await req.json();
 
   if (!tripId || !userId) {

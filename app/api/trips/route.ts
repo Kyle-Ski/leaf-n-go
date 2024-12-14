@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { FrontendTrip } from "@/types/projectTypes";
+import { validateAccessToken } from "@/utils/auth/validateAccessToken";
 
 // GET all trips for the current user
 export async function GET(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
 
-  if (!userId) {
-    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
   }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
 
   try {
     const { data: trips, error } = await supabaseServer
@@ -84,8 +92,20 @@ export async function GET(req: NextRequest) {
 
 
 export async function POST(req: NextRequest) {
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
   const { title, start_date, end_date, location, notes, checklists = [], participants = [] } = await req.json();
-  const userId = req.headers.get("x-user-id");
 
   if (!userId || !title) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

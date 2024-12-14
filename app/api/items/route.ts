@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized: User not found' }, { status: 401 });
-  } const referrer = req.headers.get('referer'); // Log the referrer for debugging
+  } 
+  
+  const referrer = req.headers.get('referer'); // Log the referrer for debugging
 
   const userId = user.id
 

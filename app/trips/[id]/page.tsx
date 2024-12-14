@@ -177,7 +177,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json", "x-user-id": user?.id || "", },
+                headers: { "Content-Type": "application/json", },
                 body: JSON.stringify(updatedTrip),
             });
 
@@ -202,7 +202,7 @@ const TripPage = () => {
         try {
             const response = await fetch(`/api/trips/${id}`, {
                 method: "DELETE",
-                headers: { "x-user-id": user?.id || "" }
+                headers: { "Content-Type": "application/json" }
             });
 
             if (!response.ok) {
