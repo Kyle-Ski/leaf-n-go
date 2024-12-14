@@ -225,4 +225,42 @@ export class DatabaseService {
     }
   }
 
+  /* AI METHODS */
+  /**
+   * Updates the recommendation our AI made for the users trip in the database for use later.
+   * @param tripId user's trip id
+   * @param userId user's id
+   * @param updateData AI recommendation data to update our database with
+   */
+  async validateAndUpdateTrip(
+    tripId: string,
+    userId: string,
+    updateData: { ai_recommendation: string }
+  ): Promise<void> {
+    // Check if the trip belongs to the user
+    const { data: trip, error: tripError } = await this.databaseClient
+      .from("trips")
+      .select("id, user_id")
+      .eq("id", tripId)
+      .single();
+
+    if (tripError || !trip) {
+      throw { message: "Trip not found or you don't have access to it", status: 404 };
+    }
+
+    if (trip.user_id !== userId) {
+      throw { message: "Unauthorized", status: 403 };
+    }
+
+    // Update the AI recommendation
+    const { error: updateError } = await this.databaseClient
+      .from("trips")
+      .update(updateData)
+      .eq("id", tripId);
+
+    if (updateError) {
+      throw { message: "Failed to update trip", status: 500 };
+    }
+  }
+
 }

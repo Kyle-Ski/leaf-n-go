@@ -1,11 +1,14 @@
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
 import anthropic from "@/lib/anthropicClient";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { validateAccessToken } from "@/utils/auth/validateAccessToken";
+import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
 import { NextRequest, NextResponse } from "next/server";
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function GET(req: NextRequest) {
     console.log("GET /api/assistant", req)
-    const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+    const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
     if (validateError) {
         return NextResponse.json({ validateError }, { status: 401 });
