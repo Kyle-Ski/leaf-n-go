@@ -129,10 +129,10 @@ export default function AuthPage() {
     }
   };
 
-  const fetchCategories = async (userId: string) => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch("/api/item-categories", {
-        headers: { "x-user-id": userId },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (!response.ok) {
@@ -212,7 +212,7 @@ export default function AuthPage() {
         await fetchTrips()
         await fetchItems();
         await fetchChecklists()
-        await fetchCategories(user.id)
+        await fetchCategories()
         await fetchUserSettings()
         router.push("/"); // Redirect to homepage
       }

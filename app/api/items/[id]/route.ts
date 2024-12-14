@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { validateAccessToken } from "@/utils/auth/validateAccessToken";
 
 export async function GET(req: NextRequest) {
+
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
   const url = new URL(req.url);
   const itemId = url.pathname.split("/").pop(); // Extract the item ID from the URL
 
@@ -29,6 +41,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
   const url = new URL(req.url);
   const itemId = url.pathname.split("/").pop(); // Extract the item ID from the URL
 
@@ -73,6 +95,16 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+  
   const url = new URL(req.url);
   const itemId = url.pathname.split("/").pop(); // Extract the item ID from the URL
 
