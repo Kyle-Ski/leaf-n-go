@@ -22,7 +22,6 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     cancelButtonText = "Cancel",
     thingsToDelete
 }) => {
-    console.log("things to delete",thingsToDelete)
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
