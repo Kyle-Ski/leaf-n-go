@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseServer } from "@/lib/supbaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 import { Button } from "@/components/ui/button";
 
 export default function AuthCallback() {

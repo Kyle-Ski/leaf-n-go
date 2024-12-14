@@ -55,9 +55,9 @@ export default function AuthPage() {
     );
   };
 
-  const fetchUserSettings = async (userId: string) => {
+  const fetchUserSettings = async () => {
     try {
-      const response = await fetch(`/api/user-settings?userId=${userId}`);
+      const response = await fetch(`/api/user-settings`);
       if (!response.ok) {
         throw new Error('Failed to fetch user settings');
       }
@@ -71,13 +71,12 @@ export default function AuthPage() {
   };
 
 
-  const fetchChecklists = async (userId: string) => {
+  const fetchChecklists = async () => {
     try {
       const response = await fetch("/api/checklists", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": userId,
         },
       });
 
@@ -102,11 +101,11 @@ export default function AuthPage() {
     }
   };
 
-  const fetchItems = async (userId: string) => {
+  const fetchItems = async () => {
     try {
       const response = await fetch("/api/items", {
         headers: {
-          "x-user-id": userId,
+          "Content-Type": "application/json",
         },
       });
 
@@ -130,10 +129,10 @@ export default function AuthPage() {
     }
   };
 
-  const fetchCategories = async (userId: string) => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch("/api/item-categories", {
-        headers: { "x-user-id": userId },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (!response.ok) {
@@ -149,10 +148,10 @@ export default function AuthPage() {
     }
   }
 
-  const fetchTrips = async (userId: string) => {
+  const fetchTrips = async () => {
     try {
       const response = await fetch("/api/trips", {
-        headers: { "x-user-id": userId },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
@@ -210,11 +209,11 @@ export default function AuthPage() {
         setUser(user); // Update user state in AuthContext
 
         // Fetch items and checklists after logging in
-        await fetchTrips(user.id)
-        await fetchItems(user.id);
-        await fetchChecklists(user.id)
-        await fetchCategories(user.id)
-        await fetchUserSettings(user.id)
+        await fetchTrips()
+        await fetchItems();
+        await fetchChecklists()
+        await fetchCategories()
+        await fetchUserSettings()
         router.push("/"); // Redirect to homepage
       }
     } catch (err) {

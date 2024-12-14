@@ -315,7 +315,9 @@ export type Action =
   | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
   | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+  | { type: 'ADD_BULK_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
+  | { type: 'DELETE_BULK_ITEMS'; payload: string[] }
   | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
   | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
   | { type: "SET_USER_SETTINGS"; payload: Partial<AppState["user_settings"]> }

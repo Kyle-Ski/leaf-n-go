@@ -8,13 +8,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/lib/appContext";
-import { useAuth } from "@/lib/auth-Context";
 import DetailedItemView from "@/components/itemDetails";
 import { formatWeight } from "@/utils/convertWeight";
+import Link from "next/link";
+import { toast } from "react-toastify";
+import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
-    const { user } = useAuth();
     const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sortOption, setSortOption] = useState<string>("name-asc");
@@ -22,6 +23,46 @@ const ItemsPage = () => {
     // State to manage the selected item for the modal
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]); // Array of selected item IDs
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleSelectRow = (id: string) => {
+        setSelectedRows((prevSelected) =>
+            prevSelected.includes(id) ? prevSelected.filter((rowId) => rowId !== id) : [...prevSelected, id]
+        );
+    };
+
+    const handleRemoveSelectedRows = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDelete = async () => {
+        try {
+            setIsUploading(true);
+            const response = await fetch("/api/items/bulk", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ itemIds: selectedRows }),
+            });
+
+            if (response.ok) {
+                dispatch({ type: "DELETE_BULK_ITEMS", payload: selectedRows });
+                toast.success("Selected items deleted successfully!");
+                setSelectedRows([]);
+            } else {
+                toast.error("Failed to delete selected items.");
+            }
+        } catch (error) {
+            console.error("Error deleting items:", error);
+            toast.error("An error occurred while deleting items.");
+        } finally {
+            setIsUploading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
 
     useEffect(() => {
         if (!state.noItems && state.items.length === 0) {
@@ -31,7 +72,6 @@ const ItemsPage = () => {
                     const response = await fetch("/api/items", {
                         headers: {
                             "Content-Type": "application/json",
-                            "x-user-id": user?.id || "",
                         },
                     });
 
@@ -47,16 +87,18 @@ const ItemsPage = () => {
                             dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false }); // Reset noItems if items exist
                         }
                     } else {
+                        toast.error("Failed to load items.");
                         console.error("Failed to fetch items:", response.statusText);
                     }
                 } catch (err) {
                     console.error("Failed to fetch items:", err);
+                    toast.error("An error occurred while fetching items.");
                 }
             };
 
             fetchItems();
         }
-    }, [dispatch, state.items, state.noItems, user?.id]);
+    }, [dispatch, state.items, state.noItems]);
 
     const items = state.items;
 
@@ -119,18 +161,37 @@ const ItemsPage = () => {
                     >
                         Create New Item
                     </Button>
+                    <Link href="/items/bulk" passHref>
+                        <Button className="bg-blue-500 text-white">
+                            Bulk Upload Items
+                        </Button>
+                    </Link>
                 </div>
             ) : (
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
                     <h1 className="text-2xl font-semibold">Your Items</h1>
-                    <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center">
-                        <Button
-                            onClick={() => setIsCreateItemModalOpen(true)}
-                            className="bg-green-500 text-white"
-                        >
-                            Create New Item
-                        </Button>
-                        <div className="flex flex-col space-y-1 sm:space-y-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex flex-col space-y-2 sm:space-y-0">
+                            <Button
+                                onClick={() => setIsCreateItemModalOpen(true)}
+                                className="bg-green-500 text-white mb-2"
+                            >
+                                Create New Item
+                            </Button>
+                            <Link href="/items/bulk" passHref>
+                                <Button className="bg-blue-500 text-white w-full mb-4">
+                                    Bulk Upload Items
+                                </Button>
+                            </Link>
+                            <Button
+                                disabled={isUploading}
+                                className="bg-red-500 text-white rounded"
+                                onClick={handleRemoveSelectedRows}
+                            >
+                                Remove ✔ Item(s)
+                            </Button>
+                        </div>
+                        <div className="flex flex-col mt-2">
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By
                             </label>
@@ -170,13 +231,21 @@ const ItemsPage = () => {
                         {filteredItems.map((item) => (
                             <li
                                 key={item.id}
-                                className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                onClick={() => {
-                                    setSelectedItemId(item.id);
-                                    setIsItemModalOpen(true);
-                                }}
+                                className="p-4 bg-white rounded-lg shadow-md flex items-center space-x-4"
                             >
-                                <div className="flex justify-between items-start md:items-center">
+                                {/* Checkbox */}
+                                <input
+                                    type="checkbox"
+                                    checked={selectedRows.includes(item.id)}
+                                    onChange={() => handleSelectRow(item.id)}
+                                    disabled={isUploading}
+                                    className="appearance-none h-5 w-5 border border-gray-300 rounded bg-white checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                                    checked:after:content-['✔'] checked:after:text-white checked:after:block checked:after:font-bold checked:after:text-center checked:after:relative checked:after:top-[-1px] cursor-pointer"
+                                />
+
+                                {/* Item Details */}
+                                <div className="flex justify-between flex-1 items-start md:items-center">
+                                    {/* Left Column */}
                                     <div className="flex flex-col space-y-1">
                                         <p className="font-semibold">{item.name}</p>
                                         {item.item_categories?.name && (
@@ -186,9 +255,24 @@ const ItemsPage = () => {
                                         )}
                                         <p className="text-sm text-gray-500">Notes: {item.notes || "N/A"}</p>
                                     </div>
+
+                                    {/* Right Column */}
                                     <div className="flex flex-col text-right space-y-1">
+                                        <Button
+                                            className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSelectedItemId(item.id);
+                                                setIsItemModalOpen(true);
+                                            }}
+                                        >
+                                            View
+                                        </Button>
                                         <p className="text-sm">Quantity: {item.quantity}</p>
-                                        <p className="text-sm">Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}{state.user_settings.weight_unit}</p>
+                                        <p className="text-sm">
+                                            Weight: {formatWeight(item.weight, state.user_settings.weight_unit)}
+                                            {state.user_settings.weight_unit}
+                                        </p>
                                     </div>
                                 </div>
                             </li>
@@ -196,6 +280,18 @@ const ItemsPage = () => {
                     </ul>
                 </div>
             )}
+
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+                title="Confirm Delete Items"
+                description="Are you sure you want to delete these items? This action cannot be undone."
+                thingsToDelete={selectedRows.map((id) => ({
+                    name: items.find((item) => item.id === id)?.name || "Unknown Item",
+                }))}
+            />
+
             {/* Create New Item Modal */}
             <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>
                 <DialogContent>
@@ -203,9 +299,7 @@ const ItemsPage = () => {
                         <DialogTitle className="text-center">Create Item</DialogTitle>
                         <DialogDescription className="text-center">Add a new item to your gear list.</DialogDescription>
                     </DialogHeader>
-                    <NewItemModal
-                        userId={user?.id || ""}
-                    />
+                    <NewItemModal />
                 </DialogContent>
             </Dialog>
 
@@ -238,4 +332,4 @@ const ItemsPage = () => {
         </>
     );
 }
-    export default withAuth(ItemsPage);
+export default withAuth(ItemsPage);

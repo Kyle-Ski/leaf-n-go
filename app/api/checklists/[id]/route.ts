@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supabaseServer';
 import { Item } from '@/types/projectTypes';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   if (!checklistId) {
@@ -73,11 +84,20 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   const body = await req.json();
@@ -152,12 +172,22 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id; // No need for `await` here
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
   const { item_id } = await req.json();
 
   if (!userId) {
-    console.error("Missing x-user-id header in request.");
-    return NextResponse.json({ error: 'User ID is required in the x-user-id header' }, { status: 400 });
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
   if (!item_id) {

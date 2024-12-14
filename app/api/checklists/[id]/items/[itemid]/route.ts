@@ -1,8 +1,21 @@
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
+    const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
+
+    if (validateError) {
+      return NextResponse.json({ validateError }, { status: 401 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+    }
+
+    const userId = user.id
+
     // Parse the request body
     const { checklistId, itemId, completed, id } = await request.json();
     // Validate required fields
@@ -12,12 +25,6 @@ export async function PUT(request: Request) {
 
     if (completed === undefined) {
       return NextResponse.json({ success: false, error: '"completed" field is required.' }, { status: 400 });
-    }
-
-    // Extract the user ID from headers
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
     }
 
     // Validate checklist ownership

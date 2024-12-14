@@ -1,14 +1,21 @@
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabaseServer';
 import { UserSettings } from '@/types/projectTypes';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
+export async function GET(request: NextRequest) {
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
 
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
   }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
 
   const { data, error } = await supabaseServer
     .from('user_settings')
@@ -23,15 +30,24 @@ export async function GET(request: Request) {
   return NextResponse.json(data);
 }
 
-export async function POST(request: Request) {
-  const body = await request.json();
+export async function POST(request: NextRequest) {
+  // Validate the access token
+  const { error: validateError, user } = await validateAccessToken(request, supabaseServer);
   
-  // Destructure userId and gather the rest of the fields
-  const { userId, dark_mode, email_notifications, push_notifications, weight_unit } = body;
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
   }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
+  const body = await request.json();
+
+  // Destructure userId and gather the rest of the fields
+  const { dark_mode, email_notifications, push_notifications, weight_unit } = body;
 
   // Construct updatedFields with only defined values
   const updatedFields: Partial<UserSettings> = {
@@ -40,7 +56,7 @@ export async function POST(request: Request) {
     ...(push_notifications !== undefined && { push_notifications }),
     ...(weight_unit !== undefined && { weight_unit }),
   };
-  
+
   // If no fields to update, return early
   if (Object.keys(updatedFields).length === 0) {
     return NextResponse.json({ message: 'No settings to update' }, { status: 200 });

@@ -1,6 +1,6 @@
-// app/api/consent/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient'; // Ensure correct path
+import { supabaseServer } from '@/lib/supabaseServer'; // Ensure correct path
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
 // Define the structure of consent categories
 export type ConsentCategories = {
@@ -15,11 +15,22 @@ export type ConsentCategories = {
 
 // GET: Fetch user consent preferences
 export async function GET(req: NextRequest) {
-    const userId = req.headers.get('x-user-id');
+    const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+    if (validateError) {
+      return NextResponse.json({ validateError }, { status: 401 });
+    }
+  
+    if (!user) {
+      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+    }
+  
+    const userId = user.id
+  
     const referrer = req.headers.get('referer'); // For debugging
 
     if (!userId) {
-        console.error('Missing x-user-id header. Referrer:', referrer);
+        console.error('Missing user id. Referrer:', referrer);
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
@@ -48,11 +59,22 @@ export async function GET(req: NextRequest) {
 
 // POST: Save or update user consent preferences
 export async function POST(req: NextRequest) {
-    const userId = req.headers.get('x-user-id');
+    const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+    if (validateError) {
+      return NextResponse.json({ validateError }, { status: 401 });
+    }
+  
+    if (!user) {
+      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+    }
+  
+    const userId = user.id
+  
     const referrer = req.headers.get('referer'); // For debugging
 
     if (!userId) {
-        console.error('Missing x-user-id header. Referrer:', referrer);
+        console.error('Missing user id. Referrer:', referrer);
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 

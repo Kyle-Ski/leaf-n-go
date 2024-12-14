@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useAuth } from "@/lib/auth-Context";
 import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
@@ -15,7 +14,6 @@ import ProgressBar from "@/components/progressBar";
 import { formatWeight } from "@/utils/convertWeight";
 
 const ChecklistsPage = () => {
-  const { user } = useAuth();
   const { state, dispatch } = useAppContext(); // Use AppState for global checklists
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -24,14 +22,7 @@ const ChecklistsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
       const fetchChecklists = async () => {
-        if (!user?.id) {
-          console.error("User ID is undefined. Cannot fetch checklists.");
-          setError("Unable to fetch checklists. Please try again later.");
-          setLoading(false);
-          return;
-        }
 
         setLoading(true);
         setError("");
@@ -40,7 +31,6 @@ const ChecklistsPage = () => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "x-user-id": user.id,
             },
           });
 
@@ -73,8 +63,7 @@ const ChecklistsPage = () => {
         console.log("HERE")
         fetchChecklists();
       }
-    }
-  }, [user, state.checklists, state.noChecklists, dispatch]);
+  }, [state.checklists, state.noChecklists, dispatch]);
 
   const filteredChecklists = state.checklists
     .filter(

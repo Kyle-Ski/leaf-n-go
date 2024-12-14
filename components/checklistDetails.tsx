@@ -25,13 +25,12 @@ type DontShowDeletePages = typeof dontShowDelete[number]
 
 interface ChecklistDetailsProps {
     id: string;
-    user: { id: string } | null;
     state: AppState;
     currentPage?: DontShowDeletePages
 }
 
 
-function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProps) {
+function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const { dispatch } = useAppContext();
     const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
     const [loading, setLoading] = useState(true);
@@ -64,7 +63,6 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-user-id': user?.id || "",
                 },
                 body: JSON.stringify({ items: itemsToAdd }),
             });
@@ -121,12 +119,12 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
     };
 
     const deleteChecklist = async () => {
-        if (!id || !user) return;
+        if (!id) return;
 
         try {
             const response = await fetch(`/api/checklists/${id}/delete`, {
                 method: "DELETE",
-                headers: { "x-user-id": user.id },
+                headers: { "Content-Type": "application/json" },
             });
 
             if (!response.ok) {
@@ -183,7 +181,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
 
 
     useEffect(() => {
-        if (!user || !id) return;
+        if (!id) return;
 
         const fetchChecklistDetails = async () => {
             setLoading(true);
@@ -191,7 +189,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                 const fetchItems = async () => {
                     try {
                         const response = await fetch(`/api/items`, {
-                            headers: { "x-user-id": user?.id },
+                            headers: { "Content-Type": "application/json" },
                         });
                         if (!response.ok) throw new Error("Failed to fetch items.");
                         const data: ItemDetails[] = await response.json();
@@ -205,7 +203,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
 
             try {
                 const response = await fetch(`/api/checklists/${id}`, {
-                    headers: { "x-user-id": user?.id || "" },
+                    headers: { "Content-Type": "application/json" },
                 });
                 if (!response.ok) throw new Error("Failed to fetch checklist details.");
 
@@ -219,7 +217,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             }
         };
         fetchChecklistDetails();
-    }, [user, id, state.items, dispatch]);
+    }, [id, state.items, dispatch]);
 
     const calculateRemainingQuantity = (itemId: string): number => {
         if (!checklist) return 0;
@@ -237,7 +235,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
             if (!id) throw new Error("No checklist id");
             const response = await fetch(`/api/checklists/${id}`, {
                 method: "DELETE",
-                headers: { "x-user-id": user?.id || "" },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ item_id: itemId }),
             });
 
@@ -281,7 +279,6 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
-                        "x-user-id": user?.id || "",
                     },
                     body: JSON.stringify({
                         checklistId: id,
@@ -443,7 +440,7 @@ function ChecklistDetails({ id, user, state, currentPage }: ChecklistDetailsProp
                         <DialogTitle>Create New Item</DialogTitle>
                         <DialogDescription>Create a new item to add to your checklist.</DialogDescription>
                     </DialogHeader>
-                    <NewItemModal userId={user?.id || ""} />
+                    <NewItemModal />
                 </DialogContent>
             </Dialog>
 

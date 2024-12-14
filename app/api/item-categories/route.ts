@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supbaseClient';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
 // GET: Fetch all item categories visible to the user
 // This includes global categories (user_id IS NULL) and any categories owned by this user
 export async function GET(req: NextRequest) {
   const referrer = req.headers.get('referer'); // For debugging if needed
-  const userId = req.headers.get("x-user-id");
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
 
   if (!userId) {
     return NextResponse.json({ error: "User ID is required." }, { status: 400 });

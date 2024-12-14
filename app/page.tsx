@@ -26,7 +26,7 @@ const PlanningHub = () => {
       const fetchTrips = async () => {
         try {
           const response = await fetch(`/api/trips`, {
-            headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
+            headers: { "Content-Type": "application/json" },
           });
 
           if (!response.ok) {

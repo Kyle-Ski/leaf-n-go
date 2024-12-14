@@ -28,7 +28,37 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "ADD_ITEM":
             return { ...state, items: [...state.items, action.payload] };
+        case 'ADD_BULK_ITEMS': {
+            return {
+                ...state,
+                items: [...state.items, ...action.payload],
+            };
+        }
+        case "DELETE_BULK_ITEMS":
+            const updatedState = {
+                ...state,
+                items: state.items.filter(item => !action.payload.includes(item.id)),
+                checklists: state.checklists.map(checklist => ({
+                    ...checklist,
+                    items: checklist.items.filter(
+                        checklistItem => !action.payload.includes(checklistItem.item_id)
+                    ),
+                })),
+                trips: state.trips.map(trip => ({
+                    ...trip,
+                    trip_checklists: trip.trip_checklists.map(tripChecklist => ({
+                        ...tripChecklist,
+                        checklists: tripChecklist.checklists.map(checklist => ({
+                            ...checklist,
+                            checklist_items: checklist.checklist_items.filter(
+                                checklistItem => !action.payload.includes(checklistItem.id)
+                            ),
+                        })),
+                    })),
+                })),
+            };
 
+            return updatedState;
         case "UPDATE_ITEM": {
             // Update the items array in the global state
             const updatedItems = state.items.map((item) =>

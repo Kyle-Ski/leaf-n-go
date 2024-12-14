@@ -8,11 +8,8 @@ import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { kgToLbs } from "@/utils/convertWeight";
 
-interface NewItemModalProps {
-  userId: string;
-}
 
-const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
+const NewItemModal: React.FC = () => {
   const { state, dispatch } = useAppContext();
   const [name, setName] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
@@ -58,7 +55,6 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ userId }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": userId,
         },
         body: JSON.stringify(payload),
       });

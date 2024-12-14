@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useAuth } from "@/lib/auth-Context";
 import { useRouter } from "next/navigation";
 import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
@@ -10,7 +9,6 @@ import { formatWeight } from "@/utils/convertWeight";
 
 const NewChecklistPage = () => {
     const router = useRouter();
-    const { user } = useAuth();
     const { state, dispatch } = useAppContext();
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
@@ -39,7 +37,6 @@ const NewChecklistPage = () => {
                     const response = await fetch("/api/items", {
                         headers: {
                             "Content-Type": "application/json",
-                            "x-user-id": user?.id || "",
                         },
                     });
 
@@ -64,7 +61,7 @@ const NewChecklistPage = () => {
 
             fetchItems();
         }
-    }, [dispatch, state.items, state.noItems, user?.id]);
+    }, [dispatch, state.items, state.noItems]);
 
     const handleItemQuantityChange = (itemId: string, quantity: number) => {
         setSelectedItems((prev) => {
@@ -81,11 +78,6 @@ const NewChecklistPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!user) {
-            setError("User is not authenticated.");
-            return;
-        }
-
         if (!title || !category) {
             setError("Title and category are required.");
             return;
@@ -96,7 +88,6 @@ const NewChecklistPage = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId: user.id,
                     title,
                     category,
                     items: Object.entries(selectedItems).map(([id, quantity]) => ({
@@ -124,10 +115,6 @@ const NewChecklistPage = () => {
     const scrollTonewItemModal = () => {
         newItemModalRef.current?.scrollIntoView({ behavior: "smooth" });
     };
-
-    if (!user) {
-        return <p>Loading...</p>;
-    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center space-y-8 p-6">
@@ -257,9 +244,7 @@ const NewChecklistPage = () => {
             {/* New Item Form */}
             <div ref={newItemModalRef} className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Add a New Item</h2>
-                <NewItemModal
-                    userId={user?.id || ""}
-                />
+                <NewItemModal />
             </div>
         </div>
     );

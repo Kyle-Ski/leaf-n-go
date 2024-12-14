@@ -19,7 +19,7 @@ const TripsPage = () => {
   const fetchTrips = useCallback(async () => {
     try {
       const response = await fetch("/api/trips", {
-        headers: { "x-user-id": user?.id || "" },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
@@ -41,10 +41,10 @@ const TripsPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (user && !state.noTrips && state.trips.length === 0) {
+    if (!state.noTrips && state.trips.length === 0) {
       fetchTrips();
     }
-  }, [user, state.noTrips, state.trips, fetchTrips]);
+  }, [state.noTrips, state.trips, fetchTrips]);
 
   const handleCreateTrip = async (tripData: CreateTripPayload) => {
     try {
@@ -59,7 +59,6 @@ const TripsPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user?.id || "",
         },
         body: JSON.stringify({ ...tripData, participants }),
       });

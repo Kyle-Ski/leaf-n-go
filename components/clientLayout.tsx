@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-Context";
 import { AppProvider } from "@/lib/appContext";
 import { ConsentProvider } from "@/lib/consentContext";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -31,6 +33,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <main className="flex-grow p-2 sm:p-4 md:p-6 lg:p-8 bg-gray-50 relative">
             <div className={alignmentClasses}>
               {children}
+              <ToastContainer />
             </div>
           </main>
 
