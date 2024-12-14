@@ -1,4 +1,4 @@
-import { ItemDetails } from '@/types/projectTypes';
+import { ItemDetails, UserSettings } from '@/types/projectTypes';
 import { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 export class DatabaseService {
@@ -325,6 +325,35 @@ export class DatabaseService {
     }
 
     return data || [];
+  }
+
+  /**
+   * validates checklist ownership from the current user
+   * @param checklistId 
+   * @param userId 
+   * @returns 
+   */
+  async validateChecklistOwnership(checklistId: string, userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklists')
+      .select('id')
+      .eq('id', checklistId)
+      .eq('user_id', userId)
+      .single();
+
+    return { data, error }
+  }
+
+  async updateCompletedChecklistItem(completed: boolean, itemId: string, checklistId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .update({ completed })
+      .eq('id', itemId)
+      .eq('checklist_id', checklistId)
+      .select('*')
+      .single();
+
+    return { data, error }
   }
 
   /**
@@ -851,13 +880,18 @@ export class DatabaseService {
 
     if (error) {
       console.error("Error adding checklists to trip_checklists:", error)
-      throw new Error ("Failed to update trip_checklists")
+      throw new Error("Failed to update trip_checklists")
     }
   }
 
+  /**
+   * Get trip checklists and items
+   * @param tripId 
+   * @returns 
+   */
   async getTripChecklistsAndItems(tripId: string) {
     const { error, data } = await this.databaseClient
-    .from("trip_checklists")
+      .from("trip_checklists")
       .select(`
           checklist_id,
           checklists (
@@ -876,6 +910,56 @@ export class DatabaseService {
     }
 
     return { data }
+  }
+
+  /* USER SETTINGS METHODS */
+
+  /**
+   * Get settings for the user
+   * @param userId 
+   * @returns 
+   */
+  async getUserSettingsForUser(userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      console.error("Error getting user settings:", error)
+    }
+
+    return { data, error }
+  }
+
+  /**
+   * Update user's settings
+   * @param userId 
+   * @param updatedFields 
+   * @returns 
+   */
+  async updateUserSettings(userId: string, updatedFields: Partial<UserSettings>) {
+    const { error } = await this.databaseClient
+      .from('user_settings')
+      .update(updatedFields)
+      .eq('user_id', userId);
+
+    return { error }
+  }
+
+  /**
+   * Tracks the user's AI usage
+   * @param userId 
+   * @returns 
+   */
+  async trackAiUsage(userId: string) {
+    const { data, error } = await this.databaseClient
+      .rpc('increment_usage_count', {
+        user_id: userId,
+        increment_by: 1, // Optional, defaults to 1
+      });
+    return { data, error }
   }
 
 }
