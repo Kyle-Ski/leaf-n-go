@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer'; // Ensure correct path
 import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
 import serviceContainer from '@/di/containers/serviceContainer';
 import { DatabaseService } from '@/di/services/databaseService';

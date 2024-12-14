@@ -428,7 +428,25 @@ export class DatabaseService {
   }
 
   /**
-   * Remove item from checklist
+   * Remove single item from checklist
+   * @param checklistId 
+   * @param itemId 
+   */
+  async removeChecklistItem(checklistId: string, itemId: string) {
+    const { error } = await this.databaseClient
+      .from("checklist_items")
+      .delete()
+      .eq("checklist_id", checklistId)
+      .eq("id", itemId);
+
+    if (error) {
+      console.error("Error removing item from checklist:", error);
+      throw new Error("Failed to remove item from checklist");
+    }
+  }
+
+  /**
+   * Remove all items from checklist
    * @param checklistId 
    * @returns 
    */
@@ -615,5 +633,249 @@ export class DatabaseService {
     };
   }
 
+  /* ITEM CATEGORIES METHODS */
+  /**
+   * Gets all item categories for user
+   * @param userId 
+   * @returns 
+   */
+  async fetchItemCategories(userId: string) {
+    const { data: categories, error } = await this.databaseClient
+      .from('item_categories')
+      .select('id, name, description, user_id, created_at')
+      .or(`user_id.eq.${userId},user_id.is.null`); // Get categories owned by user or global (null)
+
+    if (error) {
+      console.error('Error fetching item categories:', error);
+      throw new Error('Failed to fetch item categories');
+    }
+
+    return categories || [];
+  }
+
+
+  /* TRIPS METHODS */
+  /**
+   * Get user Trips
+   * @param userId 
+   * @returns 
+   */
+  async fetchUserTrips(userId: string) {
+    const { data: trips, error } = await this.databaseClient
+      .from("trips")
+      .select(`
+            id,
+            title,
+            start_date,
+            end_date,
+            location,
+            notes,
+            ai_recommendation,
+            created_at,
+            updated_at,
+            trip_checklists (
+                checklist_id,
+                checklists (
+                    title,
+                    checklist_items (
+                        id,
+                        completed
+                    )
+                )
+            ),
+            trip_participants (
+                user_id,
+                role
+            )
+        `)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error('Error fetching trips:', error);
+      throw new Error('Failed to fetch trips');
+    }
+
+    return trips || [];
+  }
+
+  /**
+   * Creates a new trip for a user
+   * @param data 
+   * @returns 
+   */
+  async createTrip(data: { title: string; start_date: string; end_date: string; location: string; notes: string; user_id: string }) {
+    const { data: newTrip, error } = await this.databaseClient
+      .from("trips")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating trip:", error);
+      throw new Error("Failed to create trip");
+    }
+
+    return newTrip;
+  }
+
+  /**
+   * Adds a checklist to a trip with our join table
+   * @param checklists 
+   */
+  async addTripChecklists(checklists: { trip_id: string; checklist_id: string }[]) {
+    const { error } = await this.databaseClient.from("trip_checklists").insert(checklists);
+
+    if (error) {
+      console.error("Error adding trip checklists:", error);
+      throw new Error("Failed to add trip checklists");
+    }
+  }
+
+  /**
+   * Add participants to a trip
+   * @param participants 
+   */
+  async addTripParticipants(participants: { trip_id: string; user_id: string; role: string }[]) {
+    const { error } = await this.databaseClient.from("trip_participants").insert(participants);
+
+    if (error) {
+      console.error("Error adding trip participants:", error);
+      throw new Error("Failed to add trip participants");
+    }
+  }
+
+  /**
+   * Get trip details
+   * @param tripId 
+   * @returns 
+   */
+  async getTripDetails(tripId: string) {
+    const { data, error } = await this.databaseClient
+      .from("trips")
+      .select(`
+            id,
+            title,
+            start_date,
+            end_date,
+            location,
+            notes,
+            created_at,
+            updated_at,
+            trip_checklists (
+                checklist_id,
+                checklists (
+                    title,
+                    checklist_items (
+                        id,
+                        completed
+                    )
+                )
+            ),
+            trip_participants (
+                user_id,
+                role
+            )
+        `)
+      .eq("id", tripId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching trip details:", error);
+      throw new Error("Failed to fetch trip details");
+    }
+
+    return data;
+  }
+
+  /**
+   * Delete trip by id
+   * @param tripId 
+   */
+  async deleteTrip(tripId: string) {
+    const { error } = await this.databaseClient.from("trips").delete().eq("id", tripId)
+
+    if (error) {
+      console.error("Error deleting Trip:", error);
+      throw new Error("Failed to delete trip.")
+    }
+  }
+
+  /**
+   * Update trip details
+   * @param tripId 
+   * @param title 
+   * @param start_date 
+   * @param end_date 
+   * @param location 
+   * @param notes 
+   */
+  async updateTripDetails(tripId: string, title: string, start_date: string, end_date: string, location: string, notes: string) {
+    const { error } = await this.databaseClient
+      .from("trips")
+      .update({ title, start_date, end_date, location, notes })
+      .eq("id", tripId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating Trip:", error)
+      throw new Error("Failed to update trip.")
+    }
+  }
+
+  /**
+   * Delete trip checklist
+   * @param tripId 
+   */
+  async deleteTripChecklist(tripId: string) {
+    const { error } = await this.databaseClient
+      .from("trip_checklists")
+      .delete()
+      .eq("trip_id", tripId);
+
+    if (error) {
+      console.error("Error removing trip_checklist:", error)
+      throw new Error("Failed to remove trip checklist.")
+    }
+  }
+
+  /**
+   * Add checklists to a trip
+   * @param newTripChecklists 
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async addChecklistsToTrip(newTripChecklists: any) {
+    const { error } = await this.databaseClient
+      .from("trip_checklists")
+      .insert(newTripChecklists);
+
+    if (error) {
+      console.error("Error adding checklists to trip_checklists:", error)
+      throw new Error ("Failed to update trip_checklists")
+    }
+  }
+
+  async getTripChecklistsAndItems(tripId: string) {
+    const { error, data } = await this.databaseClient
+    .from("trip_checklists")
+      .select(`
+          checklist_id,
+          checklists (
+            title,
+            checklist_items (
+              id,
+              completed
+            )
+          )
+        `)
+      .eq("trip_id", tripId);
+
+    if (error) {
+      console.error("Error getting trip checklists:", error)
+      throw new Error("Failed to get Trip Checklists")
+    }
+
+    return { data }
+  }
 
 }

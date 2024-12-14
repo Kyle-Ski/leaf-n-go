@@ -155,7 +155,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
   }
 
   try {
-    await databaseService.deleteChecklistItemsByChecklistId(checklistId);
+    await databaseService.removeChecklistItem(checklistId, item_id);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

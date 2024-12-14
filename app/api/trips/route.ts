@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
 import { FrontendTrip } from "@/types/projectTypes";
-import { validateAccessToken } from "@/utils/auth/validateAccessToken";
+import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
+import serviceContainer from "@/di/containers/serviceContainer";
+import { DatabaseService } from "@/di/services/databaseService";
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 // GET all trips for the current user
 export async function GET(req: NextRequest) {
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -19,36 +22,7 @@ export async function GET(req: NextRequest) {
   const userId = user.id
 
   try {
-    const { data: trips, error } = await supabaseServer
-      .from("trips")
-      .select(`
-        id,
-        title,
-        start_date,
-        end_date,
-        location,
-        notes,
-        ai_recommendation,
-        created_at,
-        updated_at,
-        trip_checklists (
-          checklist_id,
-          checklists (
-            title,
-            checklist_items (
-              id,
-              completed
-            )
-          )
-        ),
-        trip_participants (
-          user_id,
-          role
-        )
-      `)
-      .eq("user_id", userId);
-
-    if (error) throw error;
+    const trips = await databaseService.fetchUserTrips(userId);
 
     // Format each trip's trip_checklists
     const formattedTrips = trips.map((trip) => {
@@ -93,7 +67,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   // Validate the access token
-  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {
     return NextResponse.json({ validateError }, { status: 401 });
@@ -113,13 +87,14 @@ export async function POST(req: NextRequest) {
 
   try {
     // Create the trip
-    const { data: newTrip, error: tripError } = await supabaseServer
-      .from("trips")
-      .insert([{ title, start_date, end_date, location, notes, user_id: userId }])
-      .select()
-      .single();
-
-    if (tripError) throw tripError;
+    const newTrip = await databaseService.createTrip({
+      title,
+      start_date,
+      end_date,
+      location,
+      notes,
+      user_id: userId,
+    });
 
     // Add checklists to the trip
     if (checklists.length) {
@@ -127,11 +102,7 @@ export async function POST(req: NextRequest) {
         trip_id: newTrip.id,
         checklist_id: checklistId,
       }));
-      const { error: checklistError } = await supabaseServer
-        .from("trip_checklists")
-        .insert(tripChecklists);
-
-      if (checklistError) throw checklistError;
+      await databaseService.addTripChecklists(tripChecklists);
     }
 
     // Add participants to the trip
@@ -141,11 +112,7 @@ export async function POST(req: NextRequest) {
         user_id: participant.user_id,
         role: participant.role,
       }));
-      const { error: participantsError } = await supabaseServer
-        .from("trip_participants")
-        .insert(tripParticipants);
-
-      if (participantsError) throw participantsError;
+      await databaseService.addTripParticipants(tripParticipants);
     }
 
     return NextResponse.json(newTrip, { status: 201 });
@@ -153,4 +120,5 @@ export async function POST(req: NextRequest) {
     console.error("Error creating trip:", err);
     return NextResponse.json({ error: "Failed to create trip" }, { status: 500 });
   }
+
 }
