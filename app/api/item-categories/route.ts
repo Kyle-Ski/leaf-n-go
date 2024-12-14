@@ -8,7 +8,6 @@ const databaseService = serviceContainer.resolve<DatabaseService>("supabaseServi
 // GET: Fetch all item categories visible to the user
 // This includes global categories (user_id IS NULL) and any categories owned by this user
 export async function GET(req: NextRequest) {
-  const referrer = req.headers.get('referer'); // For debugging if needed
   const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
 
   if (validateError) {

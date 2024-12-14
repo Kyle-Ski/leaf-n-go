@@ -129,36 +129,37 @@ const TripPage = () => {
         }
     };
 
-    const fetchAllChecklists = async () => {
-        try {
-            const response = await fetch(`/api/checklists`, {
-                headers: { "Content-Type": "application/json" },
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch all checklists.");
-            }
-
-            const data: ChecklistWithItems[] = await response.json();
-
-            if (Array.isArray(data) && data.length === 0) {
-                // If no checklists found, set the noChecklists flag
-                dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true });
-            } else {
-                // If checklists exist, update the state
-                dispatch({ type: "SET_CHECKLISTS", payload: data });
-            }
-        } catch (err) {
-            console.error("Error fetching all checklists:", err);
-            setError("Unable to load checklists. Please try again later.");
-        }
-    };
-
     useEffect(() => {
         if (!trip) {
             setError("Trip not found.");
             return;
         }
+
+        const fetchAllChecklists = async () => {
+            try {
+                const response = await fetch(`/api/checklists`, {
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch all checklists.");
+                }
+
+                const data: ChecklistWithItems[] = await response.json();
+
+                if (Array.isArray(data) && data.length === 0) {
+                    // If no checklists found, set the noChecklists flag
+                    dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true });
+                } else {
+                    // If checklists exist, update the state
+                    dispatch({ type: "SET_CHECKLISTS", payload: data });
+                }
+            } catch (err) {
+                console.error("Error fetching all checklists:", err);
+                setError("Unable to load checklists. Please try again later.");
+            }
+        };
+
         // If no checklists flag is set, don't fetch again
         if (state.noChecklists) {
             return;
@@ -167,7 +168,7 @@ const TripPage = () => {
         if (state.checklists.length === 0) {
             fetchAllChecklists();
         }
-    }, [trip, state.checklists, state.noChecklists, fetchAllChecklists]);
+    }, [trip, state.checklists, state.noChecklists]);
 
     const handleUpdateTrip = async (updatedTrip: UpdateTripPayload) => {
         try {
