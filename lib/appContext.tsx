@@ -211,35 +211,39 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "CHECK_ITEM_IN_CHECKLIST": {
             const { checklistId, checkedState, itemId } = action.payload;
+
             if (Array.isArray(checklistId)) {
                 console.error("Checklist ID must be a string.");
                 return { ...state };
             }
 
+            // Find the target checklist
             const checklistIndex = state.checklists.findIndex((c) => c.id === checklistId);
             const checklist = state.checklists[checklistIndex];
             if (!checklist) return state;
 
             // Update the checklist items
             const updatedItems = checklist.items.map((item) => {
-                if (item.id === itemId) {
+                if (item.id === itemId && item.checklist_id === checklistId) {
                     return { ...item, completed: Boolean(checkedState) };
                 }
                 return item;
             });
 
-            // Find the updated item
-            const item = updatedItems.find(i => i.id === itemId);
-            if (!item) return state;
+            // Ensure the item was updated
+            const updatedItem = updatedItems.find((i) => i.id === itemId && i.checklist_id === checklistId);
+            if (!updatedItem) return state;
 
-            const wasCompleted = checklist.items.find(i => i.id === itemId)?.completed ?? false;
-            const nowCompleted = item.completed;
-            const itemWeight = item.items?.weight || 0;
+            const wasCompleted = checklist.items.find(
+                (i) => i.id === itemId && i.checklist_id === checklistId
+            )?.completed ?? false;
+            const nowCompleted = updatedItem.completed;
+            const itemWeight = updatedItem.items?.weight || 0;
 
+            // Update completed count and weight
             let completedCount = checklist.completion?.completed ?? 0;
             let currentWeight = checklist.completion?.currentWeight ?? 0;
 
-            // Update completed count and currentWeight
             if (!wasCompleted && nowCompleted) {
                 completedCount += 1;
                 currentWeight += itemWeight;
@@ -248,6 +252,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 currentWeight -= itemWeight;
             }
 
+            // Update the checklist
             const updatedChecklist: ChecklistWithItems = {
                 ...checklist,
                 items: updatedItems,
@@ -255,26 +260,24 @@ const appReducer = (state: AppState, action: Action): AppState => {
                     completed: completedCount,
                     total: checklist.completion?.total ?? checklist.items.length,
                     totalWeight: checklist.completion?.totalWeight ?? 0,
-                    currentWeight: currentWeight
+                    currentWeight,
                 },
             };
 
-            const updatedChecklists = state.checklists.map((c, i) => i === checklistIndex ? updatedChecklist : c);
+            const updatedChecklists = state.checklists.map((c, i) =>
+                i === checklistIndex ? updatedChecklist : c
+            );
 
-            // Update trips as well
+            // Update trips related to this checklist
             const updatedTrips = state.trips.map((trip) => ({
                 ...trip,
                 trip_checklists: trip.trip_checklists.map((tc) => {
                     if (tc.checklist_id === checklistId) {
-                        // Update the trip's checklist completion info
                         const matchingChecklist = updatedChecklists.find((cl) => cl.id === checklistId);
-                        const updatedCompletedItems = matchingChecklist?.completion?.completed ?? 0;
-                        const updatedCurrentWeight = matchingChecklist?.completion?.currentWeight ?? 0;
-
                         return {
                             ...tc,
-                            completedItems: updatedCompletedItems,
-                            currentWeight: updatedCurrentWeight,
+                            completedItems: matchingChecklist?.completion?.completed ?? 0,
+                            currentWeight: matchingChecklist?.completion?.currentWeight ?? 0,
                         };
                     }
                     return tc;

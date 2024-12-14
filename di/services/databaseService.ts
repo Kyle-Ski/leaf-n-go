@@ -307,4 +307,76 @@ export class DatabaseService {
     return { error };
   }
 
+  async fetchChecklistsByUser(userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklists')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching checklists:", error);
+      throw new Error(error.message || "Failed to fetch checklists.");
+    }
+
+    return data || [];
+  }
+
+  async fetchChecklistItemsByChecklistIds(checklistIds: string[]) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .select('*, items(*)')
+      .in('checklist_id', checklistIds);
+
+    if (error) {
+      console.error("Error fetching checklist items:", error);
+      throw new Error(error.message || "Failed to fetch checklist items.");
+    }
+
+    return data || [];
+  }
+
+  async createChecklist(checklist: { title: string; category: string; user_id: string }) {
+    const { data, error } = await this.databaseClient
+      .from("checklists")
+      .insert([checklist])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating checklist:", error);
+      throw new Error(error.message || "Failed to create checklist.");
+    }
+
+    return data;
+  }
+
+  async fetchInventoryItemsByIds(userId: string, itemIds: string[]) {
+    const { data, error } = await this.databaseClient
+      .from("items")
+      .select("*, item_categories(name)")
+      .in("id", itemIds)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching inventory items:", error);
+      throw new Error(error.message || "Failed to fetch inventory items.");
+    }
+
+    return data || [];
+  }
+
+  async insertChecklistItems(checklistItems: { checklist_id: string; item_id: string; completed: boolean }[]) {
+    const { error, data } = await this.databaseClient
+      .from("checklist_items")
+      .insert(checklistItems)
+      .select("*");
+
+    if (error) {
+      console.error("Error inserting checklist items:", error);
+      throw new Error(error.message || "Failed to insert checklist items.");
+    }
+    return data
+  }
+
+
 }

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { validateAccessToken } from '@/utils/auth/validateAccessToken';
+import { DatabaseService } from '@/di/services/databaseService';
+import serviceContainer from '@/di/containers/serviceContainer';
+
+const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
 export async function GET(req: NextRequest) {
   const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
 
   if (validateError) {
-      return NextResponse.json({ validateError }, { status: 401 });
+    return NextResponse.json({ validateError }, { status: 401 });
   }
 
   if (!user) {
-      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
   }
 
   const userId = user.id
@@ -21,15 +25,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Fetch checklists for the user
-    const { data: checklists, error: checklistError } = await supabaseServer
-      .from('checklists')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (checklistError) {
-      console.error("Error fetching checklists:", checklistError);
-      return NextResponse.json({ error: checklistError.message }, { status: 500 });
-    }
+    const checklists = await databaseService.fetchChecklistsByUser(userId);
 
     if (!checklists || checklists.length === 0) {
       console.log("No checklists found for user.");
@@ -42,21 +38,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(checklists, { status: 200 });
     }
 
-    const { data: checklistItems, error: itemsError } = await supabaseServer
-      .from('checklist_items')
-      .select('*, items(*)')
-      .in('checklist_id', checklistIds);
-
-    if (itemsError) {
-      console.error("Error fetching checklist items:", itemsError);
-      return NextResponse.json({ error: itemsError.message }, { status: 500 });
-    }
+    const checklistItems = await databaseService.fetchChecklistItemsByChecklistIds(checklistIds);
 
     // Map checklist items to their corresponding checklists and calculate completion
     const checklistsWithItems = checklists.map((checklist) => {
-      const itemsForChecklist = checklistItems
-        ? checklistItems.filter((item) => item.checklist_id === checklist.id)
-        : [];
+      const itemsForChecklist = checklistItems.filter((item) => item.checklist_id === checklist.id);
 
       // Calculate completed and total items
       const totalItems = itemsForChecklist.length;
@@ -77,6 +63,7 @@ export async function GET(req: NextRequest) {
     console.warn("Checklists error:", error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
+
 }
 
 export async function POST(req: NextRequest) {
@@ -107,11 +94,11 @@ export async function POST(req: NextRequest) {
   const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
 
   if (validateError) {
-      return NextResponse.json({ validateError }, { status: 401 });
+    return NextResponse.json({ validateError }, { status: 401 });
   }
 
   if (!user) {
-      return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
   }
 
   const userId = user.id
@@ -125,15 +112,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // Create a new checklist
-    const { data: newChecklist, error: checklistError } = await supabaseServer
-      .from("checklists")
-      .insert([{ title, category, user_id: userId }])
-      .select()
-      .single();
-
-    if (checklistError) {
-      throw checklistError;
-    }
+    const newChecklist = await databaseService.createChecklist({ title, category, user_id: userId });
 
     let inventoryItems: InventoryItem[] = [];
     let expandedChecklistItems: ChecklistItem[] = [];
@@ -141,24 +120,16 @@ export async function POST(req: NextRequest) {
     if (items && items.length > 0) {
       // Fetch user's inventory in one query
       const itemIds = items.map((item: ItemInput) => item.id);
-      const { data: inventoryData, error: inventoryError } = await supabaseServer
-        .from("items")
-        .select("*, item_categories(name)")
-        .in("id", itemIds)
-        .eq("user_id", userId);
+      inventoryItems = await databaseService.fetchInventoryItemsByIds(userId, itemIds);
 
-      if (inventoryError) {
-        throw inventoryError;
-      }
-
-      if (!inventoryData || inventoryData.length === 0) {
+      if (!inventoryItems || inventoryItems.length === 0) {
         return NextResponse.json(
           { error: "No items found in user inventory" },
           { status: 400 }
         );
       }
 
-      inventoryItems = inventoryData;
+      // inventoryItems = inventoryData;
 
       // Map inventory items by ID for quick lookup
       const inventoryMap = new Map<string, InventoryItem>(
@@ -185,19 +156,38 @@ export async function POST(req: NextRequest) {
       });
 
       // Batch insert checklist items
-      const { error: itemsError } = await supabaseServer
-        .from("checklist_items")
-        .insert(
-          expandedChecklistItems.map(({ checklist_id, item_id, completed }) => ({
-            checklist_id,
-            item_id,
-            completed,
-          }))
-        );
+      const insertedItems = await databaseService.insertChecklistItems(
+        expandedChecklistItems.map(({ checklist_id, item_id, completed }) => ({
+          checklist_id,
+          item_id,
+          completed,
+        }))
+      );
 
-      if (itemsError) {
-        throw itemsError;
+      // Map the inserted IDs back to the expandedChecklistItems
+      if (insertedItems) {
+        expandedChecklistItems = insertedItems.map((insertedItem) => {
+          const matchingItem = expandedChecklistItems.find(
+            (item) =>
+              item.checklist_id === insertedItem.checklist_id &&
+              item.item_id === insertedItem.item_id
+          );
+
+          if (!matchingItem) {
+            throw new Error(
+              `Inserted item does not match any existing item: ${insertedItem.id}`
+            );
+          }
+
+          return {
+            ...matchingItem,
+            id: insertedItem.id, // Assign the ID from the `checklist_items` table
+            checklist_id: insertedItem.checklist_id, // Ensure checklist_id is assigned correctly
+            item_id: insertedItem.item_id, // Ensure item_id is assigned correctly
+          };
+        });
       }
+
     }
 
     // Calculate completion stats
