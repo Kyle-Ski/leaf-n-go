@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { validateAccessToken } from "@/utils/auth/validateAccessToken";
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     try {
@@ -7,7 +8,18 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         const { id } = await props.params;
 
         // Get the user ID from the headers
-        const userId = req.headers.get("x-user-id");
+        const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+        if (validateError) {
+            return NextResponse.json({ validateError }, { status: 401 });
+        }
+
+        if (!user) {
+            return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+        }
+
+        const userId = user.id
+
         if (!userId) {
             return NextResponse.json({ error: "User ID is required" }, { status: 400 });
         }

@@ -65,7 +65,6 @@ const TripPage = () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-user-id": user?.id || ""
                 },
                 body: JSON.stringify({
                     tripId: trip.id,
@@ -120,7 +119,6 @@ const TripPage = () => {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-user-id": user?.id || ""
                 },
                 body: JSON.stringify({ ai_recommendation: finalCategories }),
             });

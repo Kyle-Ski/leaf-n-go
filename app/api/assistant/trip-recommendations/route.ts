@@ -1,4 +1,6 @@
 import anthropic from "@/lib/anthropicClient";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { validateAccessToken } from "@/utils/auth/validateAccessToken";
 import { trackAiUsage } from "@/utils/trackAiUsage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,7 +9,17 @@ export async function POST(req: NextRequest) {
     try {
         // Parse request body
         const body = await req.json();
-        const userId = req.headers.get('x-user-id');
+        const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+        if (validateError) {
+            return NextResponse.json({ validateError }, { status: 401 });
+        }
+
+        if (!user) {
+            return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+        }
+
+        const userId = user.id
         const { location, startDate, endDate, existingItems, tripId } = body;
 
         // Validate user input
