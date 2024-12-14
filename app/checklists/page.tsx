@@ -12,6 +12,7 @@ import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
 import ProgressBar from "@/components/progressBar";
 import { formatWeight } from "@/utils/convertWeight";
+import { toast } from "react-toastify";
 
 const ChecklistsPage = () => {
   const { state, dispatch } = useAppContext(); // Use AppState for global checklists
@@ -21,48 +22,71 @@ const ChecklistsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const showErrorToast = (error: string | null) => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000, // Adjust as needed
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  };
+
+  // Example usage in your component
   useEffect(() => {
-      const fetchChecklists = async () => {
+    if (error) {
+      showErrorToast(error);
+      setError(null); // Clear the error after displaying
+    }
+  }, [error]);
 
-        setLoading(true);
-        setError("");
-        try {
-          const response = await fetch("/api/checklists", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
+  useEffect(() => {
+    const fetchChecklists = async () => {
 
-          if (!response.ok) {
-            throw new Error("Failed to fetch checklists");
-          }
+      setLoading(true);
+      setError("");
+      try {
+        const response = await fetch("/api/checklists", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-          const data = await response.json();
-          if (Array.isArray(data) && data.length === 0) {
-            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
-          } else {
-            dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
-            dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
-          }
-        } catch (error) {
-          console.error("Error fetching checklists:", error);
-          setError("Error fetching checklists. Please try again later.");
-        } finally {
-          setLoading(false);
+        if (!response.ok) {
+          throw new Error("Failed to fetch checklists");
         }
-      };
 
-      if (state.noChecklists) {
-        // User has no checklists; stop loading and optionally show a message
+        const data = await response.json();
+        if (Array.isArray(data) && data.length === 0) {
+          dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: true })
+        } else {
+          dispatch({ type: "SET_CHECKLISTS", payload: data }); // Update global state with checklists
+          dispatch({ type: "SET_NO_CHECKLISTS_FOR_USER", payload: false })
+        }
+      } catch (error) {
+        console.error("Error fetching checklists:", error);
+        setError("Error fetching checklists. Please try again later.");
+      } finally {
         setLoading(false);
-      } else if (state.checklists.length > 0) {
-        // Use existing checklists from AppState if available
-        setLoading(false);
-      } else {
-        console.log("HERE")
-        fetchChecklists();
       }
+    };
+
+    if (state.noChecklists) {
+      // User has no checklists; stop loading and optionally show a message
+      setLoading(false);
+    } else if (state.checklists.length > 0) {
+      // Use existing checklists from AppState if available
+      setLoading(false);
+    } else {
+      console.log("HERE")
+      fetchChecklists();
+    }
   }, [state.checklists, state.noChecklists, dispatch]);
 
   const filteredChecklists = state.checklists
@@ -125,8 +149,6 @@ const ChecklistsPage = () => {
         </Select>
       </section>
 
-      {error && <p className="text-red-500">{error}</p>}
-
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <Loader className="h-12 w-12 mb-4 text-blue-500" />
@@ -168,7 +190,7 @@ const ChecklistsPage = () => {
           <section className="w-full max-w-4xl grid gap-4">
             {filteredChecklists.length > 0 ? (
               filteredChecklists.map((list) => {
-                return(
+                return (
                   <Card key={list.id} className="p-4 bg-white shadow-lg">
                     <CardHeader>
                       <CardTitle>{list.title}</CardTitle>
@@ -177,10 +199,10 @@ const ChecklistsPage = () => {
                     <CardContent className="flex flex-col space-y-4 mt-4">
                       {/* Completion Section */}
                       <ProgressBar label="Completion" percentage={(list.completion.completed / list.completion.total) * 100} color="green" description={`${list.completion.completed}/${list.completion.total} items added`} />
-  
+
                       {/* Weight Section */}
                       <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${formatWeight((list.completion.currentWeight.toFixed(1)), state.user_settings.weight_unit)}/${formatWeight(list.completion.totalWeight.toFixed(1), state.user_settings.weight_unit)} ${state.user_settings.weight_unit}`} />
-  
+
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
                           View Checklist

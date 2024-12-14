@@ -16,6 +16,7 @@ import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { ItemDetails, Item } from "@/types/projectTypes";
 import { formatWeight, kgToLbs, lbsToKg } from "@/utils/convertWeight";
+import { toast } from "react-toastify";
 
 interface DetailedItemViewProps {
     itemId: string;
@@ -29,6 +30,29 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const item = state.items.find((i) => i.id === itemId);
     const [loading, setLoading] = useState(!item);
     const [error, setError] = useState<string | null>(null);
+
+    const showErrorToast = (error: string | null) => {
+        if (error) {
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
+        }
+    };
+
+    // Example usage in your component
+    useEffect(() => {
+        if (error) {
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
+        }
+    }, [error]);
 
     // Local state for editing
     const [editItem, setEditItem] = useState({
@@ -146,7 +170,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             const response = await fetch(`/api/items/${itemId}`, {
                 method: "DELETE",
                 headers: {
-                   "Content-Type": "application/json",
+                    "Content-Type": "application/json",
                 },
             });
 
@@ -173,10 +197,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 <Loader />
             </div>
         );
-    }
-
-    if (error) {
-        return <p className="text-red-500">{error}</p>;
     }
 
     if (!item) {
@@ -304,7 +324,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                                 </select>
                             </div>
 
-                            {error && <p className="text-red-500">{error}</p>}
 
                             <div className="flex justify-end space-x-4 mt-4">
                                 <Button type="submit" className="bg-blue-500 text-white">
@@ -332,7 +351,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 description="Are you sure you want to delete this item? This action cannot be undone."
             />
 
-            {error && <p className="text-red-500 mt-4">{error}</p>}
         </div>
     );
 }

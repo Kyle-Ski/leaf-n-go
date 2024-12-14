@@ -6,6 +6,7 @@ import { withAuth } from "@/lib/withAuth";
 import NewItemModal from "@/components/newItemModal";
 import { useAppContext } from "@/lib/appContext";
 import { formatWeight } from "@/utils/convertWeight";
+import { toast } from "react-toastify";
 
 const NewChecklistPage = () => {
     const router = useRouter();
@@ -28,6 +29,28 @@ const NewChecklistPage = () => {
         }, 0);
     }, [selectedItems, state.items]);
 
+    const showErrorToast = (error: string | null) => {
+        if (error) {
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
+        }
+    };
+
+    // Example usage in your component
+    useEffect(() => {
+        if (error) {
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
+        }
+    }, [error]);
 
     useEffect(() => {
         if (!state.noItems && state.items.length === 0) {
@@ -128,7 +151,6 @@ const NewChecklistPage = () => {
                 >
                     Add New Item
                 </button>
-                {error && <p className="text-red-500 text-sm">{error}</p>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="title" className="block font-semibold text-gray-700">
@@ -180,9 +202,7 @@ const NewChecklistPage = () => {
                             <hr className="mt-4 border-t-2 border-gray-300" />
                         </div>
                         <div className="space-y-4">
-                            {error ? (
-                                <p className="text-red-500">{error}</p>
-                            ) : state.items.length === 0 ? (
+                            {state.items.length === 0 ? (
                                 <p className="text-gray-500">No items found. Add items to your inventory first.</p>
                             ) : (
                                 state.items.map((item) => (

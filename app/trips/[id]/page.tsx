@@ -15,6 +15,7 @@ import parseRecommendations from "@/utils/parseTripRecommendations";
 import getExistingItems from "@/utils/getItemNamesInTrip";
 import TripDetails from "@/components/tripDetails";
 import TripChecklists from "@/components/tripChecklists";
+import { toast } from "react-toastify";
 
 const TripPage = () => {
     const router = useRouter();
@@ -37,6 +38,29 @@ const TripPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const showErrorToast = (error: string | null) => {
+        if (error) {
+          toast.error(error, {
+            position: "top-right",
+            autoClose: 5000, // Adjust as needed
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          });
+        }
+      };
+      
+      // Example usage in your component
+      useEffect(() => {
+        if (error) {
+          showErrorToast(error);
+          setError(null); // Clear the error after displaying
+        }
+      }, [error]);
+      
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
 
@@ -218,14 +242,6 @@ const TripPage = () => {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <p className="text-gray-600 text-lg">No trip found. Please select a valid trip.</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <p className="text-red-500 text-center">{error}</p>
             </div>
         );
     }
