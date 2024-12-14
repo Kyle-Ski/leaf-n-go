@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { Item } from '@/types/projectTypes';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
 
   if (!userId) {
     console.error("Missing x-user-id header in request.");
@@ -73,7 +85,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
 
   if (!userId) {
     console.error("Missing x-user-id header in request.");
@@ -152,7 +174,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id; // No need for `await` here
-  const userId = req.headers.get('x-user-id');
+  const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id
+
   const { item_id } = await req.json();
 
   if (!userId) {

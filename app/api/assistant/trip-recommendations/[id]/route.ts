@@ -7,7 +7,6 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         // Extract tripId from the route parameters
         const { id } = await props.params;
 
-        // Get the user ID from the headers
         const { error: validateError, user } = await validateAccessToken(req, supabaseServer);
 
         if (validateError) {

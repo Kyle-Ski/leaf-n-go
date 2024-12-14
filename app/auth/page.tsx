@@ -71,13 +71,12 @@ export default function AuthPage() {
   };
 
 
-  const fetchChecklists = async (userId: string) => {
+  const fetchChecklists = async () => {
     try {
       const response = await fetch("/api/checklists", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": userId,
         },
       });
 
@@ -212,7 +211,7 @@ export default function AuthPage() {
         // Fetch items and checklists after logging in
         await fetchTrips()
         await fetchItems();
-        await fetchChecklists(user.id)
+        await fetchChecklists()
         await fetchCategories(user.id)
         await fetchUserSettings()
         router.push("/"); // Redirect to homepage

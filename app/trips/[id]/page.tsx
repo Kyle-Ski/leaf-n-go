@@ -8,7 +8,6 @@ import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
 import { ChecklistWithItems } from "@/types/projectTypes";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
-import { useAuth } from "@/lib/auth-Context";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
 import TripRecommendations from "@/components/tripRecommendations";
@@ -19,7 +18,6 @@ import TripChecklists from "@/components/tripChecklists";
 
 const TripPage = () => {
     const router = useRouter();
-    const { user } = useAuth();
     const { id } = useParams();
     const { state, dispatch } = useAppContext();
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
@@ -134,7 +132,7 @@ const TripPage = () => {
     const fetchAllChecklists = async () => {
         try {
             const response = await fetch(`/api/checklists`, {
-                headers: { "x-user-id": user?.id || "" },
+                headers: { "Content-Type": "application/json" },
             });
 
             if (!response.ok) {
@@ -293,10 +291,9 @@ const TripPage = () => {
                         <DialogTitle>Checklist</DialogTitle>
                         <DialogDescription>Viewing Checklist Details.</DialogDescription>
                     </DialogHeader>
-                    {isChecklistDialogOpen && selectedChecklistId && user && (
+                    {isChecklistDialogOpen && selectedChecklistId && (
                         <ChecklistDetails
                             id={selectedChecklistId}
-                            user={user}
                             state={state}
                             currentPage="trips"
                         />
