@@ -5,7 +5,6 @@ import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { ItemCategory, AppState, ItemDetails } from "@/types/projectTypes";
 import { kgToLbs } from "@/utils/convertWeight";
-import { useAuth } from "@/lib/auth-Context";
 import { toast } from "react-toastify";
 import BulkItemCsvUpload from "@/components/bulkItemCsvUpload";
 
@@ -19,7 +18,6 @@ interface BulkUploadRow {
 
 const BulkUpload = () => {
     const { state, dispatch } = useAppContext();
-    const { user } = useAuth();
     const [rows, setRows] = useState<BulkUploadRow[]>([
         { name: "", quantity: 1, weight: 0, notes: "", category_id: "" },
     ]);
@@ -86,7 +84,7 @@ const BulkUpload = () => {
 
             const response = await fetch("/api/items/bulk", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(sanitizedRows),
             });
 

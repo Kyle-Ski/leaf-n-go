@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { validateAccessToken } from '@/utils/auth/validateAccessToken';
 
 // GET: Fetch all items for the user
 export async function GET(req: NextRequest) {
-  const userId = req.headers.get('x-user-id');
-  const referrer = req.headers.get('referer'); // Log the referrer for debugging
+  // Validate the access token
+  const { user, error } = await validateAccessToken(req, supabaseServer);
 
-  if (!userId) {
-    console.error('Missing x-user-id header. Referrer:', referrer);
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  if (error) {
+    return NextResponse.json({ error }, { status: 401 });
   }
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized: User not found' }, { status: 401 });
+  } const referrer = req.headers.get('referer'); // Log the referrer for debugging
+
+  const userId = user.id
 
   try {
     const { data: items, error } = await supabaseServer
@@ -37,11 +43,18 @@ export async function GET(req: NextRequest) {
 
 // POST: Add a new item for the user
 export async function POST(req: NextRequest) {
-  const userId = req.headers.get('x-user-id');
+  // Validate the access token
+  const { user, error } = await validateAccessToken(req, supabaseServer);
 
-  if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  if (error) {
+    return NextResponse.json({ error }, { status: 401 });
   }
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized: User not found' }, { status: 401 });
+  } const referrer = req.headers.get('referer'); // Log the referrer for debugging
+
+  const userId = user.id
 
   try {
     const { name, quantity, weight, notes, category_id } = await req.json();

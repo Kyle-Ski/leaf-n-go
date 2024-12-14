@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { kgToLbs } from "@/utils/convertWeight";
 import { useAppContext } from "@/lib/appContext";
-import { useAuth } from "@/lib/auth-Context";
 import { ItemDetails } from "@/types/projectTypes";
 
 interface SanitizedRow {
@@ -15,7 +14,6 @@ interface SanitizedRow {
 
 const BulkItemCsvUpload = () => {
     const { state, dispatch } = useAppContext();
-    const { user } = useAuth();
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false); // New loading state
 
@@ -83,7 +81,7 @@ const BulkItemCsvUpload = () => {
 
                 const response = await fetch("/api/items/bulk", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(sanitizedRows),
                 });
 

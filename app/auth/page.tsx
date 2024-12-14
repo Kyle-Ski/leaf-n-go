@@ -102,11 +102,11 @@ export default function AuthPage() {
     }
   };
 
-  const fetchItems = async (userId: string) => {
+  const fetchItems = async () => {
     try {
       const response = await fetch("/api/items", {
         headers: {
-          "x-user-id": userId,
+          "Content-Type": "application/json",
         },
       });
 
@@ -211,7 +211,7 @@ export default function AuthPage() {
 
         // Fetch items and checklists after logging in
         await fetchTrips(user.id)
-        await fetchItems(user.id);
+        await fetchItems();
         await fetchChecklists(user.id)
         await fetchCategories(user.id)
         await fetchUserSettings(user.id)

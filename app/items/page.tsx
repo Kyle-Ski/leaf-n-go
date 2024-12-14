@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import NewItemModal from "@/components/newItemModal";
 import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/lib/appContext";
-import { useAuth } from "@/lib/auth-Context";
 import DetailedItemView from "@/components/itemDetails";
 import { formatWeight } from "@/utils/convertWeight";
 import Link from "next/link";
@@ -17,7 +16,6 @@ import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
-    const { user } = useAuth();
     const [isCreateItemModalOpen, setIsCreateItemModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sortOption, setSortOption] = useState<string>("name-asc");
@@ -42,17 +40,16 @@ const ItemsPage = () => {
     const handleDelete = async () => {
         try {
             setIsUploading(true);
-            const response = await fetch("/api/items/bulk-delete", {
-                method: "POST",
+            const response = await fetch("/api/items/bulk", {
+                method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-user-id": user?.id || "",
                 },
                 body: JSON.stringify({ itemIds: selectedRows }),
             });
 
             if (response.ok) {
-                // dispatch({ type: "DELETE_BULK_ITEMS", payload: selectedRows });
+                dispatch({ type: "DELETE_BULK_ITEMS", payload: selectedRows });
                 toast.success("Selected items deleted successfully!");
                 setSelectedRows([]);
             } else {
@@ -75,7 +72,6 @@ const ItemsPage = () => {
                     const response = await fetch("/api/items", {
                         headers: {
                             "Content-Type": "application/json",
-                            "x-user-id": user?.id || "",
                         },
                     });
 
@@ -102,7 +98,7 @@ const ItemsPage = () => {
 
             fetchItems();
         }
-    }, [dispatch, state.items, state.noItems, user?.id]);
+    }, [dispatch, state.items, state.noItems]);
 
     const items = state.items;
 
@@ -303,9 +299,7 @@ const ItemsPage = () => {
                         <DialogTitle className="text-center">Create Item</DialogTitle>
                         <DialogDescription className="text-center">Add a new item to your gear list.</DialogDescription>
                     </DialogHeader>
-                    <NewItemModal
-                        userId={user?.id || ""}
-                    />
+                    <NewItemModal />
                 </DialogContent>
             </Dialog>
 

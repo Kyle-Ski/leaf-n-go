@@ -39,7 +39,6 @@ const NewChecklistPage = () => {
                     const response = await fetch("/api/items", {
                         headers: {
                             "Content-Type": "application/json",
-                            "x-user-id": user?.id || "",
                         },
                     });
 
@@ -257,9 +256,7 @@ const NewChecklistPage = () => {
             {/* New Item Form */}
             <div ref={newItemModalRef} className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Add a New Item</h2>
-                <NewItemModal
-                    userId={user?.id || ""}
-                />
+                <NewItemModal />
             </div>
         </div>
     );
