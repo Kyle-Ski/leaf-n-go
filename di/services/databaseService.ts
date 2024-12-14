@@ -1,5 +1,5 @@
 import { ItemDetails } from '@/types/projectTypes';
-import { SupabaseClient, User } from '@supabase/supabase-js';
+import { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 export class DatabaseService {
   public databaseClient: SupabaseClient;
@@ -261,6 +261,50 @@ export class DatabaseService {
     if (updateError) {
       throw { message: "Failed to update trip", status: 500 };
     }
+  }
+
+  /* AUTH METHODS */
+  /**
+   * Signs in with email and password
+   * @param email user email
+   * @param password user password
+   * @returns session data
+   */
+  async signInWithEmailAndPassword(
+    email: string,
+    password: string
+  ): Promise<{ session: Session | null; error: Error | null }> {
+    const { data, error } = await this.databaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return { session: null, error };
+    }
+
+    return { session: data.session, error: null };
+  }
+
+  /**
+   * Let's a user sign up
+   * @param email 
+   * @param password 
+   * @returns error if there is one
+   */
+  async signUp(
+    email: string,
+    password: string
+  ): Promise<{ error: Error | null }> {
+    const { error } = await this.databaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
+    });
+
+    return { error };
   }
 
 }
