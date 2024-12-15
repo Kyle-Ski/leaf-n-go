@@ -288,6 +288,28 @@ export interface CreateTripPayload {
   notes: string | null;
   checklists?: string[];
 }
+
+export interface UpdatedAiRecommendedItem {
+  checklists: Record<string, ChecklistWithCompletion>;
+  items: ItemDetails[];
+  trips: {
+    trip_checklists: {
+      checklist_id: string;
+      completedItems: number;
+      totalItems: number;
+      totalWeight: number;
+    };
+  };
+}
+
+export interface ChecklistWithCompletion {
+  items: ChecklistItem[];
+  completion: {
+    completed: number;
+    total: number;
+  };
+}
+
 export interface AppState {
   trips: FrontendTrip[];
   checklists: ChecklistWithItems[];

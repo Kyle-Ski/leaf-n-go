@@ -57,3 +57,118 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     }
   }
 }
+
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const checklistId = await params.id;
+
+  // Validate the access token
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id;
+
+  try {
+    const { name, quantity, weight, notes, item_categories } = await req.json();
+
+    // Validate required fields
+    if (!name || quantity === undefined || weight === undefined || !item_categories) {
+      return NextResponse.json(
+        { error: 'Name, quantity, weight, and item_categories are required fields.' },
+        { status: 400 }
+      );
+    }
+
+    // Find category ID by name
+    let categoryId: string | null = null;
+
+    const category = await databaseService.fetchCategoryByName(item_categories, userId);
+    if (category) {
+      categoryId = category.id;
+    }
+
+    // Check if the item already exists for the user
+    let existingItem = await databaseService.fetchItemByNameAndUser(name, userId);
+
+    // If the item doesn't exist, create a new one
+    if (!existingItem) {
+      existingItem = await databaseService.createItem({
+        user_id: userId,
+        name,
+        quantity,
+        weight,
+        notes: notes || null,
+        category_id: categoryId, // Use resolved category ID or null
+      });
+
+      if (!existingItem) {
+        console.error('Error creating item.');
+        return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
+      }
+    }
+
+    // Add the item to the `checklist_items` table
+    const checklistItem = {
+      checklist_id: checklistId,
+      item_id: existingItem.id,
+      quantity,
+      completed: false, // Default value for new items
+    };
+
+    const insertedChecklistItem = await databaseService.insertChecklistItemAndReturn(checklistItem);
+
+    if (!insertedChecklistItem) {
+      console.error('Error adding item to checklist.');
+      return NextResponse.json({ error: 'Failed to add item to checklist.' }, { status: 500 });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function calculateChecklistCompletion(checklistItems: any[]) {
+      const total = checklistItems.length;
+      const completed = checklistItems.filter((item) => item.completed).length;
+
+      return {
+        total,
+        completed,
+      };
+    }
+
+    // Fetch all checklist items for the given checklist ID
+    const allChecklistItems = await databaseService.fetchChecklistItems(checklistId);
+    const completion = calculateChecklistCompletion(allChecklistItems);
+
+    // Calculate total weight
+    const totalWeight = allChecklistItems.reduce((sum, item) => sum + item.items.weight * item.quantity, 0);
+
+    // Construct the response to match app state
+    const response = {
+      checklists: {
+        [checklistId]: {
+          items: allChecklistItems.filter((item) => item.id === insertedChecklistItem.id), // Include only the newly added item
+          completion,
+        },
+      },
+      items: [existingItem],
+      trips: {
+        trip_checklists: {
+          checklist_id: checklistId,
+          completedItems: completion.completed,
+          totalItems: completion.total,
+          totalWeight,
+        },
+      },
+    };
+
+    return NextResponse.json(response, { status: 201 });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+  }
+}

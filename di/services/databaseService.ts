@@ -263,6 +263,30 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Checks for an item with the given name
+   * @param name 
+   * @param userId 
+   * @returns 
+   */
+  async fetchItemByNameAndUser(name: string, userId: string) {
+    const { data, error, status } = await this.databaseClient
+      .from('items') // Replace 'items' with your actual table name if different
+      .select('*')
+      .eq('name', name)
+      .eq('user_id', userId)
+      .limit(1)
+      .single(); // Fetches only one record if it exists
+  
+    // Handle the case where no matching item is found (status 406 indicates no match with .single())
+    if (error && status !== 406) {
+      console.error('Error fetching item by name and user:', error.message);
+      throw new Error('Failed to fetch item.');
+    }
+  
+    return data || null; // Return the found item or null if no item exists
+  }
+  
   /* AUTH METHODS */
   /**
    * Signs in with email and password
@@ -474,6 +498,40 @@ export class DatabaseService {
     }
   }
 
+  async fetchChecklistItems(checklistId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .select('*, items(*)') // Include item details
+      .eq('checklist_id', checklistId);
+
+    if (error || !data) {
+      console.error('Error fetching checklist items:', error);
+      return [];
+    }
+
+    return data;
+  }
+
+  async insertChecklistItemAndReturn(checklistItem: {
+    checklist_id: string;
+    item_id: string;
+    quantity: number;
+    completed: boolean;
+  }) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .insert(checklistItem)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Error inserting checklist item:', error);
+      return null;
+    }
+
+    return data;
+  }
+
   /**
    * Remove all items from checklist
    * @param checklistId 
@@ -682,6 +740,21 @@ export class DatabaseService {
     return categories || [];
   }
 
+  async fetchCategoryByName(categoryName: string, userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('item_categories')
+      .select('id')
+      .or(`user_id.eq.${userId},user_id.is.null`) // User-specific or global categories
+      .eq('name', categoryName)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching category by name:', error);
+      return null;
+    }
+
+    return data;
+  }
 
   /* TRIPS METHODS */
   /**

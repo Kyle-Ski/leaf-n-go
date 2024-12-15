@@ -89,7 +89,6 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     if (response.ok) {
                         const consentObj = await response.json()
                         updateConsent(consentObj.consent)
-                        console.log("Consent preferences successfully transferred to backend.");
                         if (!hasConsent("localStorage")) {
                             localStorage.removeItem('userConsent'); // Clear localStorage after successful transfer
                             // localStorage.removeItem('appState')
@@ -126,7 +125,6 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 });
 
                 if (response.ok) {
-                    console.log("Consent preferences successfully transferred to backend.");
                     if (!hasConsent("localStorage")) {
                         localStorage.removeItem('userConsent'); // Clear localStorage after successful transfer
                         // localStorage.removeItem('appState')

@@ -23,7 +23,6 @@ export async function GET(req: NextRequest) {
         max_tokens: 1024,
         messages: [{ role: "user", content: "Hello, Claude" }],
     });
-    console.log(defaultmessage);
     return NextResponse.json({ message: defaultmessage })
 }
 

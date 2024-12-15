@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
-import { ChecklistWithItems } from "@/types/projectTypes";
+import { ChecklistWithItems, ItemDetails, UpdatedAiRecommendedItem } from "@/types/projectTypes";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
@@ -16,6 +16,11 @@ import getExistingItems from "@/utils/getItemNamesInTrip";
 import TripDetails from "@/components/tripDetails";
 import TripChecklists from "@/components/tripChecklists";
 import { toast } from "react-toastify";
+import FloatingActionButton from "@/components/floatingActionButton";
+import ExpandableCategoryTable from "@/components/expandableAiCategoryTable";
+import { kgToLbs } from "@/utils/convertWeight";
+import ensureKeys from "@/utils/ensureObjectKeys";
+import { BotIcon } from "lucide-react";
 
 const TripPage = () => {
     const router = useRouter();
@@ -35,32 +40,32 @@ const TripPage = () => {
         isWeatherMismatch: false, // Default to false
         recommendations: {}, // Default to an empty object
     });
-
+    const [isAiSuggestionOpen, setIsAiSuggestionOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const showErrorToast = (error: string | null) => {
         if (error) {
-          toast.error(error, {
-            position: "top-right",
-            autoClose: 5000, // Adjust as needed
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "colored",
-          });
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
         }
-      };
-      
-      // Example usage in your component
-      useEffect(() => {
+    };
+
+    // Example usage in your component
+    useEffect(() => {
         if (error) {
-          showErrorToast(error);
-          setError(null); // Clear the error after displaying
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
         }
-      }, [error]);
-      
+    }, [error]);
+
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
 
@@ -215,6 +220,64 @@ const TripPage = () => {
         }
     };
 
+
+    const addAiItemToChecklist = async (checklistId: string, item: ItemDetails) => {
+        try {
+            const defaultKeys: Partial<ItemDetails> = {
+                name: "Un-named Item",
+                quantity: 0,
+                weight: 0,
+                item_categories: undefined
+            }
+            const formattedItem = ensureKeys(item, defaultKeys)
+            // Get user's weight unit preference
+            const { weight_unit } = state.user_settings;
+            let weightInLbs: number;
+
+            // Convert weight if needed
+            if (weight_unit === "kg") {
+                const converted = kgToLbs(formattedItem.weight);
+                if (converted === null) {
+                    throw new Error("Invalid weight input.");
+                }
+                weightInLbs = converted;
+            } else {
+                weightInLbs = formattedItem.weight;
+            }
+
+            // Prepare the payload
+            const payload = { ...formattedItem, weight: weightInLbs };
+
+            // Send API request
+            const response = await fetch(`/api/assistant/trip-recommendations/${checklistId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            // Handle errors
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                console.error('Failed to add item to checklist', errorResponse);
+                throw new Error('Failed to add item to checklist');
+            }
+
+            // Parse response data
+            const data: UpdatedAiRecommendedItem = await response.json();
+            // Dispatch actions to update the state
+            dispatch({ type: "ADD_ITEM", payload: data.items[0] });
+            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: data.checklists[checklistId].items });
+
+            // Return the data
+            return data;
+        } catch (error) {
+            console.error('Error in addAiItemToChecklist:', error);
+            throw error;
+        }
+    };
+
     const handleDelete = async () => {
         if (!id) {
             setError("Error Deleting Trip, try again later")
@@ -246,16 +309,23 @@ const TripPage = () => {
         );
     }
 
+    const hasValidRecommendations = (recs?: Record<string, string>) =>
+        recs && Object.keys(recs).length > 0;
+
+    const displayedRecommendations = hasValidRecommendations(recommendations?.recommendations)
+        ? recommendations // Use live-streamed recommendations if available and valid
+        : trip.ai_recommendation // Otherwise, use the saved recommendation
+            ? {
+                location, // Since saved recommendations don't include location
+                isWeatherMismatch: false,
+                recommendations: trip.ai_recommendation,
+            }
+            : null;
+
     return (
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{trip.title}</h1>
-                <Button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-red-500 text-white shadow-md"
-                >
-                    Delete Trip
-                </Button>
             </header>
 
             {/* Trip Details */}
@@ -274,15 +344,38 @@ const TripPage = () => {
                 recommendations={recommendations}
                 loading={loading}
                 error={error}
-                getAssistantHelp={getAssistantHelp}
                 aiRecommendationFromState={trip.ai_recommendation}
                 location={trip.location || "Unknown"}
             />
 
-            {/* Edit Trip Button */}
-            <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
-                Edit Trip
-            </Button>
+            <FloatingActionButton>
+                <Button
+                    onClick={() => setIsUpdateOpen(true)}
+                    className="bg-blue-500 text-white px-4 py-2"
+                >
+                    Edit Trip
+                </Button>
+                <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="bg-red-500 text-white shadow-md px-4 py-2"
+                >
+                    Delete Trip
+                </Button>
+                <Button
+                    disabled={!trip?.ai_recommendation}
+                    onClick={() => setIsAiSuggestionOpen(true)}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> Add Suggestions to Inventory
+                </Button>
+                <Button
+                    onClick={getAssistantHelp}
+                    disabled={loading}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations?.recommendations) ? "Get New Recommendations" : "Get Recommendations")}
+                </Button>
+            </FloatingActionButton>
 
             {/* Edit Trip Modal */}
             <EditTripModal
@@ -315,6 +408,23 @@ const TripPage = () => {
                             currentPage="trips"
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Add AI recs to inventory Details Dialog */}
+            <Dialog open={isAiSuggestionOpen} onOpenChange={setIsAiSuggestionOpen}>
+                <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
+                    <DialogHeader>
+                        <DialogTitle>Add Suggestions To Checklist and Inventory</DialogTitle>
+                        <DialogDescription>
+                            You can choose to add the AI&apos;s recommendations to your inventory and trip checklist.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ExpandableCategoryTable
+                        data={trip.ai_recommendation}
+                        tripChecklists={trip.trip_checklists}
+                        onAddToChecklist={addAiItemToChecklist}
+                    />
                 </DialogContent>
             </Dialog>
 

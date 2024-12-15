@@ -216,7 +216,7 @@ const BulkUpload = () => {
                     ))}
                 </tbody>
             </table>
-            <div className="flex justify-between mt-4">
+            <div className="flex justify-between m-4 mb-8">
                 <button disabled={isUploading} className="bg-green-500 text-white px-3 py-1 rounded" onClick={addRow}>
                     + Add Row
                 </button>
