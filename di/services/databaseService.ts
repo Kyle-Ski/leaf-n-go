@@ -474,6 +474,40 @@ export class DatabaseService {
     }
   }
 
+  async fetchChecklistItems(checklistId: string) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .select('*, items(*)') // Include item details
+      .eq('checklist_id', checklistId);
+
+    if (error || !data) {
+      console.error('Error fetching checklist items:', error);
+      return [];
+    }
+
+    return data;
+  }
+
+  async insertChecklistItemAndReturn(checklistItem: {
+    checklist_id: string;
+    item_id: string;
+    quantity: number;
+    completed: boolean;
+  }) {
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .insert(checklistItem)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Error inserting checklist item:', error);
+      return null;
+    }
+
+    return data;
+  }
+
   /**
    * Remove all items from checklist
    * @param checklistId 
@@ -682,6 +716,21 @@ export class DatabaseService {
     return categories || [];
   }
 
+  async fetchCategoryByName(categoryName: string, userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('item_categories')
+      .select('id')
+      .or(`user_id.eq.${userId},user_id.is.null`) // User-specific or global categories
+      .eq('name', categoryName)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching category by name:', error);
+      return null;
+    }
+
+    return data;
+  }
 
   /* TRIPS METHODS */
   /**
