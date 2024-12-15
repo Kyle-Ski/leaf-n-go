@@ -99,7 +99,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
     // If the item doesn't exist, create a new one
     if (!existingItem || existingItem.length === 0) {
-      let newItem = await databaseService.createItem({
+      const newItem = await databaseService.createItem({
         user_id: userId,
         name,
         quantity,
