@@ -412,9 +412,11 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             <ul className="space-y-4">
                 {checklist?.items
                     .filter((item) => {
-                        const nameMatch = item.items.name.toLowerCase().includes(checklistSearchQuery);
-                        const notesMatch = item.items.notes?.toLowerCase().includes(checklistSearchQuery) ?? false;
-                        const categoryMatch = item.items.item_categories?.name?.toLowerCase().includes(checklistSearchQuery) ?? false;
+                        if (!checklistSearchQuery) return true; // Return all items if no query
+                        const query = checklistSearchQuery.toLowerCase();
+                        const nameMatch = item.items.name.toLowerCase().includes(query);
+                        const notesMatch = item.items.notes?.toLowerCase().includes(query) ?? false;
+                        const categoryMatch = item.items.item_categories?.name?.toLowerCase().includes(query) ?? false;
                         return nameMatch || notesMatch || categoryMatch;
                     })
                     .sort((a, b) => {
