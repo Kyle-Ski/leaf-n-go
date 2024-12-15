@@ -140,7 +140,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             }
 
             const updatedItemData = { ...editItem, weight: weightInLbs };
-
+            setLoading(true)
             const response = await fetch(`/api/items/${itemId}`, {
                 method: "PUT",
                 headers: {
@@ -148,7 +148,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 },
                 body: JSON.stringify(updatedItemData),
             });
-
+            setLoading(false)
             if (!response.ok) {
                 throw new Error("Failed to save item.");
             }
@@ -328,7 +328,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
 
                             <div className="flex justify-end space-x-4 mt-4">
                                 <Button type="submit" className="bg-blue-500 text-white">
-                                    Save Changes
+                                    {loading ? `Saving...` : `Save Changes`}
                                 </Button>
                                 <Button
                                     type="button"

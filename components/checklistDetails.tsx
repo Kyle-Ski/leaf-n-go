@@ -22,6 +22,7 @@ import { formatWeight } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 import FloatingActionButton from "./floatingActionButton";
 import { PackagePlusIcon, PlusIcon, TrashIcon } from "lucide-react";
+import DetailedItemView from "./itemDetails";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -47,6 +48,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const [checklistSearchQuery, setChecklistSearchQuery] = useState<string>("");
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
+    const [isItemModalOpen, setIsViewItemModalOpen] = useState(false);
 
     const showErrorToast = (error: string | null) => {
         if (error) {
@@ -398,7 +400,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         onClick={() => setIsDeleteDialogOpen(true)}
                         className="p-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
                     >
-                       <TrashIcon /> Delete Checklist
+                        <TrashIcon /> Delete Checklist
                     </Button>
                 )}
                 <Button
@@ -417,7 +419,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
 
                 <Button
                     onClick={handleBulkRemoveCompletedItems}
-                    className="p-2 bg-orange-500 text-white rounded-md shadow hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="p-2 bg-yellow-600 text-white rounded-md shadow hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                     Remove ✔ed Item(s) From Checklist
                 </Button>
@@ -516,10 +518,17 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         }
                     })
                     .map((item) => (
-                        <ChecklistItemComponent key={item.id} item={item} onToggle={handleToggleItem} onRemove={() => {
-                            setSelectedItem(item);
-                            setIsRemoveModalOpen(true);
-                        }} />
+                        <ChecklistItemComponent
+                            key={item.id}
+                            item={item}
+                            onToggle={handleToggleItem}
+                            onViewItem={() => {
+                                setSelectedItem(item)
+                                setIsViewItemModalOpen(true)
+                            }} onRemove={() => {
+                                setSelectedItem(item);
+                                setIsRemoveModalOpen(true);
+                            }} />
                     ))}
             </ul>
 
@@ -533,6 +542,34 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                     <NewItemModal />
                 </DialogContent>
             </Dialog>
+
+            {/* Detailed Item View Modal */}
+            {selectedItem && (
+                <Dialog
+                    open={isItemModalOpen}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setIsViewItemModalOpen(false);
+                            setSelectedItem(null);
+                        }
+                    }}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Item Details</DialogTitle>
+                            <DialogDescription className="text-center">
+                                View and manage the details of this item. You can edit or delete the item below.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DetailedItemView
+                            itemId={selectedItem.item_id}
+                            isOpen={isItemModalOpen}
+                            onClose={() => setIsViewItemModalOpen(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+
 
             {/* Add Item Modal */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>

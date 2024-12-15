@@ -4,14 +4,16 @@ import { ChecklistItem, ChecklistItem as ChecklistItemType } from "@/types/proje
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { formatWeight } from "@/utils/convertWeight";
 import { useAppContext } from "@/lib/appContext";
+import { EyeIcon, MapPinMinusInsideIcon } from "lucide-react";
 
 interface ChecklistItemProps {
     item: ChecklistItemType;
     onToggle: (value: CheckedState, item: ChecklistItem) => void;
     onRemove: () => void;
+    onViewItem: () => void;
 }
 
-const ChecklistItemComponent = ({ item, onToggle, onRemove }: ChecklistItemProps) => {
+const ChecklistItemComponent = ({ item, onToggle, onRemove, onViewItem }: ChecklistItemProps) => {
     const { state } = useAppContext();
     return (
         <li key={item.id} className="p-4 bg-white rounded-lg shadow-md flex justify-between items-center">
@@ -51,14 +53,25 @@ const ChecklistItemComponent = ({ item, onToggle, onRemove }: ChecklistItemProps
                 )}
             </div>
 
-            {/* Remove Button */}
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onRemove()}
-            >
-                Remove
-            </Button>
+            <div className="flex space-x-2">
+                {/* View Button */}
+                <Button
+                    className="bg-blue-500 text-white"
+                    size="sm"
+                    onClick={() => onViewItem()}
+                >
+                    <EyeIcon /> View
+                </Button>
+
+                {/* Remove Button */}
+                <Button
+                    className="bg-yellow-600 text-white"
+                    size="sm"
+                    onClick={() => onRemove()}
+                >
+                    <MapPinMinusInsideIcon /> Remove
+                </Button>
+            </div>
         </li>
     );
 };
