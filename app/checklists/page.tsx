@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, PlusIcon } from "lucide-react";
 import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
@@ -112,7 +112,7 @@ const ChecklistsPage = () => {
       <section className="w-full max-w-4xl flex justify-between items-center">
         <h1 className="text-3xl font-semibold">Your Checklists</h1>
         <Link href="/checklists/new">
-          <Button className="bg-blue-500 text-white">+ New Checklist</Button>
+          <Button className="bg-green-500 text-white">{<PlusIcon/>} New Checklist</Button>
         </Link>
       </section>
 

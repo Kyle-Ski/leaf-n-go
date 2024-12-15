@@ -16,6 +16,7 @@ import getExistingItems from "@/utils/getItemNamesInTrip";
 import TripDetails from "@/components/tripDetails";
 import TripChecklists from "@/components/tripChecklists";
 import { toast } from "react-toastify";
+import FloatingActionButton from "@/components/floatingActionButton";
 
 const TripPage = () => {
     const router = useRouter();
@@ -40,27 +41,27 @@ const TripPage = () => {
 
     const showErrorToast = (error: string | null) => {
         if (error) {
-          toast.error(error, {
-            position: "top-right",
-            autoClose: 5000, // Adjust as needed
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "colored",
-          });
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
         }
-      };
-      
-      // Example usage in your component
-      useEffect(() => {
+    };
+
+    // Example usage in your component
+    useEffect(() => {
         if (error) {
-          showErrorToast(error);
-          setError(null); // Clear the error after displaying
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
         }
-      }, [error]);
-      
+    }, [error]);
+
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
 
@@ -250,12 +251,6 @@ const TripPage = () => {
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">{trip.title}</h1>
-                <Button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-red-500 text-white shadow-md"
-                >
-                    Delete Trip
-                </Button>
             </header>
 
             {/* Trip Details */}
@@ -279,10 +274,18 @@ const TripPage = () => {
                 location={trip.location || "Unknown"}
             />
 
-            {/* Edit Trip Button */}
-            <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
-                Edit Trip
-            </Button>
+            <FloatingActionButton>
+                {/* Edit Trip Button */}
+                <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
+                    Edit Trip
+                </Button>
+                <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="bg-red-500 text-white shadow-md"
+                >
+                    Delete Trip
+                </Button>
+            </FloatingActionButton>
 
             {/* Edit Trip Modal */}
             <EditTripModal

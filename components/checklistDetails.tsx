@@ -20,6 +20,7 @@ import { CheckedState } from "@radix-ui/react-checkbox";
 import ChecklistItemComponent from "@/components/checklistItem"
 import { formatWeight } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
+import FloatingActionButton from "./floatingActionButton";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -345,15 +346,31 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
         <div className="p-4 max-w-4xl mx-auto">
             <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
 
-            {(currentPage && dontShowDelete.includes(currentPage)) ? <></> : (<div className="flex justify-end mb-4">
-                <Button
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="bg-red-500 text-white"
+            <FloatingActionButton>
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                    Delete Checklist
-                </Button>
-            </div>)}
+                    Add Existing Item
+                </button>
 
+                <button
+                    onClick={() => setIsCreateItemModalOpen(true)}
+                    className="p-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+                >
+                    Create New Item
+                </button>
+
+                {!(currentPage && dontShowDelete.includes(currentPage)) && (
+                    <button
+                        onClick={() => setIsDeleteDialogOpen(true)}
+                        className="p-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    >
+                        Delete Checklist
+                    </button>
+                )}
+            </FloatingActionButton>
+            
             {/* **Completion Progress Bar** */}
             <ProgressBar label="Completion" percentage={completionPercentage} color="green" description={total > 0 ? `${completed}/${total} items completed` : "No items in checklist"} />
 
@@ -452,18 +469,6 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         }} />
                     ))}
             </ul>
-
-            <div className="mt-6 space-x-4">
-                <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white">
-                    Add Existing Item
-                </Button>
-                <Button
-                    onClick={() => setIsCreateItemModalOpen(true)}
-                    className="bg-green-500 text-white"
-                >
-                    Create New Item
-                </Button>
-            </div>
 
             {/* Create New Item Modal */}
             <Dialog open={isCreateItemModalOpen} onOpenChange={setIsCreateItemModalOpen}>

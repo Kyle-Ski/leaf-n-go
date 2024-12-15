@@ -9,6 +9,7 @@ import CreateTripModal from "@/components/createNewTripModal";
 import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { toast } from "react-toastify";
+import { PlusIcon } from "lucide-react";
 
 const TripsPage = () => {
   const { user } = useAuth();
@@ -124,7 +125,7 @@ const TripsPage = () => {
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Your Trips</h1>
         <Button onClick={() => setIsCreateModalOpen(true)} className="bg-green-500 text-white">
-          + New Trip
+          {<PlusIcon />} New Trip
         </Button>
       </header>
 

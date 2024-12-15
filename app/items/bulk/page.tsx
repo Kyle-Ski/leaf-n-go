@@ -7,7 +7,7 @@ import { ItemCategory, AppState, ItemDetails } from "@/types/projectTypes";
 import { kgToLbs } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 import BulkItemCsvUpload from "@/components/bulkItemCsvUpload";
-
+import { CheckIcon } from "lucide-react";
 interface BulkUploadRow {
     name: string;
     quantity: number;
@@ -216,7 +216,7 @@ const BulkUpload = () => {
                     ))}
                 </tbody>
             </table>
-            <div className="flex justify-between mt-4">
+            <div className="flex justify-between m-4 mb-8">
                 <button disabled={isUploading} className="bg-green-500 text-white px-3 py-1 rounded" onClick={addRow}>
                     + Add Row
                 </button>

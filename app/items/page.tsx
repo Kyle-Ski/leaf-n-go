@@ -13,6 +13,7 @@ import { formatWeight } from "@/utils/convertWeight";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
+import FloatingActionButton from "@/components/floatingActionButton";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -171,26 +172,6 @@ const ItemsPage = () => {
                 <div className="p-4 max-w-4xl mx-auto space-y-8">
                     <h1 className="text-2xl font-semibold">Your Items</h1>
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex flex-col space-y-2 sm:space-y-0">
-                            <Button
-                                onClick={() => setIsCreateItemModalOpen(true)}
-                                className="bg-green-500 text-white mb-2"
-                            >
-                                Create New Item
-                            </Button>
-                            <Link href="/items/bulk" passHref>
-                                <Button className="bg-blue-500 text-white w-full mb-4">
-                                    Bulk Upload Items
-                                </Button>
-                            </Link>
-                            <Button
-                                disabled={isUploading}
-                                className="bg-red-500 text-white rounded"
-                                onClick={handleRemoveSelectedRows}
-                            >
-                                Remove ✔ Item(s)
-                            </Button>
-                        </div>
                         <div className="flex flex-col mt-2">
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By
@@ -281,6 +262,26 @@ const ItemsPage = () => {
                 </div>
             )}
 
+            <FloatingActionButton>
+                <Button
+                    onClick={() => setIsCreateItemModalOpen(true)}
+                    className="bg-green-500 text-white mb-2"
+                >
+                    Create New Item
+                </Button>
+                <Link href="/items/bulk" passHref>
+                    <Button className="bg-blue-500 text-white w-full mb-2">
+                        Bulk Upload Items
+                    </Button>
+                </Link>
+                <Button
+                    disabled={isUploading || selectedRows.length === 0}
+                    className="bg-red-500 text-white rounded"
+                    onClick={handleRemoveSelectedRows}
+                >
+                    Delete ✔ Item(s)
+                </Button>
+            </FloatingActionButton>
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
