@@ -8,7 +8,6 @@ export interface TripRecommendationsProps {
     } | null;
     loading: boolean;
     error: string | null;
-    getAssistantHelp: () => Promise<void>;
     aiRecommendationFromState?: Record<string, string>;
     location: string;
 }
@@ -17,7 +16,6 @@ const TripRecommendations = ({
     recommendations,
     loading,
     error,
-    getAssistantHelp,
     aiRecommendationFromState,
     location,
 }: TripRecommendationsProps) => {
@@ -39,14 +37,6 @@ const TripRecommendations = ({
     return (
         <section className="w-full bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Assistant Recommendations</h2>
-            <Button
-                className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                variant="outline"
-                onClick={getAssistantHelp}
-                disabled={loading}
-            >
-                {loading ? "Loading..." : (hasValidRecommendations(displayedRecommendations?.recommendations) ? "Get New Recommendations" : "Get Recommendations")}
-            </Button>
             {process.env.NODE_ENV === "development" ? (<Button
                 className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
                 variant="outline"

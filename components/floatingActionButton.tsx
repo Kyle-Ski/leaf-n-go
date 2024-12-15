@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { PencilIcon, XIcon } from "lucide-react"; // Importing icons from lucid-react
+import { PencilIcon, XIcon } from "lucide-react";
 
 interface FloatingActionButtonProps {
-  children: React.ReactNode; // Buttons or components to show in the popover
+  children: React.ReactNode;
 }
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ children }) => {
@@ -13,7 +13,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ children })
   };
 
   return (
-    <div className="fixed bottom-24 right-6 z-50 sm:bottom-8"> {/* Adjusted position for mobile */}
+    <div className="fixed bottom-24 right-6 z-50 sm:bottom-8">
       {/* FAB Button */}
       <button
         onClick={toggleMenu}
@@ -30,7 +30,9 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ children })
 
       {/* Popover Menu */}
       {isOpen && (
-        <div className="absolute bottom-20 right-0 bg-white shadow-lg rounded-lg p-4 flex flex-col space-y-4 w-60">
+        <div
+          className="absolute bottom-20 right-0 bg-white shadow-lg rounded-lg p-4 flex flex-col space-y-3 min-w-[12rem] max-w-sm"
+        >
           {children}
         </div>
       )}

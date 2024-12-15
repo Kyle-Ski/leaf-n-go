@@ -20,6 +20,7 @@ import FloatingActionButton from "@/components/floatingActionButton";
 import ExpandableCategoryTable from "@/components/expandableAiCategoryTable";
 import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
+import { BotIcon } from "lucide-react";
 
 const TripPage = () => {
     const router = useRouter();
@@ -219,12 +220,11 @@ const TripPage = () => {
         }
     };
 
-    
+
     const addAiItemToChecklist = async (checklistId: string, item: ItemDetails) => {
         try {
-            console.log("ITEM", item)
             const defaultKeys: Partial<ItemDetails> = {
-                name: "Un-named Item", 
+                name: "Un-named Item",
                 quantity: 0,
                 weight: 0,
                 item_categories: undefined
@@ -244,10 +244,10 @@ const TripPage = () => {
             } else {
                 weightInLbs = formattedItem.weight;
             }
-    
+
             // Prepare the payload
             const payload = { ...formattedItem, weight: weightInLbs };
-    
+
             // Send API request
             const response = await fetch(`/api/assistant/trip-recommendations/${checklistId}`, {
                 method: 'POST',
@@ -256,22 +256,20 @@ const TripPage = () => {
                 },
                 body: JSON.stringify(payload),
             });
-    
+
             // Handle errors
             if (!response.ok) {
                 const errorResponse = await response.json();
-                console.log("In here?", errorResponse)
                 console.error('Failed to add item to checklist', errorResponse);
                 throw new Error('Failed to add item to checklist');
             }
-    
+
             // Parse response data
             const data: UpdatedAiRecommendedItem = await response.json();
-            console.log("data", data)
             // Dispatch actions to update the state
             dispatch({ type: "ADD_ITEM", payload: data.items[0] });
             dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: data.checklists[checklistId].items });
-    
+
             // Return the data
             return data;
         } catch (error) {
@@ -279,7 +277,7 @@ const TripPage = () => {
             throw error;
         }
     };
-    
+
     const handleDelete = async () => {
         if (!id) {
             setError("Error Deleting Trip, try again later")
@@ -311,6 +309,19 @@ const TripPage = () => {
         );
     }
 
+    const hasValidRecommendations = (recs?: Record<string, string>) =>
+        recs && Object.keys(recs).length > 0;
+
+    const displayedRecommendations = hasValidRecommendations(recommendations?.recommendations)
+        ? recommendations // Use live-streamed recommendations if available and valid
+        : trip.ai_recommendation // Otherwise, use the saved recommendation
+            ? {
+                location, // Since saved recommendations don't include location
+                isWeatherMismatch: false,
+                recommendations: trip.ai_recommendation,
+            }
+            : null;
+
     return (
         <div className="max-w-4xl mx-auto p-2 space-y-8">
             <header className="flex justify-between items-center">
@@ -333,24 +344,36 @@ const TripPage = () => {
                 recommendations={recommendations}
                 loading={loading}
                 error={error}
-                getAssistantHelp={getAssistantHelp}
                 aiRecommendationFromState={trip.ai_recommendation}
                 location={trip.location || "Unknown"}
             />
 
             <FloatingActionButton>
-                {/* Edit Trip Button */}
-                <Button onClick={() => setIsUpdateOpen(true)} className="bg-blue-500 text-white">
+                <Button
+                    onClick={() => setIsUpdateOpen(true)}
+                    className="bg-blue-500 text-white px-4 py-2"
+                >
                     Edit Trip
                 </Button>
                 <Button
                     onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-red-500 text-white shadow-md"
+                    className="bg-red-500 text-white shadow-md px-4 py-2"
                 >
                     Delete Trip
                 </Button>
-                <Button disabled={trip?.ai_recommendation ? false : true } onClick={() => setIsAiSuggestionOpen(true)} className="bg-blue-500 text-white">
-                    Add Suggestions to Inventory
+                <Button
+                    disabled={!trip?.ai_recommendation}
+                    onClick={() => setIsAiSuggestionOpen(true)}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> Add Suggestions to Inventory
+                </Button>
+                <Button
+                    onClick={getAssistantHelp}
+                    disabled={loading}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations?.recommendations) ? "Get New Recommendations" : "Get Recommendations")}
                 </Button>
             </FloatingActionButton>
 

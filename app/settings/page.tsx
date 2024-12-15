@@ -297,9 +297,6 @@ const SettingsPage = () => {
         throw new Error('Failed to save user settings');
       }
 
-      const result = await response.json();
-      console.log(result);
-
       // Set the appropriate saveSuccess state based on the section
       switch (section) {
         case "profile":
