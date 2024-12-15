@@ -218,6 +218,7 @@ const TripPage = () => {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addAiItemToChecklist = async (checklistId: string, item: any) => {
         const { weight_unit } = state.user_settings;
         let weightInLbs: number;
