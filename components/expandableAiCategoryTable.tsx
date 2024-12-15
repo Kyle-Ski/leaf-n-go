@@ -1,26 +1,27 @@
 import React, { useState, useRef } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Input } from "./ui/input";
-import { ItemDetails } from "@/types/projectTypes";
+import { ItemDetails, UpdatedAiRecommendedItem } from "@/types/projectTypes";
+import { toast } from "react-toastify";
 
 interface ExpandableCategoryTableProps {
     data: Record<string, string>; // Categories with items
-    onAddToChecklist: (checklistId: string, item: ItemDetails) => void; // Updated to include checklistId
+    onAddToChecklist: (checklistId: string, item: ItemDetails) => Promise<UpdatedAiRecommendedItem>; // Updated to return a Promise
     tripChecklists: {
         checklist_id: string;
         checklists: {
-          title: string;
-          checklist_items: {
-            id: string;
-            completed: boolean;
-            item_id: string;
-          }[];
+            title: string;
+            checklist_items: {
+                id: string;
+                completed: boolean;
+                item_id: string;
+            }[];
         }[];
         totalItems: number;
         completedItems: number;
         totalWeight: number;
         currentWeight: number;
-      }[]; // Array of checklists attached to the trip
+    }[];
 }
 
 const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
@@ -29,8 +30,9 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
     tripChecklists,
 }) => {
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [itemsState, setItemsState] = useState<Record<string, Record<string, any>>>({});
+    const [uploading, setUploading] = useState<Record<string, boolean>>({});
+    const [buttonsLeft, setButtonsLeft] = useState<Record<string, Set<string>>>({}); // Track buttons per row
     const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const toggleCategory = (category: string) => {
@@ -55,6 +57,56 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
         }));
     };
 
+    const handleAddToChecklist = async (
+        checklistId: string,
+        currentItem: ItemDetails,
+        categoryKey: string,
+        itemKey: string
+    ) => {
+        const uniqueKey = `${itemKey}-${checklistId}`;
+
+        // Set uploading state
+        setUploading((prev) => {
+            const updated = { ...prev, [uniqueKey]: true };
+            return updated;
+        });
+
+        try {
+            await onAddToChecklist(checklistId, currentItem);
+
+            // Remove button from buttonsLeft
+            setButtonsLeft((prev) => {
+                const updated = { ...prev };
+                updated[itemKey]?.delete(checklistId);
+
+                // If no buttons are left for this item, remove the row
+                if (updated[itemKey]?.size === 0) {
+                    delete updated[itemKey];
+                }
+                return updated;
+            });
+        } catch (error) {
+            toast.error(
+                "Failed to add item to inventory and checklist. Please try again soon."
+            );
+            console.error("Failed to add item to checklist:", error);
+        } finally {
+            // Toast success message
+            const checklistName =
+                tripChecklists.find((tc) => tc.checklist_id === checklistId)?.checklists[0].title ??
+                "Unknown Checklist";
+            toast.success(
+                `Successfully added ${currentItem.name} to inventory and ${checklistName} checklist!`
+            );
+            // Remove uploading state
+            setUploading((prev) => {
+                const updated = { ...prev };
+                delete updated[uniqueKey];
+                return updated;
+            });
+        }
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto bg-white shadow rounded-lg">
             {process.env.NODE_ENV === "development" ? (
@@ -76,7 +128,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                         const categoryState = itemsState[category] || {};
                         const isExpanded = expandedCategory === category;
 
-                        return (
+                        return buttonsLeft[category]?.size || !buttonsLeft[category] ? ( // Render row if buttons are left
                             <React.Fragment key={category}>
                                 {/* Category Row */}
                                 <tr>
@@ -105,20 +157,35 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                             ref={(el) => {
                                                 if (el) contentRefs.current[category] = el;
                                             }}
-                                            className={`overflow-hidden transition-all duration-300 ${isExpanded ? "min-h-[4rem] opacity-100" : "max-h-0 opacity-0"}`}
+                                            className={`overflow-hidden transition-all duration-300 ${isExpanded ? "min-h-[4rem] opacity-100" : "max-h-0 opacity-0"
+                                                }`}
                                         >
                                             {isExpanded && (
                                                 <ul className="p-4 bg-gray-50 space-y-2">
                                                     {itemList.map((item, index) => {
-                                                        // Ensure currentItem always has default values
                                                         const currentItem = categoryState[index] || {
                                                             name: item,
-                                                            quantity: 1, // Default quantity
-                                                            weight: 0,   // Default weight
-                                                            notes: "",   // Default notes
+                                                            quantity: 1,
+                                                            weight: 0,
+                                                            notes: "",
                                                         };
 
-                                                        return (
+                                                        const itemKey = `${category}-${index}`;
+                                                        if (!buttonsLeft[itemKey]) {
+                                                            // Initialize buttons for this item
+                                                            const checklistIds = new Set(
+                                                                tripChecklists.map((checklist) => checklist.checklist_id)
+                                                            );
+                                                            setButtonsLeft((prev) => ({ ...prev, [itemKey]: checklistIds }));
+
+                                                            // Initialize the uploading state for all buttons in this item
+                                                            checklistIds.forEach((checklistId) => {
+                                                                const uniqueKey = `${itemKey}-${checklistId}`;
+                                                                setUploading((prev) => ({ ...prev, [uniqueKey]: false }));
+                                                            });
+                                                        }
+
+                                                        return buttonsLeft[itemKey]?.size ? (
                                                             <li
                                                                 key={index}
                                                                 className="grid grid-cols-12 gap-4 items-center bg-white border rounded-md p-4"
@@ -140,7 +207,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                 <div className="col-span-2">
                                                                     <Input
                                                                         type="number"
-                                                                        value={currentItem.quantity || 0} // Ensure quantity is always a number
+                                                                        value={currentItem.quantity || 0}
                                                                         onChange={(e) =>
                                                                             handleFieldChange(
                                                                                 category,
@@ -159,7 +226,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                     <Input
                                                                         type="number"
                                                                         step="0.1"
-                                                                        value={currentItem.weight || 0} // Ensure weight is always a number
+                                                                        value={currentItem.weight || 0}
                                                                         onChange={(e) =>
                                                                             handleFieldChange(
                                                                                 category,
@@ -177,7 +244,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                 <div className="col-span-12 mt-2">
                                                                     <Input
                                                                         type="text"
-                                                                        value={currentItem.notes || ""} // Ensure notes is always a string
+                                                                        value={currentItem.notes || ""}
                                                                         onChange={(e) =>
                                                                             handleFieldChange(category, index, "notes", e.target.value)
                                                                         }
@@ -188,32 +255,49 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
 
                                                                 {/* Add to Checklist Buttons */}
                                                                 <div className="col-span-12 mt-4 flex flex-col gap-2">
-                                                                    {tripChecklists.map((checklist) => (
-                                                                        <button
-                                                                            key={checklist.checklist_id}
-                                                                            onClick={() =>
-                                                                                onAddToChecklist(checklist.checklist_id, {
-                                                                                    ...currentItem,
-                                                                                    item_categories: expandedCategory,
-                                                                                })
-                                                                            }
-                                                                            className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                                                        >
-                                                                            Add to {checklist.checklists[0]?.title || "Checklist"}
-                                                                        </button>
-                                                                    ))}
+                                                                    {tripChecklists.map((checklist) => {
+                                                                        const uniqueKey = `${itemKey}-${checklist.checklist_id}`;
+
+                                                                        // Check if the button should still be displayed
+                                                                        if (!buttonsLeft[itemKey]?.has(checklist.checklist_id)) {
+                                                                            return null;
+                                                                        }
+
+                                                                        return (
+                                                                            <button
+                                                                                key={checklist.checklist_id}
+                                                                                onClick={() =>
+                                                                                    handleAddToChecklist(
+                                                                                        checklist.checklist_id,
+                                                                                        {
+                                                                                            ...currentItem,
+                                                                                            item_categories: expandedCategory,
+                                                                                        },
+                                                                                        category,
+                                                                                        itemKey
+                                                                                    )
+                                                                                }
+                                                                                disabled={uploading[uniqueKey]}
+                                                                                className={`px-6 py-2 rounded-md ${uploading[uniqueKey]
+                                                                                    ? "bg-gray-500 text-white"
+                                                                                    : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400"
+                                                                                    }`}
+                                                                            >
+                                                                                {uploading[uniqueKey] ? "Uploading..." : `Add to ${checklist.checklists[0]?.title || "Checklist"}`}
+                                                                            </button>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </li>
-                                                        );
+                                                        ) : null;
                                                     })}
-
                                                 </ul>
                                             )}
                                         </div>
                                     </td>
                                 </tr>
                             </React.Fragment>
-                        );
+                        ) : null;
                     })}
                 </tbody>
             </table>

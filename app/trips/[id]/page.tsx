@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
 import EditTripModal, { UpdateTripPayload } from "@/components/editTripModal";
-import { ChecklistWithItems } from "@/types/projectTypes";
+import { ChecklistWithItems, ItemDetails, UpdatedAiRecommendedItem } from "@/types/projectTypes";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import FloatingActionButton from "@/components/floatingActionButton";
 import ExpandableCategoryTable from "@/components/expandableAiCategoryTable";
 import { kgToLbs } from "@/utils/convertWeight";
+import ensureKeys from "@/utils/ensureObjectKeys";
 
 const TripPage = () => {
     const router = useRouter();
@@ -219,39 +220,66 @@ const TripPage = () => {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const addAiItemToChecklist = async (checklistId: string, item: any) => {
-        const { weight_unit } = state.user_settings;
-        let weightInLbs: number;
-        if (weight_unit === "kg") {
-            const converted = kgToLbs(item.weight);
-            if (converted === null) {
-                throw new Error("Invalid weight input.");
+    const addAiItemToChecklist = async (checklistId: string, item: ItemDetails) => {
+        try {
+            console.log("ITEM", item)
+            const defaultKeys: Partial<ItemDetails> = {
+                name: "Un-named Item", 
+                quantity: 0,
+                weight: 0,
+                item_categories: undefined
             }
-            weightInLbs = converted;
-        } else {
-            weightInLbs = item.weight;
+            const formattedItem = ensureKeys(item, defaultKeys)
+            // Get user's weight unit preference
+            const { weight_unit } = state.user_settings;
+            let weightInLbs: number;
+
+            // Convert weight if needed
+            if (weight_unit === "kg") {
+                const converted = kgToLbs(formattedItem.weight);
+                if (converted === null) {
+                    throw new Error("Invalid weight input.");
+                }
+                weightInLbs = converted;
+            } else {
+                weightInLbs = formattedItem.weight;
+            }
+    
+            // Prepare the payload
+            const payload = { ...formattedItem, weight: weightInLbs };
+    
+            // Send API request
+            const response = await fetch(`/api/assistant/trip-recommendations/${checklistId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+    
+            // Handle errors
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                console.log("In here?", errorResponse)
+                console.error('Failed to add item to checklist', errorResponse);
+                throw new Error('Failed to add item to checklist');
+            }
+    
+            // Parse response data
+            const data: UpdatedAiRecommendedItem = await response.json();
+            console.log("data", data)
+            // Dispatch actions to update the state
+            dispatch({ type: "ADD_ITEM", payload: data.items[0] });
+            dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: data.checklists[checklistId].items });
+    
+            // Return the data
+            return data;
+        } catch (error) {
+            console.error('Error in addAiItemToChecklist:', error);
+            throw error;
         }
-
-        const payload = { ...item, weight: weightInLbs }
-        const response = await fetch(`/api/assistant/trip-recommendations/${checklistId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload), 
-        });
-
-        if (!response.ok) {
-            console.error('Failed to add item to checklist', await response.json());
-            return null;
-        }
-
-        const data = await response.json();
-        console.log('Item added successfully:', data);
-        // dispatch({ type: "NEW_TYPE_TO_ADD?", payload: data? })
-        return data;
     };
-
+    
     const handleDelete = async () => {
         if (!id) {
             setError("Error Deleting Trip, try again later")

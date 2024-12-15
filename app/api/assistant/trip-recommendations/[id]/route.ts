@@ -103,7 +103,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       notes: notes || null,
       category_id: categoryId, // Use resolved category ID or null
     });
-    console.log("ADDED AI NEW ITEM:", newItem)
 
     if (!newItem) {
       console.error('Error creating item.');
@@ -136,17 +135,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       };
     }
 
-    // Calculate updated app state structure
-    const checklistItems = await databaseService.fetchChecklistItems(checklistId);
-    const completion = calculateChecklistCompletion(checklistItems);
+    // Fetch all checklist items for the given checklist ID
+    const allChecklistItems = await databaseService.fetchChecklistItems(checklistId);
+    const completion = calculateChecklistCompletion(allChecklistItems);
 
-    const totalWeight = checklistItems.reduce((sum, item) => sum + item.items.weight * item.quantity, 0);
+    // Calculate total weight
+    const totalWeight = allChecklistItems.reduce((sum, item) => sum + item.items.weight * item.quantity, 0);
 
     // Construct the response to match app state
     const response = {
       checklists: {
         [checklistId]: {
-          items: checklistItems,
+          items: allChecklistItems.filter((item) => item.id === insertedChecklistItem.id), // Include only the newly added item
           completion,
         },
       },
