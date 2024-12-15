@@ -30,6 +30,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
     tripChecklists,
 }) => {
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [itemsState, setItemsState] = useState<Record<string, Record<string, any>>>({});
     const [uploading, setUploading] = useState<Record<string, boolean>>({});
     const [buttonsLeft, setButtonsLeft] = useState<Record<string, Set<string>>>({}); // Track buttons per row
