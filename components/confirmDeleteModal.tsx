@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader } from "./ui/loader";
 
 interface ConfirmDeleteModalProps {
     isOpen: boolean;
@@ -10,6 +11,7 @@ interface ConfirmDeleteModalProps {
     deleteButtonText?: string;
     cancelButtonText?: string;
     thingsToDelete?: { name: string }[];
+    loading?: boolean
 }
 
 const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
@@ -20,14 +22,17 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     description = "Are you sure you want to delete this? This action cannot be undone.",
     deleteButtonText = "Delete",
     cancelButtonText = "Cancel",
-    thingsToDelete
+    thingsToDelete,
+    loading
 }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
+                    <DialogDescription>{loading ? (
+                        <><Loader className="h-12 w-12 text-blue-500" />Loading...</>
+                    ) : description}</DialogDescription>
                     <DialogDescription>{thingsToDelete && thingsToDelete.map((t) => `${t.name}, `)}</DialogDescription>
                 </DialogHeader>
                 <div className="flex space-x-4 mt-4">

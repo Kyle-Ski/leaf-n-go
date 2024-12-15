@@ -290,6 +290,7 @@ const ItemsPage = () => {
                 thingsToDelete={selectedRows.map((id) => ({
                     name: items.find((item) => item.id === id)?.name || "Unknown Item",
                 }))}
+                loading={isUploading}
             />
 
             {/* Create New Item Modal */}

@@ -48,26 +48,26 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
 
     const showErrorToast = (error: string | null) => {
         if (error) {
-          toast.error(error, {
-            position: "top-right",
-            autoClose: 5000, // Adjust as needed
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "colored",
-          });
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
         }
-      };
-      
-      // Example usage in your component
-      useEffect(() => {
+    };
+
+    // Example usage in your component
+    useEffect(() => {
         if (error) {
-          showErrorToast(error);
-          setError(null); // Clear the error after displaying
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
         }
-      }, [error]);
+    }, [error]);
 
     // Determine if any items have been selected
     const hasSelectedItems = Object.keys(selectedItems).length > 0;
@@ -335,7 +335,11 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
         }
     };
 
-    if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
+    if (loading) return (
+        <div className="flex justify-center items-center min-h-screen">
+            <Loader className="h-12 w-12 text-blue-500" />
+        </div>
+    );
 
     return (
         <div className="p-4 max-w-4xl mx-auto">

@@ -151,8 +151,8 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             if (!response.ok) {
                 throw new Error("Failed to save item.");
             }
-
             const updatedItem: Item = await response.json();
+            toast.success(`Updated ${updatedItem.name} successfully!`);
             dispatch({
                 type: "UPDATE_ITEM",
                 payload: updatedItem,
@@ -177,7 +177,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             if (!response.ok) {
                 throw new Error("Failed to delete item.");
             }
-
+            toast.success("Deleted item successfully.")
             dispatch({
                 type: "SET_ITEMS",
                 payload: state.items.filter((i) => i.id !== itemId),
