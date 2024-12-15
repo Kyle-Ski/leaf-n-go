@@ -8,6 +8,7 @@ import { withAuth } from "@/lib/withAuth";
 import CreateTripModal from "@/components/createNewTripModal";
 import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
+import { toast } from "react-toastify";
 
 const TripsPage = () => {
   const { user } = useAuth();
@@ -16,6 +17,29 @@ const TripsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  const showErrorToast = (error: string | null) => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000, // Adjust as needed
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  };
+  
+  // Example usage in your component
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error);
+      setError(null); // Clear the error after displaying
+    }
+  }, [error]);
+  
   const fetchTrips = useCallback(async () => {
     try {
       const response = await fetch("/api/trips", {
@@ -74,17 +98,6 @@ const TripsPage = () => {
       setError("Failed to create trip. Please try again.");
     }
   };
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-red-500 text-center mb-4">{error}</p>
-        <Button onClick={() => fetchTrips()} className="bg-blue-500 text-white">
-          Retry
-        </Button>
-      </div>
-    );
-  }
 
   if (state.noTrips) {
     return (

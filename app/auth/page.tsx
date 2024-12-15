@@ -9,6 +9,7 @@ import { useAppContext } from "@/lib/appContext";
 import { UserSettings } from "@/types/projectTypes";
 import ConsentModal from "@/components/consentModal";
 import { useConsent } from "@/lib/consentContext";
+import { toast } from "react-toastify";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -16,15 +17,38 @@ export default function AuthPage() {
   const { setUser } = useAuth(); // Use setUser from AuthContext
   const { dispatch } = useAppContext(); // Use dispatch from AppContext
   const { consent } = useConsent();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false); // Default to Sign In
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(!consent.cookies.functional && !consent.aiDataUsage);
-  
+
+  const showErrorToast = (error: string | null) => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000, // Adjust as needed
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  };
+
+  // Example usage in your component
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error);
+      setError(null); // Clear the error after displaying
+    }
+  }, [error]);
+
   // Determine if consent modal should be shown
   useEffect(() => {
     // Show modal if user hasn't set functional, analytics, or aiDataUsage preferences
@@ -34,7 +58,7 @@ export default function AuthPage() {
       !consent.aiDataUsage;
     setIsConsentModalOpen(shouldShowConsent);
   }, [consent]);
-  
+
   // Check query parameters for mode
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -227,7 +251,7 @@ export default function AuthPage() {
   return (
     <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
       <h1 className="text-2xl font-semibold mb-6">
-        
+
         {isSignUp ? "Sign Up" : "Sign In"}
       </h1>
       {isSignUp && (
@@ -262,7 +286,6 @@ export default function AuthPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button type="submit" className="bg-blue-500 text-white">
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
@@ -284,7 +307,7 @@ export default function AuthPage() {
         </p>
       )}
       <ConsentModal isOpen={isConsentModalOpen} onClose={() => {
-          setIsConsentModalOpen(false)
+        setIsConsentModalOpen(false)
       }} />
     </div>
   );

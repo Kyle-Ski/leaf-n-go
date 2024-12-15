@@ -19,6 +19,7 @@ import ProgressBar from "./progressBar";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import ChecklistItemComponent from "@/components/checklistItem"
 import { formatWeight } from "@/utils/convertWeight";
+import { toast } from "react-toastify";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -44,6 +45,29 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const [checklistSearchQuery, setChecklistSearchQuery] = useState<string>("");
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
+
+    const showErrorToast = (error: string | null) => {
+        if (error) {
+            toast.error(error, {
+                position: "top-right",
+                autoClose: 5000, // Adjust as needed
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
+        }
+    };
+
+    // Example usage in your component
+    useEffect(() => {
+        if (error) {
+            showErrorToast(error);
+            setError(null); // Clear the error after displaying
+        }
+    }, [error]);
 
     // Determine if any items have been selected
     const hasSelectedItems = Object.keys(selectedItems).length > 0;
@@ -88,6 +112,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
 
         } catch (err) {
             console.error("Error adding items:", err);
+            setError("Error adding items, try again soon.")
         } finally {
             // Close the modal after adding
             setIsAddModalOpen(false);
@@ -138,7 +163,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             window.location.href = "/checklists";
         } catch (err) {
             console.error("Error deleting checklist:", err);
-            alert("Failed to delete checklist. Please try again.");
+            setError("Failed to delete checklist, try again soon.")
         }
     };
 
@@ -196,6 +221,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         dispatch({ type: "SET_ITEMS", payload: data });
                     } catch (err) {
                         console.error("Failed to fetch items:", err);
+                        setError("Failed to get items, try again soon.")
                     }
                 };
                 await fetchItems();
@@ -248,6 +274,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             );
         } catch (err) {
             console.error("Error removing item:", err);
+            setError("Error removing item, please try again soon.")
         } finally {
             setIsRemoveModalOpen(false);
         }
@@ -308,8 +335,11 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
         }
     };
 
-    if (loading) return <Loader className="h-12 w-12 text-blue-500" />;
-    if (error) return <p className="text-red-500">{error}</p>;
+    if (loading) return (
+        <div className="flex justify-center items-center min-h-screen">
+            <Loader className="h-12 w-12 text-blue-500" />
+        </div>
+    );
 
     return (
         <div className="p-4 max-w-4xl mx-auto">

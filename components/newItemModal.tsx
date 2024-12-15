@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { kgToLbs } from "@/utils/convertWeight";
+import { toast } from "react-toastify";
 
 
 const NewItemModal: React.FC = () => {
@@ -18,12 +19,33 @@ const NewItemModal: React.FC = () => {
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  const showErrorToast = (error: string | null) => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000, // Adjust as needed
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  };
+
+  // Example usage in your component
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error);
+      setError(null); // Clear the error after displaying
+    }
+  }, [error]);
 
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     try {
@@ -65,6 +87,7 @@ const NewItemModal: React.FC = () => {
       }
 
       const newItem: ItemDetails = await response.json();
+      toast.success(`Created ${newItem.name} successfully!`)
       dispatch({ type: "ADD_ITEM", payload: newItem });
       if (state.noItems) {
         dispatch({ type: "SET_NO_ITEMS_FOR_USER", payload: false })
@@ -77,7 +100,6 @@ const NewItemModal: React.FC = () => {
       setNotes("");
 
       // Set success message
-      setSuccess("Item created successfully!");
     } catch (err) {
       console.error("Error creating item:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
@@ -96,8 +118,6 @@ const NewItemModal: React.FC = () => {
         </div>
       ) : (
         <form onSubmit={handleCreateItem} className="space-y-4 w-full">
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && <p className="text-green-500 text-sm">{success}</p>}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Name
