@@ -263,6 +263,30 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Checks for an item with the given name
+   * @param name 
+   * @param userId 
+   * @returns 
+   */
+  async fetchItemByNameAndUser(name: string, userId: string) {
+    const { data, error, status } = await this.databaseClient
+      .from('items') // Replace 'items' with your actual table name if different
+      .select('*')
+      .eq('name', name)
+      .eq('user_id', userId)
+      .limit(1)
+      .single(); // Fetches only one record if it exists
+  
+    // Handle the case where no matching item is found (status 406 indicates no match with .single())
+    if (error && status !== 406) {
+      console.error('Error fetching item by name and user:', error.message);
+      throw new Error('Failed to fetch item.');
+    }
+  
+    return data || null; // Return the found item or null if no item exists
+  }
+  
   /* AUTH METHODS */
   /**
    * Signs in with email and password

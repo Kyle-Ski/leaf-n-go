@@ -30,10 +30,9 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
     tripChecklists,
 }) => {
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [itemsState, setItemsState] = useState<Record<string, Record<string, any>>>({});
     const [uploading, setUploading] = useState<Record<string, boolean>>({});
-    const [buttonsLeft, setButtonsLeft] = useState<Record<string, Set<string>>>({}); // Track buttons per row
+    const [successfulUploads, setSuccessfulUploads] = useState<Record<string, boolean>>({});
     const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const toggleCategory = (category: string) => {
@@ -75,17 +74,11 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
         try {
             await onAddToChecklist(checklistId, currentItem);
 
-            // Remove button from buttonsLeft
-            setButtonsLeft((prev) => {
-                const updated = { ...prev };
-                updated[itemKey]?.delete(checklistId);
-
-                // If no buttons are left for this item, remove the row
-                if (updated[itemKey]?.size === 0) {
-                    delete updated[itemKey];
-                }
-                return updated;
-            });
+            // Mark the button as successfully uploaded
+            setSuccessfulUploads((prev) => ({
+                ...prev,
+                [uniqueKey]: true,
+            }));
         } catch (error) {
             toast.error(
                 "Failed to add item to inventory and checklist. Please try again soon."
@@ -129,7 +122,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                         const categoryState = itemsState[category] || {};
                         const isExpanded = expandedCategory === category;
 
-                        return buttonsLeft[category]?.size || !buttonsLeft[category] ? ( // Render row if buttons are left
+                        return (
                             <React.Fragment key={category}>
                                 {/* Category Row */}
                                 <tr>
@@ -172,21 +165,8 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                         };
 
                                                         const itemKey = `${category}-${index}`;
-                                                        if (!buttonsLeft[itemKey]) {
-                                                            // Initialize buttons for this item
-                                                            const checklistIds = new Set(
-                                                                tripChecklists.map((checklist) => checklist.checklist_id)
-                                                            );
-                                                            setButtonsLeft((prev) => ({ ...prev, [itemKey]: checklistIds }));
 
-                                                            // Initialize the uploading state for all buttons in this item
-                                                            checklistIds.forEach((checklistId) => {
-                                                                const uniqueKey = `${itemKey}-${checklistId}`;
-                                                                setUploading((prev) => ({ ...prev, [uniqueKey]: false }));
-                                                            });
-                                                        }
-
-                                                        return buttonsLeft[itemKey]?.size ? (
+                                                        return (
                                                             <li
                                                                 key={index}
                                                                 className="grid grid-cols-12 gap-4 items-center bg-white border rounded-md p-4"
@@ -258,12 +238,6 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                 <div className="col-span-12 mt-4 flex flex-col gap-2">
                                                                     {tripChecklists.map((checklist) => {
                                                                         const uniqueKey = `${itemKey}-${checklist.checklist_id}`;
-
-                                                                        // Check if the button should still be displayed
-                                                                        if (!buttonsLeft[itemKey]?.has(checklist.checklist_id)) {
-                                                                            return null;
-                                                                        }
-
                                                                         return (
                                                                             <button
                                                                                 key={checklist.checklist_id}
@@ -278,19 +252,26 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                                         itemKey
                                                                                     )
                                                                                 }
-                                                                                disabled={uploading[uniqueKey]}
-                                                                                className={`px-6 py-2 rounded-md ${uploading[uniqueKey]
+                                                                                disabled={
+                                                                                    uploading[uniqueKey] ||
+                                                                                    successfulUploads[uniqueKey]
+                                                                                }
+                                                                                className={`px-6 py-2 rounded-md ${uploading[uniqueKey] || successfulUploads[uniqueKey]
                                                                                     ? "bg-gray-500 text-white"
                                                                                     : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400"
                                                                                     }`}
                                                                             >
-                                                                                {uploading[uniqueKey] ? "Uploading..." : `Add to ${checklist.checklists[0]?.title || "Checklist"}`}
+                                                                                {uploading[uniqueKey]
+                                                                                    ? "Uploading..."
+                                                                                    : successfulUploads[uniqueKey]
+                                                                                        ? "Added"
+                                                                                        : `Add to ${checklist.checklists[0]?.title || "Checklist"}`}
                                                                             </button>
                                                                         );
                                                                     })}
                                                                 </div>
                                                             </li>
-                                                        ) : null;
+                                                        );
                                                     })}
                                                 </ul>
                                             )}
@@ -298,7 +279,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                     </td>
                                 </tr>
                             </React.Fragment>
-                        ) : null;
+                        );
                     })}
                 </tbody>
             </table>

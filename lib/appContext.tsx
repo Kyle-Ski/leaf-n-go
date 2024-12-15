@@ -27,7 +27,17 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, items: action.payload };
 
         case "ADD_ITEM":
+            // Check if the item ID already exists in state
+            const itemExists = state.items.some(item => item.id === action.payload.id);
+
+            // If it exists, return the current state without changes
+            if (itemExists) {
+                return state;
+            }
+
+            // If it doesn't exist, add the new item to the state
             return { ...state, items: [...state.items, action.payload] };
+
         case 'ADD_BULK_ITEMS': {
             return {
                 ...state,
@@ -44,21 +54,55 @@ const appReducer = (state: AppState, action: Action): AppState => {
                         checklistItem => !action.payload.includes(checklistItem.item_id)
                     ),
                 })),
-                trips: state.trips.map(trip => ({
-                    ...trip,
-                    trip_checklists: trip.trip_checklists.map(tripChecklist => ({
-                        ...tripChecklist,
-                        checklists: tripChecklist.checklists.map(checklist => ({
-                            ...checklist,
-                            checklist_items: checklist.checklist_items.filter(
+                trips: state.trips.map(trip => {
+                    const updatedTripChecklists = trip.trip_checklists.map(tripChecklist => {
+                        const updatedChecklists = tripChecklist.checklists.map(checklist => {
+                            // Filter out deleted checklist items
+                            const filteredChecklistItems = checklist.checklist_items.filter(
                                 checklistItem => !action.payload.includes(checklistItem.id)
-                            ),
-                        })),
-                    })),
-                })),
-            };
+                            );
 
+                            // Recalculate completedItems and totalItems at the checklist level
+                            const completedItems = filteredChecklistItems.filter(item => item.completed).length;
+                            const totalItems = filteredChecklistItems.length;
+
+                            return {
+                                ...checklist,
+                                checklist_items: filteredChecklistItems,
+                                completedItems,
+                                totalItems,
+                            };
+                        });
+
+                        // Recalculate totalItems at the trip checklist level
+                        const tripTotalItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.totalItems,
+                            0
+                        );
+
+                        // Recalculate completedItems at the trip checklist level
+                        const tripCompletedItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.completedItems,
+                            0
+                        );
+
+                        return {
+                            ...tripChecklist,
+                            checklists: updatedChecklists,
+                            totalItems: tripTotalItems,
+                            completedItems: tripCompletedItems,
+                        };
+                    });
+
+                    return {
+                        ...trip,
+                        trip_checklists: updatedTripChecklists,
+                    };
+                }),
+            };
             return updatedState;
+
+
         case "UPDATE_ITEM": {
             // Update the items array in the global state
             const updatedItems = state.items.map((item) =>

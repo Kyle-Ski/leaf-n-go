@@ -94,25 +94,30 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       categoryId = category.id;
     }
 
-    // Add the item to the `items` table
-    const newItem = await databaseService.createItem({
-      user_id: userId,
-      name,
-      quantity,
-      weight,
-      notes: notes || null,
-      category_id: categoryId, // Use resolved category ID or null
-    });
+    // Check if the item already exists for the user
+    let existingItem = await databaseService.fetchItemByNameAndUser(name, userId);
 
-    if (!newItem) {
-      console.error('Error creating item.');
-      return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
+    // If the item doesn't exist, create a new one
+    if (!existingItem) {
+      existingItem = await databaseService.createItem({
+        user_id: userId,
+        name,
+        quantity,
+        weight,
+        notes: notes || null,
+        category_id: categoryId, // Use resolved category ID or null
+      });
+
+      if (!existingItem) {
+        console.error('Error creating item.');
+        return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
+      }
     }
 
     // Add the item to the `checklist_items` table
     const checklistItem = {
       checklist_id: checklistId,
-      item_id: newItem.id,
+      item_id: existingItem.id,
       quantity,
       completed: false, // Default value for new items
     };
@@ -150,7 +155,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
           completion,
         },
       },
-      items: [newItem],
+      items: [existingItem],
       trips: {
         trip_checklists: {
           checklist_id: checklistId,
