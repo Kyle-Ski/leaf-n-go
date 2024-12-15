@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const supabaseService = serviceContainer.resolve<DatabaseService>('supabaseService');
 
     // Use the service to fetch items
-    const items = await supabaseService.fetchItemsByUser(userId);
+    const items = await supabaseService.fetchItems({ user_id: userId });
 
     if (!items || items.length === 0) {
       console.log('No items found for user ID:', userId, 'Referrer:', referrer);

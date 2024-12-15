@@ -95,11 +95,11 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     }
 
     // Check if the item already exists for the user
-    let existingItem = await databaseService.fetchItemByNameAndUser(name, userId);
+    let existingItem = await databaseService.fetchItems({ name, user_id: userId });
 
     // If the item doesn't exist, create a new one
-    if (!existingItem) {
-      existingItem = await databaseService.createItem({
+    if (!existingItem || existingItem.length === 0) {
+      let newItem = await databaseService.createItem({
         user_id: userId,
         name,
         quantity,
@@ -107,17 +107,16 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         notes: notes || null,
         category_id: categoryId, // Use resolved category ID or null
       });
-
-      if (!existingItem) {
+      if (!newItem) {
         console.error('Error creating item.');
         return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
       }
+      existingItem = [newItem]
     }
-
     // Add the item to the `checklist_items` table
     const checklistItem = {
       checklist_id: checklistId,
-      item_id: existingItem.id,
+      item_id: existingItem[0].id,
       quantity,
       completed: false, // Default value for new items
     };
@@ -141,7 +140,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     }
 
     // Fetch all checklist items for the given checklist ID
-    const allChecklistItems = await databaseService.fetchChecklistItems(checklistId);
+    const allChecklistItems = await databaseService.fetchChecklistItems({ checklist_id: checklistId });
     const completion = calculateChecklistCompletion(allChecklistItems);
 
     // Calculate total weight
@@ -155,7 +154,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
           completion,
         },
       },
-      items: [existingItem],
+      items: existingItem,
       trips: {
         trip_checklists: {
           checklist_id: checklistId,

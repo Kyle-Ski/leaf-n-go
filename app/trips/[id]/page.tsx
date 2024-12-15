@@ -362,18 +362,18 @@ const TripPage = () => {
                     Delete Trip
                 </Button>
                 <Button
-                    disabled={!trip?.ai_recommendation}
-                    onClick={() => setIsAiSuggestionOpen(true)}
-                    className="bg-purple-600 text-white px-4 py-2"
-                >
-                    <BotIcon /> Add Suggestions to Inventory
-                </Button>
-                <Button
                     onClick={getAssistantHelp}
                     disabled={loading}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
                     <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations?.recommendations) ? "Get New Recommendations" : "Get Recommendations")}
+                </Button>
+                <Button
+                    disabled={!trip?.ai_recommendation}
+                    onClick={() => setIsAiSuggestionOpen(true)}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> Add Suggestions to Inventory
                 </Button>
             </FloatingActionButton>
 

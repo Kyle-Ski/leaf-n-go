@@ -1,4 +1,4 @@
-import { ItemDetails, UserSettings } from '@/types/projectTypes';
+import { Checklist, ChecklistFilters, ChecklistItemFilters, ChecklistItemInsert, ItemDetails, TripFilters, UserSettings } from '@/types/projectTypes';
 import { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 export class DatabaseService {
@@ -25,23 +25,19 @@ export class DatabaseService {
   }
 
   /* ITEM METHODS */
-  /**
-   * Get all items for a user and their associated category names and ids
-   * @param userId current user's id
-   * @returns array of items and their nested item_categories
-   */
-  async fetchItemsByUser(userId: string): Promise<ItemDetails[]> {
-    const { data: items, error } = await this.databaseClient
-      .from('items')
-      .select('*, item_categories(name)')
-      .eq('user_id', userId);
 
-    if (error) {
-      console.error('Error fetching items:', error);
-      throw new Error('Failed to fetch items');
+  async fetchItems(filters: Partial<{ user_id: string; id: string; name: string; category_id: string }>): Promise<ItemDetails[]> {
+    let query = this.databaseClient.from('items').select('*, item_categories(name)');
+    for (const [key, value] of Object.entries(filters)) {
+      if (Array.isArray(value)) {
+        query = query.in(key as keyof typeof filters, value);
+      } else {
+        query = query.eq(key as keyof typeof filters, value);
+      }
     }
-
-    return items || [];
+    const { data, error } = await query;
+    if (error) throw new Error('Failed to fetch items');
+    return data || [];
   }
 
   /**
@@ -87,25 +83,6 @@ export class DatabaseService {
     }
 
     return data;
-  }
-
-  /**
-   * 
-   * @param itemId item's id
-   * @returns item with item_categories
-   */
-  async fetchItemWithCategoryById(itemId: string) {
-    const { data: item, error } = await this.databaseClient
-      .from('items')
-      .select('*, item_categories(name)')
-      .eq('id', itemId)
-      .single();
-
-    if (error || !item) {
-      throw new Error('Item not found.');
-    }
-
-    return item;
   }
 
   /**
@@ -263,30 +240,6 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Checks for an item with the given name
-   * @param name 
-   * @param userId 
-   * @returns 
-   */
-  async fetchItemByNameAndUser(name: string, userId: string) {
-    const { data, error, status } = await this.databaseClient
-      .from('items') // Replace 'items' with your actual table name if different
-      .select('*')
-      .eq('name', name)
-      .eq('user_id', userId)
-      .limit(1)
-      .single(); // Fetches only one record if it exists
-  
-    // Handle the case where no matching item is found (status 406 indicates no match with .single())
-    if (error && status !== 406) {
-      console.error('Error fetching item by name and user:', error.message);
-      throw new Error('Failed to fetch item.');
-    }
-  
-    return data || null; // Return the found item or null if no item exists
-  }
-  
   /* AUTH METHODS */
   /**
    * Signs in with email and password
@@ -332,22 +285,37 @@ export class DatabaseService {
   }
 
   /* CHECKLIST METHODS */
-  /**
-   * Get all checklists for user
-   * @param userId 
-   * @returns 
-   */
-  async fetchChecklistsByUser(userId: string) {
-    const { data, error } = await this.databaseClient
-      .from('checklists')
-      .select('*')
-      .eq('user_id', userId);
 
-    if (error) {
-      console.error("Error fetching checklists:", error);
-      throw new Error(error.message || "Failed to fetch checklists.");
+  async fetchChecklists(filters: ChecklistFilters): Promise<Checklist[]> {
+    let query = this.databaseClient.from('checklists').select('*');
+    for (const [key, value] of Object.entries(filters)) {
+      query = query.eq(key as keyof ChecklistFilters, value);
     }
+    const { data, error } = await query;
+    if (error) throw new Error('Failed to fetch checklists');
+    return data || [];
+  }
 
+  async fetchChecklistItems(filters: ChecklistItemFilters | ChecklistItemFilters[]): Promise<
+    {
+      checklist_id: string;
+      item_id: string;
+      completed: boolean;
+      quantity: number;
+      items: ItemDetails;
+      id: string
+    }[]
+  > {
+    let query = this.databaseClient.from('checklist_items').select('*, items(*)');
+    for (const [key, value] of Object.entries(filters)) {
+      if (Array.isArray(value)) {
+        query = query.in(key as keyof ChecklistItemFilters, value);
+      } else {
+        query = query.eq(key as keyof ChecklistItemFilters, value);
+      }
+    }
+    const { data, error } = await query;
+    if (error) throw new Error('Failed to fetch checklist items');
     return data || [];
   }
 
@@ -445,39 +413,14 @@ export class DatabaseService {
    * @param checklistItems 
    * @returns 
    */
-  async insertChecklistItems(checklistItems: { checklist_id: string; item_id: string; completed: boolean }[]) {
-    const { error, data } = await this.databaseClient
-      .from("checklist_items")
-      .insert(checklistItems)
-      .select("*");
-
-    if (error) {
-      console.error("Error inserting checklist items:", error);
-      throw new Error(error.message || "Failed to insert checklist items.");
-    }
-    return data
-  }
-
-  /**
-   * Get single checklist from a user
-   * @param checklistId 
-   * @param userId 
-   * @returns 
-   */
-  async getChecklistByIdAndUserId(checklistId: string, userId: string) {
+  async insertChecklistItems(checklistItems: ChecklistItemInsert | ChecklistItemInsert[]): Promise<ChecklistItemInsert[]> {
     const { data, error } = await this.databaseClient
-      .from("checklists")
-      .select("id")
-      .eq("id", checklistId)
-      .eq("user_id", userId)
-      .single();
+      .from('checklist_items')
+      .insert(Array.isArray(checklistItems) ? checklistItems : [checklistItems])
+      .select('*');
 
-    if (error) {
-      console.error("Error fetching checklist:", error);
-      return null;
-    }
-
-    return data;
+    if (error) throw new Error('Failed to insert checklist items');
+    return data || [];
   }
 
   /**
@@ -496,20 +439,6 @@ export class DatabaseService {
       console.error("Error removing item from checklist:", error);
       throw new Error("Failed to remove item from checklist");
     }
-  }
-
-  async fetchChecklistItems(checklistId: string) {
-    const { data, error } = await this.databaseClient
-      .from('checklist_items')
-      .select('*, items(*)') // Include item details
-      .eq('checklist_id', checklistId);
-
-    if (error || !data) {
-      console.error('Error fetching checklist items:', error);
-      return [];
-    }
-
-    return data;
   }
 
   async insertChecklistItemAndReturn(checklistItem: {

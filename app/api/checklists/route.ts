@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Fetch checklists for the user
-    const checklists = await databaseService.fetchChecklistsByUser(userId);
+    const checklists = await databaseService.fetchChecklists({ user_id: userId });
 
     if (!checklists || checklists.length === 0) {
       console.log("No checklists found for user.");
