@@ -17,6 +17,7 @@ import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { ItemDetails, Item } from "@/types/projectTypes";
 import { formatWeight, kgToLbs, lbsToKg } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
+import { PencilIcon, TrashIcon } from "lucide-react";
 
 interface DetailedItemViewProps {
     itemId: string;
@@ -230,10 +231,10 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             {/* Action Buttons */}
             <div className="flex space-x-4">
                 <Button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white">
-                    Edit Item
+                   <PencilIcon /> Edit Item
                 </Button>
                 <Button onClick={() => setIsDeleteModalOpen(true)} className="bg-red-500 text-white">
-                    Delete Item
+                   <TrashIcon /> Delete Item
                 </Button>
             </div>
 

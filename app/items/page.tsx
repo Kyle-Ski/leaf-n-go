@@ -14,6 +14,7 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import FloatingActionButton from "@/components/floatingActionButton";
+import { EyeIcon, FolderUp, PlusIcon, TrashIcon } from "lucide-react";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -240,14 +241,13 @@ const ItemsPage = () => {
                                     {/* Right Column */}
                                     <div className="flex flex-col text-right space-y-1">
                                         <Button
-                                            className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                                            variant="outline"
+                                            className="bg-blue-500 text-white"
                                             onClick={() => {
                                                 setSelectedItemId(item.id);
                                                 setIsItemModalOpen(true);
                                             }}
                                         >
-                                            View
+                                           <EyeIcon /> View
                                         </Button>
                                         <p className="text-sm">Quantity: {item.quantity}</p>
                                         <p className="text-sm">
@@ -264,23 +264,23 @@ const ItemsPage = () => {
 
             <FloatingActionButton>
                 <Button
-                    onClick={() => setIsCreateItemModalOpen(true)}
-                    className="bg-green-500 text-white mb-2"
-                >
-                    Create New Item
-                </Button>
-                <Link href="/items/bulk" passHref>
-                    <Button className="bg-blue-500 text-white w-full mb-2">
-                        Bulk Upload Items
-                    </Button>
-                </Link>
-                <Button
                     disabled={isUploading || selectedRows.length === 0}
                     className="bg-red-500 text-white rounded"
                     onClick={handleRemoveSelectedRows}
                 >
-                    Delete ✔ Item(s)
+                    <TrashIcon /> Delete ✔ Item(s)
                 </Button>
+                <Button
+                    onClick={() => setIsCreateItemModalOpen(true)}
+                    className="bg-green-500 text-white mb-2"
+                >
+                    <PlusIcon /> Create New Item
+                </Button>
+                <Link href="/items/bulk" passHref>
+                    <Button className="bg-blue-500 text-white w-full mb-2">
+                        <FolderUp /> Bulk Upload Items
+                    </Button>
+                </Link>
             </FloatingActionButton>
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}

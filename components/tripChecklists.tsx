@@ -2,6 +2,7 @@ import { AppState, FrontendTrip } from "@/types/projectTypes";
 import Link from "next/link";
 import ProgressBar from "./progressBar";
 import { Button } from "./ui/button";
+import { EyeIcon } from "lucide-react";
 
 interface TripChecklistsProps {
     state: AppState;
@@ -44,14 +45,13 @@ const TripChecklists = ({ state, trip, setSelectedChecklistId, setIsChecklistDia
                                 </div>
                                 {/* Replace Link with a button that opens the dialog */}
                                 <Button
-                                    className="text-blue-500 border border-blue-500 rounded-lg px-4 py-2 text-sm hover:bg-blue-100 transition"
-                                    variant="outline"
+                                    className="bg-blue-500 text-white"
                                     onClick={() => {
                                         setSelectedChecklistId(checklist.checklist_id);
                                         setIsChecklistDialogOpen(true);
                                     }}
                                 >
-                                    View
+                                    <EyeIcon /> View
                                 </Button>
                             </li>
                         )

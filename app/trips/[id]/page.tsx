@@ -20,7 +20,7 @@ import FloatingActionButton from "@/components/floatingActionButton";
 import ExpandableCategoryTable from "@/components/expandableAiCategoryTable";
 import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
-import { BotIcon } from "lucide-react";
+import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 
 const TripPage = () => {
     const router = useRouter();
@@ -350,16 +350,16 @@ const TripPage = () => {
 
             <FloatingActionButton>
                 <Button
-                    onClick={() => setIsUpdateOpen(true)}
-                    className="bg-blue-500 text-white px-4 py-2"
-                >
-                    Edit Trip
-                </Button>
-                <Button
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="bg-red-500 text-white shadow-md px-4 py-2"
                 >
-                    Delete Trip
+                   <TrashIcon /> Delete Trip
+                </Button>
+                <Button
+                    onClick={() => setIsUpdateOpen(true)}
+                    className="bg-blue-500 text-white px-4 py-2"
+                >
+                   <PencilIcon /> Edit Trip
                 </Button>
                 <Button
                     onClick={getAssistantHelp}

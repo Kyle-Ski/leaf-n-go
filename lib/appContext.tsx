@@ -453,6 +453,81 @@ const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, checklists: updatedChecklists, trips: updatedTrips };
         }
 
+        case "REMOVE_ITEMS_FROM_CHECKLIST": {
+            const { checklistId, itemIds } = action.payload;
+
+            // Update the checklists
+            const updatedChecklists = state.checklists.map((checklist) => {
+                if (checklist.id === checklistId) {
+                    // Filter out the removed items
+                    const updatedItems = checklist.items.filter(
+                        (item) => !itemIds.includes(item.id)
+                    );
+
+                    // Recalculate completed and total counts
+                    const completedItems = updatedItems.filter((item) => item.completed).length;
+                    const totalItems = updatedItems.length;
+
+                    // Recalculate weights
+                    const totalWeight = updatedItems.reduce(
+                        (sum, item) => sum + (item.items?.weight || 0),
+                        0
+                    );
+                    const currentWeight = updatedItems
+                        .filter((item) => item.completed)
+                        .reduce((sum, item) => sum + (item.items?.weight || 0), 0);
+
+                    return {
+                        ...checklist,
+                        items: updatedItems,
+                        completion: {
+                            completed: completedItems,
+                            total: totalItems,
+                            totalWeight,
+                            currentWeight,
+                        },
+                    };
+                }
+                return checklist;
+            });
+
+            // Update the trips related to this checklist
+            const updatedTrips = state.trips.map((trip) => {
+                const updatedTripChecklists = trip.trip_checklists.map((tripChecklist) => {
+                    if (tripChecklist.checklist_id === checklistId) {
+                        const matchingChecklist = updatedChecklists.find(
+                            (cl) => cl.id === checklistId
+                        );
+
+                        return {
+                            ...tripChecklist,
+                            completedItems: matchingChecklist?.completion?.completed ?? 0,
+                            totalItems: matchingChecklist?.completion?.total ?? 0,
+                            currentWeight: matchingChecklist?.completion?.currentWeight ?? 0,
+                        };
+                    }
+                    return tripChecklist;
+                });
+
+                return {
+                    ...trip,
+                    trip_checklists: updatedTripChecklists,
+                };
+            });
+
+            // Remove the items globally from the `items` array if applicable
+            const updatedItems = state.items.filter(
+                (item) => !itemIds.includes(item.id)
+            );
+
+            return {
+                ...state,
+                checklists: updatedChecklists,
+                trips: updatedTrips,
+                items: updatedItems,
+            };
+        }
+
         case "SET_NO_CHECKLISTS_FOR_USER":
             return { ...state, noChecklists: action.payload };
 

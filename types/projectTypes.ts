@@ -358,6 +358,7 @@ export type Action =
   | { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
   | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem[] }
   | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: { checklistId: (string | string[]), itemId: string } }
+  | { type: 'REMOVE_ITEMS_FROM_CHECKLIST'; payload: { checklistId: string, itemIds: string[] } }
   | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
   | { type: 'ADD_BULK_ITEMS'; payload: (Item | ItemDetails)[] }

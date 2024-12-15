@@ -9,7 +9,7 @@ import CreateTripModal from "@/components/createNewTripModal";
 import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { toast } from "react-toastify";
-import { PlusIcon } from "lucide-react";
+import { EyeIcon, PlusIcon } from "lucide-react";
 
 const TripsPage = () => {
   const { user } = useAuth();
@@ -139,11 +139,10 @@ const TripsPage = () => {
               - {trip.end_date ? `Ends: ${trip.end_date}` : "No end date"}
             </p>
             <Button
-              variant="outline"
-              className="mt-4"
+              className="bg-blue-500 text-white mt-4"
               onClick={() => router.push(`/trips/${trip.id}`)}
             >
-              View Trip
+             <EyeIcon /> View Trip
             </Button>
           </div>
         ))}

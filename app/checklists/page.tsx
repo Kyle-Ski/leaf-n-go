@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, PlusIcon } from "lucide-react";
+import { ChevronDown, EyeIcon, PlusIcon } from "lucide-react";
 import { useAppContext } from "@/lib/appContext";
 import { withAuth } from "@/lib/withAuth";
 import { Loader } from "@/components/ui/loader";
@@ -175,7 +175,7 @@ const ChecklistsPage = () => {
 
                       <Link href={`/checklists/${list.id}`}>
                         <Button variant="outline" className="mt-2">
-                          View Checklist
+                          <EyeIcon /> View Checklist
                         </Button>
                       </Link>
                     </CardContent>
@@ -203,8 +203,8 @@ const ChecklistsPage = () => {
                       <ProgressBar label="Weight" percentage={(list.completion.currentWeight / list.completion.totalWeight) * 100} color="blue" description={`${formatWeight((list.completion.currentWeight.toFixed(1)), state.user_settings.weight_unit)}/${formatWeight(list.completion.totalWeight.toFixed(1), state.user_settings.weight_unit)} ${state.user_settings.weight_unit}`} />
 
                       <Link href={`/checklists/${list.id}`}>
-                        <Button variant="outline" className="mt-2">
-                          View Checklist
+                        <Button variant="outline" className="bg-blue-500 text-white mt-2 hover:bg-gray-600 hover:text-white">
+                         <EyeIcon /> View Checklist
                         </Button>
                       </Link>
                     </CardContent>
