@@ -237,7 +237,7 @@ const TripPage = () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(payload), // The item object sent in the request
+            body: JSON.stringify(payload), 
         });
 
         if (!response.ok) {
@@ -247,7 +247,7 @@ const TripPage = () => {
 
         const data = await response.json();
         console.log('Item added successfully:', data);
-
+        // dispatch({ type: "NEW_TYPE_TO_ADD?", payload: data? })
         return data;
     };
 
@@ -365,7 +365,7 @@ const TripPage = () => {
                     <DialogHeader>
                         <DialogTitle>Add Suggestions To Checklist and Inventory</DialogTitle>
                         <DialogDescription>
-                            You can choose to add the AI's recommendations to your inventory and trip checklist.
+                            You can choose to add the AI&apos;s recommendations to your inventory and trip checklist.
                         </DialogDescription>
                     </DialogHeader>
                     <ExpandableCategoryTable

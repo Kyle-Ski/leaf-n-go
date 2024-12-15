@@ -9,18 +9,18 @@ interface ExpandableCategoryTableProps {
     tripChecklists: {
         checklist_id: string;
         checklists: {
-            title: string;
-            checklist_items: {
-                id: string;
-                completed: boolean;
-                item_id: string;
-            }[];
+          title: string;
+          checklist_items: {
+            id: string;
+            completed: boolean;
+            item_id: string;
+          }[];
         }[];
         totalItems: number;
         completedItems: number;
         totalWeight: number;
         currentWeight: number;
-    }[]; // Array of checklists attached to the trip
+      }[]; // Array of checklists attached to the trip
 }
 
 const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
@@ -29,6 +29,7 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
     tripChecklists,
 }) => {
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [itemsState, setItemsState] = useState<Record<string, Record<string, any>>>({});
     const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -190,12 +191,11 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                                                                     {tripChecklists.map((checklist) => (
                                                                         <button
                                                                             key={checklist.checklist_id}
-                                                                            onClick={() =>{
-                                                                                console.log("checklist.checklist_id")
+                                                                            onClick={() =>
                                                                                 onAddToChecklist(checklist.checklist_id, {
                                                                                     ...currentItem,
                                                                                     item_categories: expandedCategory,
-                                                                                })}
+                                                                                })
                                                                             }
                                                                             className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                                                         >
