@@ -108,7 +108,7 @@ const ItemsPage = () => {
         .filter((item) => {
             const query = searchQuery.toLowerCase();
 
-            const nameMatch = item.name.toLowerCase().includes(query);
+            const nameMatch = item.name?.toLowerCase().includes(query);
             const notesMatch = item.notes?.toLowerCase().includes(query) ?? false;
             const categoryMatch = item.item_categories?.name?.toLowerCase().includes(query) ?? false;
 

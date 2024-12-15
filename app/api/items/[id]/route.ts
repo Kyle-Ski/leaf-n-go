@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const item = await databaseService.fetchItemWithCategoryById(itemId);
+    const item = await databaseService.fetchItems({ id: itemId });
     return NextResponse.json(item, { status: 200 });
   } catch (error) {
     if (error instanceof Error) {

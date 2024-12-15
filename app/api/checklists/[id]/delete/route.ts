@@ -30,7 +30,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 
   try {
     // Verify the checklist belongs to the user
-    const checklist = await databaseService.getChecklistByIdAndUserId(checklistId, userId);
+    const checklist = await databaseService.fetchChecklists({ id: checklistId, user_id: userId });
 
     if (!checklist) {
       return NextResponse.json({ error: "Checklist not found or unauthorized" }, { status: 404 });

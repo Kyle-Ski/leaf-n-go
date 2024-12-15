@@ -310,6 +310,29 @@ export interface ChecklistWithCompletion {
   };
 }
 
+export interface TripFilters {
+  id?: string;
+  user_id?: string;
+}
+
+export interface ChecklistItemInsert {
+  checklist_id: string;
+  item_id: string;
+  quantity?: number;
+  completed: boolean;
+  id?: string;
+}
+
+export interface ChecklistFilters {
+  user_id?: string;
+  id?: string;
+}
+
+export interface ChecklistItemFilters {
+  checklist_id?: string;
+  id?: string;
+}
+
 export interface AppState {
   trips: FrontendTrip[];
   checklists: ChecklistWithItems[];
@@ -334,14 +357,14 @@ export type Action =
   | { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
   | { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
   | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem[] }
-  | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: {checklistId: (string | string[]), itemId: string} }
+  | { type: 'REMOVE_ITEM_FROM_CHECKLIST'; payload: { checklistId: (string | string[]), itemId: string } }
   | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
   | { type: 'ADD_BULK_ITEMS'; payload: (Item | ItemDetails)[] }
-  | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails)}
+  | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails) }
   | { type: 'DELETE_BULK_ITEMS'; payload: string[] }
   | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
-  | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems)}
+  | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems) }
   | { type: "SET_USER_SETTINGS"; payload: Partial<AppState["user_settings"]> }
   | { type: "UPDATE_USER_SETTING"; payload: { key: keyof AppState["user_settings"]; value: any } }
   | { type: 'SET_IS_NEW'; payload: boolean }
