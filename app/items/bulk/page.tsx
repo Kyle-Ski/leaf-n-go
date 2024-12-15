@@ -7,7 +7,7 @@ import { ItemCategory, AppState, ItemDetails } from "@/types/projectTypes";
 import { kgToLbs } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 import BulkItemCsvUpload from "@/components/bulkItemCsvUpload";
-import { CheckIcon } from "lucide-react";
+
 interface BulkUploadRow {
     name: string;
     quantity: number;
