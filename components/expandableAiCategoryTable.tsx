@@ -5,7 +5,7 @@ import { ItemDetails, UpdatedAiRecommendedItem } from "@/types/projectTypes";
 import { toast } from "react-toastify";
 
 interface ExpandableCategoryTableProps {
-    data: Record<string, string>; // Categories with items
+    data: Record<string, string[]>; // Categories with items
     onAddToChecklist: (checklistId: string, item: ItemDetails) => Promise<UpdatedAiRecommendedItem>; // Updated to return a Promise
     tripChecklists: {
         checklist_id: string;
@@ -117,9 +117,13 @@ const ExpandableCategoryTable: React.FC<ExpandableCategoryTableProps> = ({
                 <tbody>
                     {Object.entries(data).map(([category, items]) => {
                         const itemList = items
-                            .split("\n")
-                            .filter((item) => item.trim())
-                            .map((item) => item.replace(/^- /, "").trim()); // Normalize items
+                            .flatMap((item) =>
+                                item
+                                    .split("\n") // Split each string into lines
+                                    .filter((line) => line.trim()) // Remove empty lines
+                                    .map((line) => line.replace(/^- /, "").trim()) // Normalize each line
+                            );
+
                         const categoryState = itemsState[category] || {};
                         const isExpanded = expandedCategory === category;
 

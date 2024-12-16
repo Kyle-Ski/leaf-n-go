@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
             Populate each category with relevant items. Do not include items the user already has unless absolutely necessary.
             Here is a list of their items they are already bringing: ${existingItemsList}. 
         `;
-        console.log("SYSTEM PROMPT:", systemPrompt)
         // Create the message with Claude
         const msg = await anthropic.messages.create({
             model: "claude-3-5-haiku-20241022",

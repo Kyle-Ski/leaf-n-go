@@ -73,9 +73,10 @@ export interface FrontendTrip {
   end_date: string | null;
   location: string | null;
   notes: string | null;
-  ai_recommendation: Record<string, string>;
+  ai_recommendation: Record<string, string[]>;
   created_at: string;
   updated_at: string;
+  trip_category?: TripCategory | null;
   trip_checklists: {
     checklist_id: string;
     checklists: {
@@ -97,6 +98,15 @@ export interface FrontendTrip {
   }[];
 }
 
+export interface TripCategory {
+  id: string;
+  name: string;
+  description?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Trip {
   id: string;
   title: string;
@@ -106,6 +116,7 @@ export interface Trip {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  trip_category?: TripCategory | null;
   trip_checklists: Array<{
     checklist_id: string;
     title: string;
@@ -289,6 +300,8 @@ export interface CreateTripPayload {
   location: string | null;
   notes: string | null;
   checklists?: string[];
+  trip_category: string;
+  new_trip_category?: string;
 }
 
 export interface UpdatedAiRecommendedItem {
@@ -343,6 +356,7 @@ export interface AppState {
   noTrips: boolean;
   noChecklists: boolean;
   noItems: boolean;
+  trip_categories: TripCategory[];
   item_categories: ItemCategory[];
   user_settings: UserSettings
 }
@@ -352,6 +366,10 @@ export type Action =
   | { type: 'ADD_TRIP'; payload: FrontendTrip }
   | { type: 'UPDATE_TRIP'; payload: FrontendTrip }
   | { type: 'REMOVE_TRIP'; payload: (string | string[]) }
+  | { type: 'SET_TRIP_CATEGORIES'; payload: TripCategory[] }
+  | { type: 'UPDATE_TRIP_CATEGORY'; payload: { tripId: string, tripCategoryId: string } }
+  | { type: 'ADD_TRIP_CATEGORY'; payload: TripCategory }
+  | { type: 'REMOVE_TRIP_CATEGORY'; payload: string }
   | { type: 'SET_NO_TRIPS_FOR_USER'; payload: boolean }
   | { type: 'SET_CHECKLISTS'; payload: ChecklistWithItems[] }
   | { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }

@@ -25,6 +25,8 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
   const [newTripLocation, setNewTripLocation] = useState("");
   const [newTripNotes, setNewTripNotes] = useState("");
   const [selectedChecklists, setSelectedChecklists] = useState<string[]>([]);
+  const [categoryOption, setCategoryOption] = useState(state.trip_categories && state.trip_categories.length > 0 ? state.trip_categories[0].id: "CREATE_NEW");
+  const [newCategory, setNewCategory] = useState("");
 
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
@@ -44,7 +46,9 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
       end_date: newTripEndDate ? newTripEndDate.toISOString() : null,
       location: newTripLocation || null,
       notes: newTripNotes || null,
-      checklists: selectedChecklists
+      checklists: selectedChecklists,
+      trip_category: categoryOption,
+      new_trip_category: newCategory === "" ? undefined : newCategory
     });
 
     setModalError(null);
@@ -59,6 +63,8 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
     setNewTripLocation("");
     setNewTripNotes("");
     setSelectedChecklists([])
+    setCategoryOption(state.trip_categories && state.trip_categories.length > 0 ? state.trip_categories[0].id: "CREATE_NEW");
+    setNewCategory("");
   };
 
   return (
@@ -81,6 +87,39 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
               onChange={(e) => setNewTripTitle(e.target.value)}
               className="w-full"
             />
+            <label htmlFor="trip-categories" className="block text-sm font-medium text-gray-700">
+              Trip Category
+            </label>
+            <select
+              value={categoryOption}
+              onChange={(e) => setCategoryOption(e.target.value)}
+              id="trip-categories"
+              className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {state.trip_categories && state.trip_categories.length ? state.trip_categories.map((category) => {
+                return (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                )
+              }) :
+                <></>
+              }
+              <option value="CREATE_NEW">
+                Create New Category
+              </option>
+            </select>
+            {categoryOption === "CREATE_NEW" ? (<><label htmlFor="create-new-trip-category" className="block text-sm font-medium text-gray-700">
+              Create New Trip Category
+            </label>
+              <Input
+                id="create-new-trip-category"
+                type="text"
+                placeholder="New Trip Type"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="w-full"
+              /></>) : null}
             <label htmlFor="trip-start" className="block text-sm font-medium text-gray-700">
               Start Date
             </label>

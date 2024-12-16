@@ -58,6 +58,14 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
   }
 }
 
+/**
+ * Adds an item that was recommended by the AI to our inventory, 
+ * if it already is in there (same name) we will only add it to the checklist
+ * that the user specified.
+ * @param req 
+ * @param props 
+ * @returns 
+ */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;

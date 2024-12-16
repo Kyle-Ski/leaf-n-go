@@ -10,6 +10,7 @@ const initialState: AppState = {
     noChecklists: false,
     noItems: false,
     item_categories: [],
+    trip_categories: [],
     user_settings: {
         user_id: "",
         dark_mode: false,
@@ -249,6 +250,54 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "SET_NO_ITEMS_FOR_USER":
             return { ...state, noItems: action.payload };
+
+        case "SET_TRIP_CATEGORIES": {
+            return {
+                ...state,
+                trip_categories: action.payload,
+            };
+        }
+
+        case "ADD_TRIP_CATEGORY": {
+            return {
+                ...state,
+                trip_categories: [...state.trip_categories, action.payload],
+            };
+        }
+
+        case "UPDATE_TRIP_CATEGORY": {
+            const { tripId, tripCategoryId } = action.payload;
+
+            return {
+                ...state,
+                trips: state.trips.map((trip) =>
+                    trip.id === tripId
+                        ? {
+                            ...trip,
+                            trip_category: state.trip_categories.find(
+                                (category) => category.id === tripCategoryId
+                            ), // Update the `trip_category` relationship
+                        }
+                        : trip
+                ),
+            };
+        }
+
+        case "REMOVE_TRIP_CATEGORY": {
+            const categoryIdToRemove = action.payload;
+      
+            return {
+              ...state,
+              trip_categories: state.trip_categories.filter(
+                (category) => category.id !== categoryIdToRemove
+              ),
+              trips: state.trips.map((trip) =>
+                trip.trip_category?.id === categoryIdToRemove
+                  ? { ...trip, trip_category: null } // Remove the association if it matches
+                  : trip
+              ),
+            };
+          }
 
         case "SET_TRIPS":
             return { ...state, trips: action.payload };
@@ -664,6 +713,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 dispatch({ type: "SET_TRIPS", payload: parsedState.trips });
                 dispatch({ type: "SET_CHECKLISTS", payload: checklistsWithCompletion });
                 dispatch({ type: "SET_CATEGORIES", payload: parsedState.item_categories });
+                dispatch({ type: "SET_TRIP_CATEGORIES", payload: parsedState.trip_categories })
                 dispatch({ type: "SET_USER_SETTINGS", payload: parsedState.user_settings });
                 // Add other state restoration as needed
             } catch (error) {

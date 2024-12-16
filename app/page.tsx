@@ -102,7 +102,7 @@ const PlanningHub = () => {
       setError(null); // Clear the error after displaying
     }
   }, [error]);
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -112,7 +112,7 @@ const PlanningHub = () => {
   }
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
-      
+
       {/* Current Trip Overview */}
       {upcomingTrip && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">

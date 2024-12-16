@@ -9,6 +9,9 @@ const TripDetails = ({ trip }: TripDetailsProps) => {
         <section className="w-full bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Trip Details</h2>
             <p>
+                <strong>Trip Type:</strong> {trip?.trip_category?.name || "N/A"}
+            </p>
+            <p>
                 <strong>Start Date:</strong> {trip.start_date || "N/A"}
             </p>
             <p>

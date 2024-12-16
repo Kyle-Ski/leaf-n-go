@@ -52,7 +52,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     // Cast the trip to the new type
-    const frontendTrip = trip as FrontendTrip;
+    const frontendTrip = trip;
 
     return NextResponse.json(frontendTrip, { status: 200 });
   } catch (err) {
@@ -123,7 +123,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
   const userId = user.id
 
-  const { title, start_date, end_date, location, notes, trip_checklists } = await req.json();
+  let { title, start_date, end_date, location, notes, trip_checklists, trip_category, new_category } = await req.json();
 
   if (!tripId || !userId) {
     return NextResponse.json({ error: "Trip ID and User ID are required" }, { status: 400 });
@@ -141,9 +141,22 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     // if (ownerError || ownerCheck?.role !== "owner") {
     //   return NextResponse.json({ error: "You do not have permission to update this trip" }, { status: 403 });
     // }
+    let newTripType
+    if (new_category) {
+      const { data, error } = await databaseService.postTripCategory(userId, new_category, '')
+
+      if (error) {
+        throw new Error("Error creating new trip category.")
+      }
+
+      newTripType = data && data[0]
+    }
+    if (newTripType) {
+      trip_category = newTripType.id
+    }
 
     // Update the trip details
-    await databaseService.updateTripDetails(tripId, title, start_date, end_date, location, notes)
+    await databaseService.updateTripDetails(tripId, title, start_date, end_date, location, notes, trip_category)
 
     // Update trip checklists
     if (trip_checklists) {

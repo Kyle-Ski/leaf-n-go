@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FrontendTrip } from "@/types/projectTypes";
 import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
 import serviceContainer from "@/di/containers/serviceContainer";
 import { DatabaseService } from "@/di/services/databaseService";
@@ -54,7 +53,7 @@ export async function GET(req: NextRequest) {
         : {};
 
       // Cast the trip to the new type if needed (optional for TypeScript)
-      return { ...trip, ai_recommendation: parsedAiRecommendation } as FrontendTrip;
+      return { ...trip, ai_recommendation: parsedAiRecommendation };
     });
 
     return NextResponse.json(formattedTrips, { status: 200 });
@@ -79,13 +78,22 @@ export async function POST(req: NextRequest) {
 
   const userId = user.id
 
-  const { title, start_date, end_date, location, notes, checklists = [], participants = [] } = await req.json();
+  let { title, start_date, end_date, location, notes, checklists = [], participants = [], new_trip_category, trip_category } = await req.json();
 
   if (!userId || !title) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   try {
+    if (new_trip_category) {
+      const { data, error } = await databaseService.postTripCategory(userId, new_trip_category, "")
+
+      if (error) {
+        throw new Error("Error creating new trip type.")
+      }
+
+      trip_category = data && data[0].id
+    }
     // Create the trip
     const newTrip = await databaseService.createTrip({
       title,
@@ -94,6 +102,7 @@ export async function POST(req: NextRequest) {
       location,
       notes,
       user_id: userId,
+      trip_type_id: trip_category
     });
 
     // Add checklists to the trip

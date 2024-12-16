@@ -11,7 +11,7 @@ import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
 import TripRecommendations from "@/components/tripRecommendations";
-import parseRecommendations, { parseRecommendations2 } from "@/utils/parseTripRecommendations";
+import { parseRecommendations2 } from "@/utils/parseTripRecommendations";
 import getExistingItems from "@/utils/getItemNamesInTrip";
 import TripDetails from "@/components/tripDetails";
 import TripChecklists from "@/components/tripChecklists";
@@ -23,16 +23,6 @@ import ensureKeys from "@/utils/ensureObjectKeys";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useConsent } from "@/lib/consentContext";
 
-export interface Recommendations {
-    [category: string]: string[];
-}
-
-export interface RecommendationState {
-    location: string;
-    isWeatherMismatch: boolean;
-    recommendations: Recommendations;
-}
-
 const TripPage = () => {
     const router = useRouter();
     const { id } = useParams();
@@ -43,11 +33,7 @@ const TripPage = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
     const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
-    const [recommendations, setRecommendations] = useState<RecommendationState>({
-        location: "", // Default to an empty string
-        isWeatherMismatch: false, // Default to false
-        recommendations: {}, // Default to an empty object
-    });
+    const [recommendations, setRecommendations] = useState({});
     const [isAiSuggestionOpen, setIsAiSuggestionOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -81,11 +67,7 @@ const TripPage = () => {
         setLoading(true);
         setError(null);
 
-        setRecommendations({
-            location: "",
-            isWeatherMismatch: false,
-            recommendations: {},
-        });
+        setRecommendations({});
 
         if (!trip) {
             setLoading(false);
@@ -107,8 +89,8 @@ const TripPage = () => {
                     startDate: trip.start_date,
                     endDate: trip.end_date,
                     existingItems,
-                    tripType: "Road Trip",
-                    categories: ["Flight Tips","Checked Bag Items","Snacks","Clothing & Layers","Navigation & Safety","Cords and Technology","Entertainment & Personal Items","Weather Forecast Insights","Specific Location Considerations","Additional Recommendations", "Pro Tips"]
+                    tripType: trip.trip_category,
+                    categories: ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"]
                 }),
             });
 
@@ -130,34 +112,22 @@ const TripPage = () => {
                 if (streamedText.includes("unusual") || streamedText.includes("might be a system error")) {
                     isWeatherMismatch = true;
                 }
-                const categories2 = parseRecommendations2(streamedText, ["Flight Tips","Checked Bag Items","Snacks","Clothing & Layers","Navigation & Safety","Cords and Technology","Entertainment & Personal Items","Weather Forecast Insights","Specific Location Considerations","Additional Recommendations", "Pro Tips"])
-                console.log("-->", categories2)
+                const categories2 = parseRecommendations2(streamedText, ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"])
                 // Extract categories dynamically
-                const categories = parseRecommendations(streamedText);
 
-                setRecommendations((prev) => ({
-                    location: trip.location || "",
-                    isWeatherMismatch,
-                    recommendations: { ...prev.recommendations, ...categories2 },
-                }));
+                setRecommendations((prev) => ({ ...prev, categories2 }))
             }
             // Final pass for the last chunk of data after the loop
-            const finalCategories = parseRecommendations(streamedText);
-            const finalCategories2 = parseRecommendations2(streamedText, ["Flight Tips","Checked Bag Items","Snacks","Clothing & Layers","Navigation & Safety","Cords and Technology","Entertainment & Personal Items","Weather Forecast Insights","Specific Location Considerations","Additional Recommendations", "Pro Tips"])
-            setRecommendations((prev) => ({
-                location: trip.location || "",
-                isWeatherMismatch,
-                recommendations: { ...prev.recommendations, ...finalCategories2 },
-            }));
-
-            dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: finalCategories } })
+            const finalCategories2 = parseRecommendations2(streamedText, ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"])
+            setRecommendations((prev) => ({ ...prev, ...finalCategories2}))
+            dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: finalCategories2 } })
 
             await fetch(`/api/assistant/trip-recommendations/${trip.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ ai_recommendation: finalCategories }),
+                body: JSON.stringify({ ai_recommendation: finalCategories2 }),
             });
 
         } catch (err) {
@@ -170,7 +140,7 @@ const TripPage = () => {
 
     useEffect(() => {
         if (!trip) {
-            setError("Trip not found.");
+            router.push("/trips")
             return;
         }
 
@@ -302,9 +272,9 @@ const TripPage = () => {
             if (!response.ok) {
                 throw new Error("Failed to delete trip.");
             }
-
-            dispatch({ type: "REMOVE_TRIP", payload: id });
             router.push("/trips");
+            toast.success("Successfully deleted the trip.")
+            dispatch({ type: "REMOVE_TRIP", payload: id });
         } catch (err) {
             console.error(err);
             setError("Failed to delete trip. Please try again.");
@@ -319,18 +289,12 @@ const TripPage = () => {
         );
     }
 
-    const hasValidRecommendations = (recs?: RecommendationState) =>
+    const hasValidRecommendations = (recs: Record<string, string[]> | null) =>
         recs && Object.keys(recs).length > 0;
 
     const displayedRecommendations = hasValidRecommendations(recommendations)
         ? recommendations // Use live-streamed recommendations if available and valid
         : trip.ai_recommendation // Otherwise, use the saved recommendation
-            ? {
-                location, // Since saved recommendations don't include location
-                isWeatherMismatch: false,
-                recommendations: trip.ai_recommendation,
-            }
-            : null;
 
     return (
         <div className="max-w-4xl mx-auto p-2 space-y-8">
@@ -376,10 +340,10 @@ const TripPage = () => {
                     disabled={loading}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
-                    <BotIcon /> {loading ? "Loading Recommendations..." :  "Get Recommendations"}
+                    <BotIcon /> {loading ? "Loading Recommendations..." :(hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
                 </Button> : <></>}
                 {hasConsent('aiDataUsage') ? <Button
-                    disabled={!trip?.ai_recommendation}
+                    disabled={hasValidRecommendations(displayedRecommendations) ? false : true}
                     onClick={() => setIsAiSuggestionOpen(true)}
                     className="bg-purple-600 text-white px-4 py-2"
                 >

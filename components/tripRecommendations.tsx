@@ -1,14 +1,10 @@
 import { Button } from "./ui/button";
 
 export interface TripRecommendationsProps {
-    recommendations: {
-        location: string;
-        isWeatherMismatch: boolean;
-        recommendations: Record<string, string>;
-    } | null;
+    recommendations: Record<string, string[]> | null;
     loading: boolean;
     error: string | null;
-    aiRecommendationFromState?: Record<string, string>;
+    aiRecommendationFromState?: Record<string, string[]>;
     location: string;
 }
 
@@ -21,18 +17,12 @@ const TripRecommendations = ({
 }: TripRecommendationsProps) => {
 
     // Determine which recommendations to display
-    const hasValidRecommendations = (recs?: Record<string, string>) =>
+    const hasValidRecommendations = (recs: Record<string, string[]> | null) =>
         recs && Object.keys(recs).length > 0;
-    
-    const displayedRecommendations = hasValidRecommendations(recommendations?.recommendations)
+
+    const displayedRecommendations = hasValidRecommendations(recommendations)
         ? recommendations // Use live-streamed recommendations if available and valid
         : aiRecommendationFromState // Otherwise, use the saved recommendation
-            ? {
-                location, // Since saved recommendations don't include location
-                isWeatherMismatch: false,
-                recommendations: aiRecommendationFromState,
-            }
-            : null;    
 
     return (
         <section className="w-full bg-white shadow-md rounded-lg p-6">
@@ -49,23 +39,29 @@ const TripRecommendations = ({
             {displayedRecommendations && (
                 <div className="recommendations">
                     <h2 className="text-xl font-bold mb-4">
-                        {hasValidRecommendations(displayedRecommendations.recommendations) && `On your trip to ${displayedRecommendations.location}, we suggest:`}
+                        {hasValidRecommendations(displayedRecommendations) && `On your trip to ${location}, we suggest:`}
                     </h2>
 
-                    {displayedRecommendations.isWeatherMismatch && (
+                    {/* {displayedRecommendations.isWeatherMismatch && (
                         <p className="text-red-500">
                             Note: Weather data might be inaccurate for this location, or we
                             couldn&apos;t find any data.
                         </p>
-                    )}
+                    )} */}
 
                     <div className="packing-list">
-                        {Object.entries(displayedRecommendations.recommendations).map(([category, items]) => (
-                            <div key={category} className="mb-4">
-                                <h3 className="font-semibold text-lg">{category}</h3>
-                                <p className="text-gray-700 whitespace-pre-line">{items}</p>
-                            </div>
-                        ))}
+                        {Object.entries(displayedRecommendations).map(([category, items]) => {
+                            return (
+                                <div key={category} className="mb-4">
+                                    <h3 className="font-semibold text-lg">{category}</h3>
+                                    <ul className="text-gray-700 list-disc pl-5 space-y-1">
+                                        {items.map((item: string, index: number) => (
+                                            <li key={index}>{item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}

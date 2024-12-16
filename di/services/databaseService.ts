@@ -717,6 +717,11 @@ export class DatabaseService {
             ai_recommendation,
             created_at,
             updated_at,
+            trip_category:trip_types (
+              id,
+              name,
+              description
+            ),
             trip_checklists (
                 checklist_id,
                 checklists (
@@ -747,7 +752,7 @@ export class DatabaseService {
    * @param data 
    * @returns 
    */
-  async createTrip(data: { title: string; start_date: string; end_date: string; location: string; notes: string; user_id: string }) {
+  async createTrip(data: { title: string; start_date: string; end_date: string; location: string; notes: string; user_id: string, trip_type_id?: string }) {
     const { data: newTrip, error } = await this.databaseClient
       .from("trips")
       .insert([data])
@@ -805,6 +810,11 @@ export class DatabaseService {
             notes,
             created_at,
             updated_at,
+            trip_category:trip_types (
+              id,
+              name,
+              description
+            ),
             trip_checklists (
                 checklist_id,
                 checklists (
@@ -853,10 +863,10 @@ export class DatabaseService {
    * @param location 
    * @param notes 
    */
-  async updateTripDetails(tripId: string, title: string, start_date: string, end_date: string, location: string, notes: string) {
+  async updateTripDetails(tripId: string, title: string, start_date: string, end_date: string, location: string, notes: string, trip_category_id: string) {
     const { error } = await this.databaseClient
       .from("trips")
-      .update({ title, start_date, end_date, location, notes })
+      .update({ title, start_date, end_date, location, notes, trip_type_id: trip_category_id })
       .eq("id", tripId)
       .select()
       .single();
@@ -925,6 +935,53 @@ export class DatabaseService {
     }
 
     return { data }
+  }
+
+  /**
+   * Get a user's trip categories
+   * @param userId 
+   * @returns 
+   */
+  async getTripCategoriesForUser(userId: string) {
+    const { data, error } = await this.databaseClient
+      .from('trip_types')
+      .select('*')
+      .eq('user_id', userId);
+
+    return { data, error };
+  }
+
+  /**
+   * Adds a new trip category for a user.
+   * @param userId 
+   * @param name 
+   * @param description 
+   * @returns 
+   */
+  async postTripCategory(userId: string, name: string, description: string) {
+    const { data, error } = await this.databaseClient
+      .from('trip_types')
+      .insert({ name, description, user_id: userId })
+      .select();
+
+    return { data, error };
+  }
+
+  /**
+   * Deletes a user's trip category
+   * @param userId 
+   * @param tripCategoryId 
+   * @returns 
+   */
+  async deleteTripCategory(userId: string, tripCategoryId: string) {
+    const { data, error } = await this.databaseClient
+      .from('trip_types')
+      .delete()
+      .eq('id', tripCategoryId)
+      .eq('user_id', userId)
+      .select();
+
+    return { data, error }
   }
 
   /* USER SETTINGS METHODS */
