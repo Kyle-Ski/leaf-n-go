@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader } from "@/components/ui/loader";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import { Item } from "@/types/projectTypes";
@@ -18,8 +17,9 @@ interface DetailedItemViewProps {
     onClose?: () => void;
 }
 
-const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
+const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, onClose }) => {
     const router = useRouter();
+    const pathname = usePathname();
     const { state, dispatch } = useAppContext();
     const item = state.items.find((i) => i.id === itemId);
     const [loading, setLoading] = useState(!item);
@@ -133,6 +133,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
     const handleDelete = async () => {
         setError(null);
         try {
+            setLoading(true)
             const response = await fetch(`/api/items/${itemId}`, {
                 method: "DELETE",
                 headers: {
@@ -143,14 +144,22 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
             if (!response.ok) {
                 throw new Error("Failed to delete item.");
             }
+            setLoading(false)
             toast.success("Deleted item successfully.");
             dispatch({
-                type: "SET_ITEMS",
-                payload: state.items.filter((i) => i.id !== itemId),
+                type: "DELETE_ITEM",
+                payload: itemId,
             }); // Update global state
 
             setIsDeleted(true);
-            router.push("/items");
+            if (pathname.startsWith("/items")) {
+                router.push("/items");
+            } else if (pathname.startsWith("/checklists")) {
+                onClose && onClose();
+                router.push(pathname); // Stay on the current checklist page
+            } else {
+                console.error("Unknown route: No navigation logic for this path.");
+            }
         } catch (err) {
             console.error(err);
             setError("Failed to delete item. Please try again.");
@@ -268,14 +277,15 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                     </>
                 ) : (
                     <>
-                        <Button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white">
+                        <Button disabled={loading} onClick={() => setIsEditing(true)} className="bg-blue-500 text-white">
                             <PencilIcon /> Edit Item
                         </Button>
                         <Button
+                            disabled={loading}
                             onClick={() => setIsDeleteModalOpen(true)}
                             className="bg-red-500 text-white"
                         >
-                            <TrashIcon /> Delete Item
+                            {loading ? "Deleting Item... ": <><TrashIcon /> Delete Item</>}
                         </Button>
                     </>
                 )}
@@ -286,7 +296,7 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId }) => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onDelete={handleDelete}
-                title="Confirm Delete Item"
+                title={loading ? "Deleting Item... " : "Confirm Delete Item"}
                 description="Are you sure you want to delete this item? This action cannot be undone."
             />
         </div>

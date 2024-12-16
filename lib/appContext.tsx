@@ -44,6 +44,87 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 items: [...state.items, ...action.payload],
             };
         }
+        case "DELETE_ITEM": {
+            const itemIdToDelete = action.payload; // The ID of the item to delete
+
+            const updatedState = {
+                ...state,
+                // Remove the item from the global items array
+                items: state.items.filter(item => item.id !== itemIdToDelete),
+
+                // Update checklists by removing the item and recalculating completed/total items
+                checklists: state.checklists.map(checklist => {
+                    const filteredChecklistItems = checklist.items.filter(
+                        checklistItem => checklistItem.item_id !== itemIdToDelete
+                    );
+
+                    // Recalculate completed and total items
+                    const completedItems = filteredChecklistItems.filter(item => item.completed).length;
+                    const totalItems = filteredChecklistItems.length;
+
+                    return {
+                        ...checklist,
+                        items: filteredChecklistItems,
+                        completion: {
+                            completed: completedItems,
+                            total: totalItems,
+                            totalWeight: checklist.completion?.totalWeight ?? 0, // Keep total weight if available
+                            currentWeight: filteredChecklistItems.reduce(
+                                (sum, item) => (item.completed ? sum + (item.items?.weight || 0) : sum),
+                                0
+                            ), // Recalculate weight
+                        },
+                    };
+                }),
+
+                // Update trips by removing the item from trip_checklists and recalculating their totals
+                trips: state.trips.map(trip => {
+                    const updatedTripChecklists = trip.trip_checklists.map(tripChecklist => {
+                        const updatedChecklists = tripChecklist.checklists.map(checklist => {
+                            const filteredChecklistItems = checklist.checklist_items.filter(
+                                checklistItem => checklistItem.item_id !== itemIdToDelete
+                            );
+
+                            // Recalculate completed and total items at the checklist level
+                            const completedItems = filteredChecklistItems.filter(item => item.completed).length;
+                            const totalItems = filteredChecklistItems.length;
+
+                            return {
+                                ...checklist,
+                                checklist_items: filteredChecklistItems,
+                                completedItems,
+                                totalItems,
+                            };
+                        });
+
+                        // Recalculate total items and completed items at the trip level
+                        const tripTotalItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.totalItems,
+                            0
+                        );
+                        const tripCompletedItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.completedItems,
+                            0
+                        );
+
+                        return {
+                            ...tripChecklist,
+                            checklists: updatedChecklists,
+                            totalItems: tripTotalItems,
+                            completedItems: tripCompletedItems,
+                        };
+                    });
+
+                    return {
+                        ...trip,
+                        trip_checklists: updatedTripChecklists,
+                    };
+                }),
+            };
+
+            return updatedState;
+        }
+
         case "DELETE_BULK_ITEMS":
             const updatedState = {
                 ...state,

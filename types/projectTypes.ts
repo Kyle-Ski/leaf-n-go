@@ -363,6 +363,7 @@ export type Action =
   | { type: 'REMOVE_ITEMS_FROM_CHECKLIST'; payload: { checklistId: string, itemIds: string[] } }
   | { type: 'SET_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'ADD_ITEM'; payload: (Item | ItemDetails) }
+  | { type: 'DELETE_ITEM'; payload: string }
   | { type: 'ADD_BULK_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails) }
   | { type: 'DELETE_BULK_ITEMS'; payload: string[] }
