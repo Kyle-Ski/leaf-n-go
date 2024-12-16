@@ -27,7 +27,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, onClose }) 
 
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isDeleted, setIsDeleted] = useState(false);
 
     // Local state for editing
     const [editItem, setEditItem] = useState({
@@ -151,7 +150,6 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, onClose }) 
                 payload: itemId,
             }); // Update global state
 
-            setIsDeleted(true);
             if (pathname.startsWith("/items")) {
                 router.push("/items");
             } else if (pathname.startsWith("/checklists")) {
