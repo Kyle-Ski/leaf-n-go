@@ -28,4 +28,47 @@ const parseRecommendations = (streamedText: string): Record<string, string> => (
     "Additional Recommendations": streamedText.match(/Additional Recommendations:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
 });
 
+/**
+ * Parses the streamed text to extract recommendations based on provided categories.
+ *
+ * @param streamedText - The accumulated streamed text from the API response.
+ * @param categories - An array of category names to extract recommendations for.
+ * @returns A record mapping each category to an array of recommended items.
+ */
+export const parseRecommendations2 = (
+    streamedText: string,
+    categories: string[]
+): Record<string, string[]> => {
+    const recommendations: Record<string, string[]> = {};
+
+    categories.forEach((category) => {
+        // Escape special regex characters in category names
+        const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Regex to match the category and capture the array items
+        const regex = new RegExp(`"${escapedCategory}":\\s*\\[(.*?)\\]`, 's');
+
+        const match = streamedText.match(regex);
+
+        if (match && match[1]) {
+            const itemsText = match[1];
+
+            // Match all string items within the array
+            const itemMatches = itemsText.match(/"([^"]+)"/g);
+
+            const items = itemMatches
+                ? itemMatches.map((item) => item.replace(/"/g, ''))
+                : [];
+
+            recommendations[category] = items;
+        } else {
+            // If the category is not found, assign an empty array
+            recommendations[category] = [];
+        }
+    });
+
+    return recommendations;
+};
+
+
 export default parseRecommendations
