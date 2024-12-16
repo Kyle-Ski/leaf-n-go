@@ -153,7 +153,9 @@ const DetailedItemView: React.FC<DetailedItemViewProps> = ({ itemId, onClose }) 
             if (pathname.startsWith("/items")) {
                 router.push("/items");
             } else if (pathname.startsWith("/checklists")) {
-                onClose && onClose();
+                if (onClose) {
+                    onClose()
+                }
                 router.push(pathname); // Stay on the current checklist page
             } else {
                 console.error("Unknown route: No navigation logic for this path.");
