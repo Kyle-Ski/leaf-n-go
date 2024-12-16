@@ -53,7 +53,7 @@ const ChecklistItemComponent = ({ item, onToggle, onRemove, onViewItem }: Checkl
                 )}
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row sm:space-x-4 gap-2">
                 {/* View Button */}
                 <Button
                     className="bg-blue-500 text-white"

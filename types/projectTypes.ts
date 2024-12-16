@@ -16,6 +16,7 @@ export interface ItemDetails {
   user_id: string;
   quantity: number;
   item_categories?: ItemCategory;
+  category_id: string | null | "";
 }
 
 export interface Item {
@@ -28,6 +29,7 @@ export interface Item {
   weight: number;
   notes?: string;
   item_categories?: ItemCategory;
+  category_id: string | null | "";
 }
 
 export interface Checklist {
