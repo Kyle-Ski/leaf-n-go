@@ -21,11 +21,13 @@ import ExpandableCategoryTable from "@/components/expandableAiCategoryTable";
 import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { useConsent } from "@/lib/consentContext";
 
 const TripPage = () => {
     const router = useRouter();
     const { id } = useParams();
     const { state, dispatch } = useAppContext();
+    const { hasConsent } = useConsent();
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -340,41 +342,41 @@ const TripPage = () => {
             />
 
             {/* AI Assistant */}
-            <TripRecommendations
+            {hasConsent('aiDataUsage') ? <TripRecommendations
                 recommendations={recommendations}
                 loading={loading}
                 error={error}
                 aiRecommendationFromState={trip.ai_recommendation}
                 location={trip.location || "Unknown"}
-            />
+            /> : <></>}
 
             <FloatingActionButton>
                 <Button
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="bg-red-500 text-white shadow-md px-4 py-2"
                 >
-                   <TrashIcon /> Delete Trip
+                    <TrashIcon /> Delete Trip
                 </Button>
                 <Button
                     onClick={() => setIsUpdateOpen(true)}
                     className="bg-blue-500 text-white px-4 py-2"
                 >
-                   <PencilIcon /> Edit Trip
+                    <PencilIcon /> Edit Trip
                 </Button>
-                <Button
+                {hasConsent('aiDataUsage') ? <Button
                     onClick={getAssistantHelp}
                     disabled={loading}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
                     <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations?.recommendations) ? "Get New Recommendations" : "Get Recommendations")}
-                </Button>
-                <Button
+                </Button> : <></>}
+                {hasConsent('aiDataUsage') ? <Button
                     disabled={!trip?.ai_recommendation}
                     onClick={() => setIsAiSuggestionOpen(true)}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
                     <BotIcon /> Add Suggestions to Inventory
-                </Button>
+                </Button> : <></>}
             </FloatingActionButton>
 
             {/* Edit Trip Modal */}
