@@ -17,7 +17,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ children })
       {/* FAB Button */}
       <button
         onClick={toggleMenu}
-        className="p-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="p-4 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
         aria-label="Toggle Menu"
       >
         <span className="sr-only">Toggle Menu</span>
@@ -31,7 +31,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ children })
       {/* Popover Menu */}
       {isOpen && (
         <div
-          className="absolute bottom-20 right-0 bg-white shadow-lg rounded-lg p-4 flex flex-col space-y-3 min-w-[12rem] max-w-sm"
+          className="bg-gray-300 absolute bottom-20 right-0 shadow-lg rounded-lg p-4 flex flex-col space-y-3 min-w-[12rem] max-w-sm"
         >
           {children}
         </div>

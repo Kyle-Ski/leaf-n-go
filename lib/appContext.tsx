@@ -44,6 +44,87 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 items: [...state.items, ...action.payload],
             };
         }
+        case "DELETE_ITEM": {
+            const itemIdToDelete = action.payload; // The ID of the item to delete
+
+            const updatedState = {
+                ...state,
+                // Remove the item from the global items array
+                items: state.items.filter(item => item.id !== itemIdToDelete),
+
+                // Update checklists by removing the item and recalculating completed/total items
+                checklists: state.checklists.map(checklist => {
+                    const filteredChecklistItems = checklist.items.filter(
+                        checklistItem => checklistItem.item_id !== itemIdToDelete
+                    );
+
+                    // Recalculate completed and total items
+                    const completedItems = filteredChecklistItems.filter(item => item.completed).length;
+                    const totalItems = filteredChecklistItems.length;
+
+                    return {
+                        ...checklist,
+                        items: filteredChecklistItems,
+                        completion: {
+                            completed: completedItems,
+                            total: totalItems,
+                            totalWeight: checklist.completion?.totalWeight ?? 0, // Keep total weight if available
+                            currentWeight: filteredChecklistItems.reduce(
+                                (sum, item) => (item.completed ? sum + (item.items?.weight || 0) : sum),
+                                0
+                            ), // Recalculate weight
+                        },
+                    };
+                }),
+
+                // Update trips by removing the item from trip_checklists and recalculating their totals
+                trips: state.trips.map(trip => {
+                    const updatedTripChecklists = trip.trip_checklists.map(tripChecklist => {
+                        const updatedChecklists = tripChecklist.checklists.map(checklist => {
+                            const filteredChecklistItems = checklist.checklist_items.filter(
+                                checklistItem => checklistItem.item_id !== itemIdToDelete
+                            );
+
+                            // Recalculate completed and total items at the checklist level
+                            const completedItems = filteredChecklistItems.filter(item => item.completed).length;
+                            const totalItems = filteredChecklistItems.length;
+
+                            return {
+                                ...checklist,
+                                checklist_items: filteredChecklistItems,
+                                completedItems,
+                                totalItems,
+                            };
+                        });
+
+                        // Recalculate total items and completed items at the trip level
+                        const tripTotalItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.totalItems,
+                            0
+                        );
+                        const tripCompletedItems = updatedChecklists.reduce(
+                            (sum, checklist) => sum + checklist.completedItems,
+                            0
+                        );
+
+                        return {
+                            ...tripChecklist,
+                            checklists: updatedChecklists,
+                            totalItems: tripTotalItems,
+                            completedItems: tripCompletedItems,
+                        };
+                    });
+
+                    return {
+                        ...trip,
+                        trip_checklists: updatedTripChecklists,
+                    };
+                }),
+            };
+
+            return updatedState;
+        }
+
         case "DELETE_BULK_ITEMS":
             const updatedState = {
                 ...state,
@@ -451,6 +532,81 @@ const appReducer = (state: AppState, action: Action): AppState => {
             }));
 
             return { ...state, checklists: updatedChecklists, trips: updatedTrips };
+        }
+
+        case "REMOVE_ITEMS_FROM_CHECKLIST": {
+            const { checklistId, itemIds } = action.payload;
+
+            // Update the checklists
+            const updatedChecklists = state.checklists.map((checklist) => {
+                if (checklist.id === checklistId) {
+                    // Filter out the removed items
+                    const updatedItems = checklist.items.filter(
+                        (item) => !itemIds.includes(item.id)
+                    );
+
+                    // Recalculate completed and total counts
+                    const completedItems = updatedItems.filter((item) => item.completed).length;
+                    const totalItems = updatedItems.length;
+
+                    // Recalculate weights
+                    const totalWeight = updatedItems.reduce(
+                        (sum, item) => sum + (item.items?.weight || 0),
+                        0
+                    );
+                    const currentWeight = updatedItems
+                        .filter((item) => item.completed)
+                        .reduce((sum, item) => sum + (item.items?.weight || 0), 0);
+
+                    return {
+                        ...checklist,
+                        items: updatedItems,
+                        completion: {
+                            completed: completedItems,
+                            total: totalItems,
+                            totalWeight,
+                            currentWeight,
+                        },
+                    };
+                }
+                return checklist;
+            });
+
+            // Update the trips related to this checklist
+            const updatedTrips = state.trips.map((trip) => {
+                const updatedTripChecklists = trip.trip_checklists.map((tripChecklist) => {
+                    if (tripChecklist.checklist_id === checklistId) {
+                        const matchingChecklist = updatedChecklists.find(
+                            (cl) => cl.id === checklistId
+                        );
+
+                        return {
+                            ...tripChecklist,
+                            completedItems: matchingChecklist?.completion?.completed ?? 0,
+                            totalItems: matchingChecklist?.completion?.total ?? 0,
+                            currentWeight: matchingChecklist?.completion?.currentWeight ?? 0,
+                        };
+                    }
+                    return tripChecklist;
+                });
+
+                return {
+                    ...trip,
+                    trip_checklists: updatedTripChecklists,
+                };
+            });
+
+            // Remove the items globally from the `items` array if applicable
+            const updatedItems = state.items.filter(
+                (item) => !itemIds.includes(item.id)
+            );
+
+            return {
+                ...state,
+                checklists: updatedChecklists,
+                trips: updatedTrips,
+                items: updatedItems,
+            };
         }
 
         case "SET_NO_CHECKLISTS_FOR_USER":

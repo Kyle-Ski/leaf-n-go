@@ -21,6 +21,8 @@ import ChecklistItemComponent from "@/components/checklistItem"
 import { formatWeight } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 import FloatingActionButton from "./floatingActionButton";
+import { PackagePlusIcon, PlusIcon, TrashIcon } from "lucide-react";
+import DetailedItemView from "./itemDetails";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -46,6 +48,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const [checklistSearchQuery, setChecklistSearchQuery] = useState<string>("");
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
+    const [isItemModalOpen, setIsViewItemModalOpen] = useState(false);
 
     const showErrorToast = (error: string | null) => {
         if (error) {
@@ -267,6 +270,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             });
 
             if (!response.ok) throw new Error("Failed to remove item from checklist.");
+            toast.success("Successfully removed item from checklist.")
             dispatch({ type: "REMOVE_ITEM_FROM_CHECKLIST", payload: { checklistId: id, itemId } });
             setChecklist((prev) =>
                 prev
@@ -336,6 +340,50 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
         }
     };
 
+    const handleBulkRemoveCompletedItems = async () => {
+        try {
+            if (!id) throw new Error("No checklist id provided");
+
+            // Get all completed items
+            const completedItems = checklist?.items.filter((item) => item.completed);
+
+            if (!completedItems || completedItems.length === 0) {
+                toast.info("No completed items to remove.");
+                return;
+            }
+
+            // Prepare API payload
+            const itemIdsToRemove = completedItems.map((item) => item.id);
+            // Make API call to remove items from the checklist
+            const response = await fetch(`/api/checklists/${id}/bulk-remove`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ item_ids: itemIdsToRemove }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to remove completed items from the checklist.");
+            }
+            // Update the checklist state after removal
+            dispatch({
+                type: "REMOVE_ITEMS_FROM_CHECKLIST",
+                payload: { checklistId: id, itemIds: itemIdsToRemove },
+            });
+
+            setChecklist((prev) =>
+                prev
+                    ? { ...prev, items: prev.items.filter((item) => !itemIdsToRemove.includes(item.id)) }
+                    : prev
+            );
+            toast.success("Successfully removed items from checklist.")
+
+        } catch (err) {
+            console.error("Error removing completed items:", err);
+            setError("Error removing completed items, please try again soon.");
+        }
+    };
+
+
     if (loading) return (
         <div className="flex justify-center items-center min-h-screen">
             <Loader className="h-12 w-12 text-blue-500" />
@@ -347,30 +395,37 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
 
             <FloatingActionButton>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-                    Add Existing Item
-                </button>
-
-                <button
-                    onClick={() => setIsCreateItemModalOpen(true)}
-                    className="p-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
-                >
-                    Create New Item
-                </button>
-
                 {!(currentPage && dontShowDelete.includes(currentPage)) && (
-                    <button
+                    <Button
                         onClick={() => setIsDeleteDialogOpen(true)}
                         className="p-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
                     >
-                        Delete Checklist
-                    </button>
+                        <TrashIcon /> Delete Checklist
+                    </Button>
                 )}
+                <Button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                    <PackagePlusIcon /> Add Existing Item
+                </Button>
+
+                <Button
+                    onClick={() => setIsCreateItemModalOpen(true)}
+                    className="p-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+                >
+                    <PlusIcon /> Create New Item
+                </Button>
+
+                <Button
+                    onClick={handleBulkRemoveCompletedItems}
+                    className="p-2 bg-yellow-600 text-white rounded-md shadow hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                >
+                    Remove ✔ed Item(s) From Checklist
+                </Button>
             </FloatingActionButton>
-            
+
+
             {/* **Completion Progress Bar** */}
             <ProgressBar label="Completion" percentage={completionPercentage} color="green" description={total > 0 ? `${completed}/${total} items completed` : "No items in checklist"} />
 
@@ -463,10 +518,17 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         }
                     })
                     .map((item) => (
-                        <ChecklistItemComponent key={item.id} item={item} onToggle={handleToggleItem} onRemove={() => {
-                            setSelectedItem(item);
-                            setIsRemoveModalOpen(true);
-                        }} />
+                        <ChecklistItemComponent
+                            key={item.id}
+                            item={item}
+                            onToggle={handleToggleItem}
+                            onViewItem={() => {
+                                setSelectedItem(item)
+                                setIsViewItemModalOpen(true)
+                            }} onRemove={() => {
+                                setSelectedItem(item);
+                                setIsRemoveModalOpen(true);
+                            }} />
                     ))}
             </ul>
 
@@ -480,6 +542,34 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                     <NewItemModal />
                 </DialogContent>
             </Dialog>
+
+            {/* Detailed Item View Modal */}
+            {selectedItem && (
+                <Dialog
+                    open={isItemModalOpen}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setIsViewItemModalOpen(false);
+                            setSelectedItem(null);
+                        }
+                    }}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="text-center">Item Details</DialogTitle>
+                            <DialogDescription className="text-center">
+                                View and manage the details of this item. You can edit or delete the item below.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DetailedItemView
+                            itemId={selectedItem.item_id}
+                            isOpen={isItemModalOpen}
+                            onClose={() => setIsViewItemModalOpen(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+
 
             {/* Add Item Modal */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>

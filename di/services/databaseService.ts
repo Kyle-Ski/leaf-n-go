@@ -441,6 +441,19 @@ export class DatabaseService {
     }
   }
 
+  async bulkRemoveChecklistItems(checklistId: string, itemIds: string[]): Promise<void> {
+    const { error } = await this.databaseClient
+      .from('checklist_items')
+      .delete()
+      .eq('checklist_id', checklistId)
+      .in('id', itemIds);
+
+    if (error) {
+      console.error("Error bulk removing items from checklist:", error);
+      throw new Error("Failed to bulk remove items from checklist");
+    }
+  }
+
   async insertChecklistItemAndReturn(checklistItem: {
     checklist_id: string;
     item_id: string;

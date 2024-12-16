@@ -11,6 +11,7 @@ import { Loader } from "@/components/ui/loader";
 import { useAppContext } from "@/lib/appContext";
 import { useConsent } from "@/lib/consentContext";
 import { toast } from "react-toastify";
+import { EyeIcon, TicketsPlaneIcon } from "lucide-react";
 
 const PlanningHub = () => {
   const { user } = useAuth();
@@ -128,7 +129,7 @@ const PlanningHub = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-gray-700">{upcomingTrip.notes}</p>
                   <Link href={`/trips/${upcomingTrip.id || ""}`}>
-                    <Button className="bg-blue-500 text-white">View Trip</Button>
+                    <Button className="bg-blue-500 text-white"><EyeIcon /> View Trip</Button>
                   </Link>
                 </div>
               </div>
@@ -172,7 +173,7 @@ const PlanningHub = () => {
               <CardContent>
                 <Link href={`/trips/${trip.id || ""}`}>
                   <Button variant="outline" className="mt-2">
-                    View Trip
+                    <EyeIcon /> View Trip
                   </Button>
                 </Link>
               </CardContent>
@@ -185,7 +186,7 @@ const PlanningHub = () => {
       <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl text-center">
         <h2 className="text-xl font-semibold mb-4">Plan Your Next Adventure</h2>
         <Link href="/trips">
-          <Button className="bg-green-600 text-white px-6 py-3 rounded-md">Start a New Trip</Button>
+          <Button className="bg-green-600 text-white px-6 py-3 rounded-md"><TicketsPlaneIcon /> Start a New Trip</Button>
         </Link>
       </section>
     </div>
