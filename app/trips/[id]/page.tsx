@@ -22,7 +22,7 @@ import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useConsent } from "@/lib/consentContext";
-import CategorySelector from "@/components/categoryInput";
+import CategorySelector from "@/components/categorySelector";
 
 type Action =
     | { type: "ADD_CATEGORY"; payload: string }
@@ -53,7 +53,11 @@ const TripPage = () => {
     const [recommendations, setRecommendations] = useState({});
     const [isAiSuggestionOpen, setIsAiSuggestionOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [categories, dispatch2] = useReducer(categoryReducer, state.item_categories.map((ic) => ic.name))
+
+    const defaultCategories = state.item_categories
+    .filter((ic) => ic.user_id === null)
+    .map((ic) => ic.name);
+    const [categories, dispatch2] = useReducer(categoryReducer, defaultCategories)
     const [customCategory, setCustomCategory] = useState("")
 
     const handleAddCategory = (category: string) => {
@@ -388,7 +392,7 @@ const TripPage = () => {
                     <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
                 </Button> : <></>}
                 {hasConsent('aiDataUsage') ? <Button
-                    disabled={hasValidRecommendations(displayedRecommendations) ? false : true}
+                    disabled={loading}
                     onClick={() => setIsAiSuggestionOpen(true)}
                     className="bg-purple-600 text-white px-4 py-2"
                 >

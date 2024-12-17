@@ -185,7 +185,6 @@ export default function AuthPage() {
       }
 
       const data = await response.json()
-
       dispatch({ type: "SET_CATEGORIES", payload: data })
     } catch (err) {
       console.error(err);

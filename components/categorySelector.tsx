@@ -17,7 +17,7 @@ interface CategorySelectorProps {
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ handleAddCategory, customCategory, setCustomCategory, handleAddCustomCategory, categories, handleRemoveCategory }) => {
     const { state } = useAppContext();
-
+  
     return (
         <div className="space-y-4">
             <div className="flex space-x-2">
