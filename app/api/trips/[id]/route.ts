@@ -123,7 +123,9 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
   const userId = user.id
 
-  let { title, start_date, end_date, location, notes, trip_checklists, trip_category, new_category } = await req.json();
+  const body = await req.json();
+  const { title, start_date, end_date, location, notes, trip_checklists, new_category } = body;
+  let { trip_category } = body
 
   if (!tripId || !userId) {
     return NextResponse.json({ error: "Trip ID and User ID are required" }, { status: 400 });

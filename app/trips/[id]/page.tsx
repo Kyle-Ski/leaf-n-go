@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
@@ -22,6 +22,22 @@ import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
 import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useConsent } from "@/lib/consentContext";
+import CategorySelector from "@/components/categoryInput";
+
+type Action =
+    | { type: "ADD_CATEGORY"; payload: string }
+    | { type: "REMOVE_CATEGORY"; payload: string }
+
+function categoryReducer(state: string[], action: Action): string[] {
+    switch (action.type) {
+        case "ADD_CATEGORY":
+            return [...new Set([...state, action.payload])]
+        case "REMOVE_CATEGORY":
+            return state.filter((category) => category !== action.payload)
+        default:
+            return state
+    }
+}
 
 const TripPage = () => {
     const router = useRouter();
@@ -33,10 +49,27 @@ const TripPage = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
     const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
+    const [isAssistantCategoriesOpen, setIsAssistantCategoriesOpen] = useState(false)
     const [recommendations, setRecommendations] = useState({});
     const [isAiSuggestionOpen, setIsAiSuggestionOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [categories, dispatch2] = useReducer(categoryReducer, state.item_categories.map((ic) => ic.name))
+    const [customCategory, setCustomCategory] = useState("")
 
+    const handleAddCategory = (category: string) => {
+        dispatch2({ type: "ADD_CATEGORY", payload: category })
+    }
+
+    const handleRemoveCategory = (category: string) => {
+        dispatch2({ type: "REMOVE_CATEGORY", payload: category })
+    }
+
+    const handleAddCustomCategory = () => {
+        if (customCategory.trim()) {
+            handleAddCategory(customCategory.trim())
+            setCustomCategory("")
+        }
+    }
     const showErrorToast = (error: string | null) => {
         if (error) {
             toast.error(error, {
@@ -63,6 +96,12 @@ const TripPage = () => {
     // Find the trip in the app state
     const trip = state.trips.find((trip) => trip.id === id);
 
+    /**
+     * Sends information about the user's trip to our AI.
+     * Will always have default recommendation categories, will
+     * give the AI the dates, location and items that are in the user's 
+     * checklist.
+     */
     const getAssistantHelp = async () => {
         setLoading(true);
         setError(null);
@@ -74,10 +113,10 @@ const TripPage = () => {
             setError("Trip data is missing, please try again later.");
             return;
         }
-
+        dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: {} } })
         try {
             const existingItems = getExistingItems(trip.id, state);
-
+            const userCategories = ["Weather Forecast Insights", "Pro Tips", "Specific Location Considerations", ...categories, "Additional Recommendations"]
             const response = await fetch(`/api/assistant/trip-recommendations`, {
                 method: "POST",
                 headers: {
@@ -90,18 +129,17 @@ const TripPage = () => {
                     endDate: trip.end_date,
                     existingItems,
                     tripType: trip.trip_category,
-                    categories: ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"]
+                    categories: userCategories
                 }),
             });
 
             if (!response.ok || !response.body) {
                 throw new Error("Failed to get recommendations. Please try again.");
             }
-
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let streamedText = "";
-            let isWeatherMismatch = false;
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
@@ -110,16 +148,16 @@ const TripPage = () => {
 
                 // Detect weather mismatch
                 if (streamedText.includes("unusual") || streamedText.includes("might be a system error")) {
-                    isWeatherMismatch = true;
+                    console.log("UNUSUAL?")
                 }
-                const categories2 = parseRecommendations2(streamedText, ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"])
+                const categories2 = parseRecommendations2(streamedText, userCategories)
                 // Extract categories dynamically
 
-                setRecommendations((prev) => ({ ...prev, categories2 }))
+                setRecommendations((prev) => ({ ...prev, ...categories2 }))
             }
             // Final pass for the last chunk of data after the loop
-            const finalCategories2 = parseRecommendations2(streamedText, ["Flight Tips", "Checked Bag Items", "Snacks", "Clothing & Layers", "Navigation & Safety", "Cords and Technology", "Entertainment & Personal Items", "Weather Forecast Insights", "Specific Location Considerations", "Additional Recommendations", "Pro Tips"])
-            setRecommendations((prev) => ({ ...prev, ...finalCategories2}))
+            const finalCategories2 = parseRecommendations2(streamedText, userCategories)
+            setRecommendations((prev) => ({ ...prev, ...finalCategories2 }))
             dispatch({ type: "UPDATE_TRIP", payload: { ...trip, ai_recommendation: finalCategories2 } })
 
             await fetch(`/api/assistant/trip-recommendations/${trip.id}`, {
@@ -336,11 +374,18 @@ const TripPage = () => {
                     <PencilIcon /> Edit Trip
                 </Button>
                 {hasConsent('aiDataUsage') ? <Button
+                    onClick={() => setIsAssistantCategoriesOpen(true)}
+                    disabled={loading}
+                    className="bg-purple-600 text-white px-4 py-2"
+                >
+                    <BotIcon /> {loading ? "Loading Recommendations..." : "Edit Packing Categories for AI"}
+                </Button> : <></>}
+                {hasConsent('aiDataUsage') ? <Button
                     onClick={getAssistantHelp}
                     disabled={loading}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
-                    <BotIcon /> {loading ? "Loading Recommendations..." :(hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
+                    <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
                 </Button> : <></>}
                 {hasConsent('aiDataUsage') ? <Button
                     disabled={hasValidRecommendations(displayedRecommendations) ? false : true}
@@ -399,6 +444,42 @@ const TripPage = () => {
                         tripChecklists={trip.trip_checklists}
                         onAddToChecklist={addAiItemToChecklist}
                     />
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Categories the AI will taylor suggestions to */}
+            <Dialog open={isAssistantCategoriesOpen} onOpenChange={setIsAssistantCategoriesOpen}>
+                <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-2 sm:p-4 rounded-lg">
+                    <DialogHeader>
+                        <DialogTitle>Categories The Assistant Will Respond With</DialogTitle>
+                        <DialogDescription className="whitespace-pre-line">
+                            {`Select the categories you'd like the assistant to focus on for recommendations.
+
+                            We have the 10 essentials already picked, feel free to remove them and add your own!
+
+                            The assistant will always give recommendations for the following: "Specific Location Considerations", "Additional Recommendations", "Pro Tips", and "Weather Forecast Insights"
+
+                            For example: "I'm going on a road trip to the Grand Canyon and need help with: Flight Considerations, Clothing & Layers, Snacks, Electronics & Personal Items, and Health & Hygiene."`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <CategorySelector
+                        handleAddCategory={handleAddCategory}
+                        customCategory={customCategory}
+                        setCustomCategory={setCustomCategory}
+                        handleAddCustomCategory={handleAddCustomCategory}
+                        categories={categories}
+                        handleRemoveCategory={handleRemoveCategory}
+                    />
+                    <Button
+                        onClick={() => {
+                            getAssistantHelp()
+                            setIsAssistantCategoriesOpen(false)
+                        }}
+                        disabled={loading}
+                        className="bg-purple-600 text-white px-4 py-2"
+                    >
+                        <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
+                    </Button>
                 </DialogContent>
             </Dialog>
 

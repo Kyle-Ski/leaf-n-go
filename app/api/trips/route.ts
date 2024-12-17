@@ -77,8 +77,9 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = user.id
-
-  let { title, start_date, end_date, location, notes, checklists = [], participants = [], new_trip_category, trip_category } = await req.json();
+  const body = await req.json();
+  const { title, start_date, end_date, location, notes, checklists = [], participants = [], new_trip_category } = body;
+  let { trip_category } = body;
 
   if (!userId || !title) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

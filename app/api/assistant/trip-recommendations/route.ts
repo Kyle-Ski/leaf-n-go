@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         const selectedCategories: string[] = categories && categories.length > 0 ? categories : defaultCategories;
 
         // Generate dynamic system prompt based on selected categories
-        const systemPrompt = `You are an expert in traveling, taking flights, road tripping, hiking, backpacking, climbing, and trail running, and trip planning. 
+        const systemPrompt = `You are an expert in traveling, taking flights, road tripping, hiking, backpacking, climbing, trail running, and trip planning. 
             Your role is to help users pack and prepare for their adventures. Provide thoughtful, practical suggestions 
             and share best practices tailored to each trip's unique details. Offer guidance in a friendly, supportive tone 
             without being overly prescriptive or pushy.
@@ -180,13 +180,11 @@ export async function POST(req: NextRequest) {
         const encoder = new TextEncoder();
         const readableStream = new ReadableStream({
             async start(controller) {
-                let accumulatedText = '';
                 for await (const event of msg) {
                     if (event.type === 'content_block_delta') {
                         const { delta } = event;
                         if ('text' in delta) {
                             const text = delta.text;
-                            accumulatedText += text;
                             controller.enqueue(encoder.encode(text));
                         }
                     }
