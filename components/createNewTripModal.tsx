@@ -69,7 +69,7 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-4 rounded-lg">
         <DialogHeader>
           <DialogTitle>Create New Trip</DialogTitle>
         </DialogHeader>

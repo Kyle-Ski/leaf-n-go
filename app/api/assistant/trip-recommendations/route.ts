@@ -194,8 +194,13 @@ export async function POST(req: NextRequest) {
         });
 
         return new Response(readableStream, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        })
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Transfer-Encoding': 'chunked',
+                'Cache-Control': 'no-cache, no-transform',
+                'Connection': 'keep-alive'
+            },
+        });
     } catch (error) {
         console.error("Error generating message:", error);
         return NextResponse.json({ error: "An error occurred while processing your request." }, { status: 500 });
