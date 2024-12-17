@@ -1,7 +1,7 @@
 {
     "functions": {
       "api/assistant/trip-recommendations/route.ts": {
-        "memory": 4000,
+        "memory": 3009,
         "maxDuration": 50
       }
     }
