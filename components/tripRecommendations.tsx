@@ -31,6 +31,14 @@ const TripRecommendations = ({
     return (
         <section className="w-full bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Assistant Recommendations</h2>
+            <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-md shadow-md flex items-start gap-2">
+                <svg className="w-6 h-6 text-blue-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                </svg>
+                <p className="text-blue-800 font-medium">It looks like you don&apos;t have any checklists linked to this trip yet. Head over to <Link href="/checklists" className="underline text-blue-600 hover:text-blue-800">
+                    Checklists
+                </Link> to add a checklist and unlock more features on this page.</p>
+            </div>
             {(hasChecklist && hasValidRecommendations(recommendations)) ? <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-md shadow-md flex items-start gap-2">
                 <svg className="w-6 h-6 text-blue-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
