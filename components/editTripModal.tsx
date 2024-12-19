@@ -58,6 +58,15 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
     }
   }, [isOpen, trip, resetForm]);
 
+  // Ensure end date is never before start date
+  useEffect(() => {
+    if (startDate && endDate && endDate < startDate) {
+      setEndDate(startDate);
+    }
+  }, [startDate, endDate]);
+
+
+
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
       prev.includes(checklistId) ? prev.filter((id) => id !== checklistId) : [...prev, checklistId]
@@ -148,6 +157,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onChange={(date) => setStartDate(date)}
               placeholderText="Select start date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxDate={endDate || undefined}
+              popperPlacement="right-end"
             />
 
             <label htmlFor="trip-end" className="block text-sm font-medium text-gray-700">
@@ -159,6 +170,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onChange={(date) => setEndDate(date)}
               placeholderText="Select end date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              minDate={startDate || undefined}
+              popperPlacement="right-end"
             />
 
             <label htmlFor="trip-location" className="block text-sm font-medium text-gray-700">
