@@ -42,33 +42,33 @@ export const parseRecommendations2 = (
     const recommendations: Record<string, string[]> = {};
 
     categories.forEach((category) => {
-        // Escape special regex characters in category names
         const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        // Regex to match the category and capture the array items
-        const regex = new RegExp(`"${escapedCategory}":\\s*\\[(.*?)\\]`, 's');
+        // Find the start of the category array
+        // We'll match `"<Category>": [`
+        const startRegex = new RegExp(`"${escapedCategory}":\\s*\\[`, 's');
+        const startMatch = streamedText.match(startRegex);
 
-        const match = streamedText.match(regex);
+        if (startMatch) {
+            // Found the start of the category array. Now we take everything after this match.
+            const startIndex = startMatch.index! + startMatch[0].length;
+            // Find the substring from where the array starts to either the closing bracket or end of string
+            // We'll look for a closing bracket `]` after the startIndex
+            const endBracketIndex = streamedText.indexOf(']', startIndex);
+            const arrayText = endBracketIndex === -1
+                ? streamedText.slice(startIndex) // No closing bracket yet, take everything
+                : streamedText.slice(startIndex, endBracketIndex);
 
-        if (match && match[1]) {
-            const itemsText = match[1];
-
-            // Match all string items within the array
-            const itemMatches = itemsText.match(/"([^"]+)"/g);
-
-            const items = itemMatches
-                ? itemMatches.map((item) => item.replace(/"/g, ''))
-                : [];
+            // Extract items from arrayText. They are quoted strings: "item"
+            const itemMatches = arrayText.match(/"([^"]*)"/g);
+            const items = itemMatches ? itemMatches.map((item) => item.replace(/"/g, '')) : [];
 
             recommendations[category] = items;
         } else {
-            // If the category is not found, assign an empty array
+            // Category not found yet or no partial array found
             recommendations[category] = [];
         }
     });
 
     return recommendations;
 };
-
-
-export default parseRecommendations

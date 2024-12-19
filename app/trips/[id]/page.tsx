@@ -393,7 +393,7 @@ const TripPage = () => {
                 )}
                 {hasConsent("aiDataUsage") && (
                     <Button
-                        disabled={loading || !trip.trip_checklists.length}
+                        disabled={loading || !trip.trip_checklists.length || !trip.ai_recommendation}
                         onClick={() => setIsAiSuggestionOpen(true)}
                         className="bg-purple-600 text-white px-4 py-2"
                     >
