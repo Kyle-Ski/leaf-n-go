@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useAppContext } from "@/lib/appContext";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import ChecklistDetails from "@/components/checklistDetails";
-import TripRecommendations from "@/components/tripRecommendations";
+import TripRecommendations from "@/components/tripRecommendations/tripRecommendations";
 import { parseRecommendations2 } from "@/utils/parseTripRecommendations";
 import getExistingItems from "@/utils/getItemNamesInTrip";
 import TripDetails from "@/components/tripDetails";
