@@ -810,6 +810,7 @@ export class DatabaseService {
             notes,
             created_at,
             updated_at,
+            ai_recommendation,
             trip_category:trip_types (
               id,
               name,

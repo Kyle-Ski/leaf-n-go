@@ -55,8 +55,8 @@ const TripPage = () => {
     const [loading, setLoading] = useState(false);
 
     const defaultCategories = state.item_categories
-    .filter((ic) => ic.user_id === null)
-    .map((ic) => ic.name);
+        .filter((ic) => ic.user_id === null)
+        .map((ic) => ic.name);
     const [categories, dispatch2] = useReducer(categoryReducer, defaultCategories)
     const [customCategory, setCustomCategory] = useState("")
 
@@ -140,7 +140,7 @@ const TripPage = () => {
             if (!response.ok || !response.body) {
                 throw new Error("Failed to get recommendations. Please try again.");
             }
-            
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let streamedText = "";
@@ -234,6 +234,12 @@ const TripPage = () => {
             }
 
             const updatedData = await response.json();
+            if (updatedData?.ai_recommendation) {
+                const ai_recommendation = JSON.parse(updatedData.ai_recommendation)
+                dispatch({ type: "UPDATE_TRIP", payload: {...updatedData, ai_recommendation} });
+                setIsUpdateOpen(false);
+                return;
+            }
             dispatch({ type: "UPDATE_TRIP", payload: updatedData });
             setIsUpdateOpen(false);
         } catch (err) {
@@ -360,6 +366,8 @@ const TripPage = () => {
                 recommendations={recommendations}
                 loading={loading}
                 error={error}
+                setIsUpdateOpen={() => setIsUpdateOpen(true)}
+                hasChecklist={!trip.trip_checklists.length}
                 aiRecommendationFromState={trip.ai_recommendation}
                 location={trip.location || "Unknown"}
             /> : <></>}
@@ -392,7 +400,7 @@ const TripPage = () => {
                     <BotIcon /> {loading ? "Loading Recommendations..." : (hasValidRecommendations(displayedRecommendations) ? "Get New Recommendations" : "Get Recommendations")}
                 </Button> : <></>}
                 {hasConsent('aiDataUsage') ? <Button
-                    disabled={loading}
+                    disabled={loading || !trip.trip_checklists.length}
                     onClick={() => setIsAiSuggestionOpen(true)}
                     className="bg-purple-600 text-white px-4 py-2"
                 >
