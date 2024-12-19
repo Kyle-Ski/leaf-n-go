@@ -271,6 +271,13 @@ const TripPage = () => {
             }
 
             const data: UpdatedAiRecommendedItem = await response.json();
+            // If the response contains categories, integrate them into state
+            if (data.categories) {
+                for (const [_, category] of Object.entries(data.categories)) {
+                    // Assuming you have a dispatcher for adding or updating categories in your state:
+                    dispatch({ type: "ADD_CATEGORY", payload: category });
+                }
+            }
             dispatch({ type: "ADD_ITEM", payload: data.items[0] });
             dispatch({ type: "ADD_ITEM_TO_CHECKLIST", payload: data.checklists[checklistId].items });
             return data;

@@ -9,43 +9,19 @@ import { useAppContext } from "@/lib/appContext";
 import { kgToLbs } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 
-
 const NewItemModal: React.FC = () => {
   const { state, dispatch } = useAppContext();
   const [name, setName] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [weight, setWeight] = useState<number>(0);
-  const [category, setCategory] = useState<string>("")
+  const [category, setCategory] = useState<string>("");
+  const [createNewCategory, setCreateNewCategory] = useState<boolean>(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const showErrorToast = (error: string | null) => {
-    if (error) {
-      toast.error(error, {
-        position: "top-right",
-        autoClose: 5000, // Adjust as needed
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-    }
-  };
-
-  // Example usage in your component
-  useEffect(() => {
-    if (error) {
-      showErrorToast(error);
-      setError(null); // Clear the error after displaying
-    }
-  }, [error]);
 
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
@@ -64,14 +40,23 @@ const NewItemModal: React.FC = () => {
         weightInLbs = weight;
       }
 
-      // Prepare the payload with weight in pounds
-      const payload = {
+      // Prepare the payload
+      const payload: Record<string, any> = {
         name,
         quantity,
-        weight: weightInLbs, // Use the converted weight
+        weight: weightInLbs,
         notes,
-        category_id: category,
       };
+
+      if (createNewCategory) {
+        // If creating a new category, don't send category_id, send new_category_name instead
+        if (!newCategoryName.trim()) {
+          throw new Error("New category name is required.");
+        }
+        payload.new_category_name = newCategoryName.trim();
+      } else {
+        payload.category_id = category || null;
+      }
 
       const response = await fetch("/api/items", {
         method: "POST",
@@ -87,6 +72,9 @@ const NewItemModal: React.FC = () => {
       }
 
       const newItem: ItemDetails = await response.json();
+      if (createNewCategory && newItem.item_categories) {
+        dispatch({ type: "ADD_CATEGORY", payload: newItem.item_categories });
+      }
       toast.success(`Created ${newItem.name} successfully!`)
       dispatch({ type: "ADD_ITEM", payload: newItem });
       if (state.noItems) {
@@ -98,16 +86,17 @@ const NewItemModal: React.FC = () => {
       setQuantity(1);
       setWeight(0);
       setNotes("");
+      setCategory("");
+      setCreateNewCategory(false);
+      setNewCategoryName("");
 
-      // Set success message
     } catch (err) {
       console.error("Error creating item:", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      toast.error("An unexpected Error occurred, please try again soon.")
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-[300px] flex items-center justify-center">
@@ -167,10 +156,18 @@ const NewItemModal: React.FC = () => {
             </label>
             <select
               id="category"
-              value={category || ""}
-              onChange={(e) => setCategory(e.target.value)}
+              value={createNewCategory ? "CREATE_NEW" : category || ""}
+              onChange={(e) => {
+                if (e.target.value === "CREATE_NEW") {
+                  setCreateNewCategory(true);
+                  setCategory("");
+                } else {
+                  setCreateNewCategory(false);
+                  setCategory(e.target.value);
+                }
+              }}
               className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-              required
+              required={!createNewCategory}
             >
               <option value="" disabled>
                 Select a category
@@ -180,8 +177,24 @@ const NewItemModal: React.FC = () => {
                   {cat.name}
                 </option>
               ))}
+              <option value="CREATE_NEW">Create New Item Category</option>
             </select>
           </div>
+          {createNewCategory && (
+            <div>
+              <label htmlFor="new-category-name" className="block text-sm font-medium text-gray-700">
+                New Category Name (required)
+              </label>
+              <Input
+                type="text"
+                id="new-category-name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                required
+                className="w-full"
+              />
+            </div>
+          )}
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
               Notes

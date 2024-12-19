@@ -26,7 +26,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
         case "SET_ITEMS":
             return { ...state, items: action.payload };
-
+        case "ADD_CATEGORY": 
+            return { ...state, item_categories: [ ...state.item_categories, action.payload ]}
         case "ADD_ITEM":
             // Check if the item ID already exists in state
             const itemExists = state.items.some(item => item.id === action.payload.id);

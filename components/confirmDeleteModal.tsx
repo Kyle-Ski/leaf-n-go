@@ -31,7 +31,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{loading ? (
-                        <><Loader className="h-12 w-12 text-blue-500" />Loading...</>
+                        "Working..."
                     ) : description}</DialogDescription>
                     <DialogDescription>{thingsToDelete && thingsToDelete.map((t) => `${t.name}, `)}</DialogDescription>
                 </DialogHeader>

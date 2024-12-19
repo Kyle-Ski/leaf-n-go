@@ -315,6 +315,7 @@ export interface UpdatedAiRecommendedItem {
       totalWeight: number;
     };
   };
+  categories?: Record<string, ItemCategory>;
 }
 
 export interface ChecklistWithCompletion {
@@ -385,6 +386,7 @@ export type Action =
   | { type: 'ADD_BULK_ITEMS'; payload: (Item | ItemDetails)[] }
   | { type: 'UPDATE_ITEM'; payload: (Item | ItemDetails) }
   | { type: 'DELETE_BULK_ITEMS'; payload: string[] }
+  | { type: 'ADD_CATEGORY'; payload: ItemCategory }
   | { type: 'SET_NO_ITEMS_FOR_USER'; payload: boolean }
   | { type: 'SET_CHECKLIST_DETAILS'; payload: (ChecklistWithItems) }
   | { type: "SET_USER_SETTINGS"; payload: Partial<AppState["user_settings"]> }

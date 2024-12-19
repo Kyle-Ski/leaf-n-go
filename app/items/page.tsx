@@ -156,7 +156,7 @@ const ItemsPage = () => {
         <>
             {state.noItems ? (
                 <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-                    <p className="text-gray-600 text-lg">You don’t have any items yet. Try creating your first item!</p>
+                    <p className="text-gray-600 text-lg">You don&apos;t have any items yet. Try creating your first item!</p>
                     <Button
                         onClick={() => setIsCreateItemModalOpen(true)}
                         className="bg-green-500 text-white"
