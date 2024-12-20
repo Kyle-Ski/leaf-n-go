@@ -8,6 +8,7 @@ interface AiSuggestionsDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     trip: FrontendTrip;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addAiItemToChecklist: (checklistId: string, item: ItemDetails) => Promise<any>;
 }
 

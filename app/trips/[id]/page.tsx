@@ -4,7 +4,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/withAuth";
-import { ChecklistWithItems, ItemDetails, UpdatedAiRecommendedItem, Trip } from "@/types/projectTypes";
+import { ChecklistWithItems, ItemDetails, UpdatedAiRecommendedItem } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { toast } from "react-toastify";
 import FloatingActionButton from "@/components/floatingActionButton";
@@ -273,6 +273,7 @@ const TripPage = () => {
             const data: UpdatedAiRecommendedItem = await response.json();
             // If the response contains categories, integrate them into state
             if (data.categories) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const [_, category] of Object.entries(data.categories)) {
                     // Assuming you have a dispatcher for adding or updating categories in your state:
                     dispatch({ type: "ADD_CATEGORY", payload: category });

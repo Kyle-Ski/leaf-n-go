@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
@@ -40,7 +40,7 @@ const NewItemModal: React.FC = () => {
         weightInLbs = weight;
       }
 
-      // Prepare the payload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: Record<string, any> = {
         name,
         quantity,

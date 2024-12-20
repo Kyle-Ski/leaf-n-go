@@ -15,7 +15,6 @@ export interface TripRecommendationsProps {
 
 const TripRecommendations = ({
   recommendations,
-  loading,
   error,
   aiRecommendationFromState,
   location,

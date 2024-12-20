@@ -131,6 +131,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Failed to add item to checklist.' }, { status: 500 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function calculateChecklistCompletion(checklistItems: any[]) {
       const total = checklistItems.length;
       const completed = checklistItems.filter((item) => item.completed).length;
