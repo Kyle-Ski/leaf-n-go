@@ -8,6 +8,7 @@ import { ItemDetails } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { kgToLbs } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const NewItemModal: React.FC = () => {
   const { state, dispatch } = useAppContext();
@@ -154,31 +155,31 @@ const NewItemModal: React.FC = () => {
             <label htmlFor="category" className="block text-gray-700">
               Category
             </label>
-            <select
-              id="category"
+            <Select
               value={createNewCategory ? "CREATE_NEW" : category || ""}
-              onChange={(e) => {
-                if (e.target.value === "CREATE_NEW") {
+              onValueChange={(e) => {
+                if (e === "CREATE_NEW") {
                   setCreateNewCategory(true);
                   setCategory("");
                 } else {
                   setCreateNewCategory(false);
-                  setCategory(e.target.value);
+                  setCategory(e);
                 }
               }}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               required={!createNewCategory}
             >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {state.item_categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-              <option value="CREATE_NEW">Create New Item Category</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {state.item_categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="CREATE_NEW">Create New Item Category</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {createNewCategory && (
             <div>

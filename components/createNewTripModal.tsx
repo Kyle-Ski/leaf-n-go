@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface CreateTripModalProps {
   isOpen: boolean;
@@ -111,23 +112,26 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
             <label htmlFor="trip-categories" className="block text-sm font-medium text-gray-700">
               Trip Category
             </label>
-            <select
+            <Select
               value={categoryOption}
-              onChange={(e) => setCategoryOption(e.target.value)}
-              id="trip-categories"
-              className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(e) => setCategoryOption(e)}
             >
-              {state.trip_categories && state.trip_categories.length ? (
-                state.trip_categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))
-              ) : (
-                <></>
-              )}
-              <option value="CREATE_NEW">Create New Category</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a Trip Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {state.trip_categories && state.trip_categories.length ? (
+                  state.trip_categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <></>
+                )}
+                <SelectItem value="CREATE_NEW">Create New Category</SelectItem>
+              </SelectContent>
+            </Select>
             {categoryOption === "CREATE_NEW" && (
               <>
                 <label htmlFor="create-new-trip-category" className="block text-sm font-medium text-gray-700">
