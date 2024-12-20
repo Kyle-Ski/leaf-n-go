@@ -412,20 +412,21 @@ const appReducer = (state: AppState, action: Action): AppState => {
             // Update the trips that are associated with the checklist
             const updatedTrips = state.trips.map((trip) => {
                 const updatedTripChecklists = trip.trip_checklists.map((tripChecklist) => {
-                    if (tripChecklist.checklist_id === updatedChecklist.id) {
-                        const matchingChecklist = updatedChecklists.find(
-                            (cl) => cl.id === updatedChecklist.id
-                        );
+                    const matchingChecklist = updatedChecklists.find(
+                        (cl) => cl.id === tripChecklist.checklist_id
+                    );
 
-                        // Update the trip-level stats based on the checklist
+                    if (matchingChecklist && tripChecklist.checklist_id === updatedChecklist.id) {
+                        // Update the trip-level stats and title based on the checklist
                         return {
                             ...tripChecklist,
-                            completedItems: matchingChecklist?.completion?.completed ?? 0,
-                            totalItems: matchingChecklist?.completion?.total ?? 0,
-                            currentWeight: matchingChecklist?.completion?.currentWeight ?? 0,
+                            title: updatedChecklist.title, // Update title
+                            completedItems: matchingChecklist.completion.completed,
+                            totalItems: matchingChecklist.completion.total,
+                            currentWeight: matchingChecklist.completion.currentWeight,
                         };
                     }
-                    return tripChecklist;
+                    return tripChecklist; // Ensure other trip checklists are preserved
                 });
 
                 return {
