@@ -10,6 +10,7 @@ import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import { toast } from "react-toastify";
 import { EyeIcon, PlusIcon } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 const TripsPage = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ const TripsPage = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const showErrorToast = (error: string | null) => {
     if (error) {
@@ -32,17 +34,19 @@ const TripsPage = () => {
       });
     }
   };
-  
+
   // Example usage in your component
   useEffect(() => {
     if (error) {
       showErrorToast(error);
       setError(null); // Clear the error after displaying
+      setLoading(false);
     }
   }, [error]);
-  
+
   const fetchTrips = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch("/api/trips", {
         headers: { "Content-Type": "application/json" },
       });
@@ -50,7 +54,7 @@ const TripsPage = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch trips.");
       }
-
+      setLoading(false);
       const data = await response.json();
 
       if (Array.isArray(data) && data.length === 0) {
@@ -71,7 +75,31 @@ const TripsPage = () => {
     }
   }, [state.noTrips, state.trips, fetchTrips]);
 
+  const fetchTripTypes = async () => {
+    try {
+      const response = await fetch("api/trips/trip-categories", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch trip categories.")
+      }
+
+      const data = await response.json();
+
+      dispatch({ type: "SET_TRIP_CATEGORIES", payload: data })
+
+    } catch (error) {
+      console.error("Error fetching trip types:", error);
+    }
+  }
+
+
   const handleCreateTrip = async (tripData: CreateTripPayload) => {
+    setLoading(true)
     try {
       const participants = [
         {
@@ -92,7 +120,10 @@ const TripsPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create trip.");
       }
-
+      toast.success(`Successfully created ${tripData.title}!`)
+      if (tripData.new_trip_category) {
+        fetchTripTypes();
+      }
       fetchTrips(); // Refresh trips after creating a new one
     } catch (err) {
       console.error(err);
@@ -142,10 +173,11 @@ const TripsPage = () => {
               className="bg-blue-500 text-white mt-4"
               onClick={() => router.push(`/trips/${trip.id}`)}
             >
-             <EyeIcon /> View Trip
+              <EyeIcon /> View Trip
             </Button>
           </div>
         ))}
+        {loading ? <Loader className="h-12 w-12 text-blue-500" /> : null}
       </div>
 
       {/* Create Trip Modal */}

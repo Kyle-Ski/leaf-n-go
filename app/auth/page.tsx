@@ -94,6 +94,27 @@ export default function AuthPage() {
     }
   };
 
+  const fetchTripTypes = async () => {
+    try {
+      const response = await fetch("api/trips/trip-categories", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch trip categories.")
+      }
+
+      const data = await response.json();
+
+      dispatch({ type: "SET_TRIP_CATEGORIES", payload: data })
+
+    } catch (error) {
+      console.error("Error fetching trip types:", error);
+    }
+  }
 
   const fetchChecklists = async () => {
     try {
@@ -164,7 +185,6 @@ export default function AuthPage() {
       }
 
       const data = await response.json()
-
       dispatch({ type: "SET_CATEGORIES", payload: data })
     } catch (err) {
       console.error(err);
@@ -238,6 +258,7 @@ export default function AuthPage() {
         await fetchChecklists()
         await fetchCategories()
         await fetchUserSettings()
+        await fetchTripTypes();
         router.push("/"); // Redirect to homepage
       }
     } catch (err) {

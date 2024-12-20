@@ -1,14 +1,14 @@
-import serviceContainer from "@/di/containers/serviceContainer";
-import { DatabaseService } from "@/di/services/databaseService";
-import anthropic from "@/lib/anthropicClient";
-import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
-import { trackAiUsage } from "@/utils/trackAiUsage";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+import anthropic from '@/lib/anthropicClient';
+import { trackAiUsage } from '@/utils/trackAiUsage';
+import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
+import serviceContainer from '@/di/containers/serviceContainer';
+import { DatabaseService } from '@/di/services/databaseService';
 
-const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
+const databaseService = serviceContainer.resolve<DatabaseService>('supabaseService');
 
 export async function POST(req: NextRequest) {
-    console.log("API /assistant/recommendations")
+    console.log("API /assistant/trip-recommendations");
     try {
         // Parse request body
         const body = await req.json();
@@ -22,50 +22,63 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ validateError: 'Unauthorized: User not found' }, { status: 401 });
         }
 
-        const userId = user.id
-        const { location, startDate, endDate, existingItems, tripId } = body;
+        const userId = user.id;
+        const { location, startDate, endDate, existingItems, tripId, tripType, categories } = body;
 
         // Validate user input
         if (!location || !startDate || !endDate || !userId || !tripId) {
-            return NextResponse.json({ error: "Missing required fields: location, startDate, or endDate" }, { status: 400 });
+            return NextResponse.json({ error: "Missing required fields: location, startDate, endDate, userId, or tripId" }, { status: 400 });
         }
 
         // Track AI usage
-        trackAiUsage(userId)
+        trackAiUsage(userId);
 
         // Format existing items as a comma-separated string for inclusion in the prompt
         const existingItemsList = existingItems?.map((item: { id: string, name: string }) => item.name).join(", ") || "None";
 
-        // Generate the message
+        // Define categories or use default
+        const defaultCategories = [
+            "Shelter & Sleep System",
+            "Clothing & Layers",
+            "Food & Cooking Gear",
+            "Navigation & Safety",
+            "Health & Hygiene",
+            "Backpack & Carrying System",
+            "Lighting & Power",
+            "Entertainment & Personal Items",
+            "Fix-it Kit",
+            "Water Management",
+            "Pro Tips",
+            "Weather Forecast Insights",
+            "Specific Location Considerations",
+            "Additional Recommendations"
+        ];
+
+        const selectedCategories: string[] = categories && categories.length > 0 ? categories : defaultCategories;
+
+        // Generate dynamic system prompt based on selected categories
+        const systemPrompt = `You are an expert in traveling, taking flights, road tripping, hiking, backpacking, climbing, trail running, and trip planning. 
+            Your role is to help users pack and prepare for their adventures. Provide thoughtful, practical suggestions 
+            and share best practices tailored to each trip's unique details. Offer guidance in a friendly, supportive tone 
+            without being overly prescriptive or pushy.
+            If you have any special notes or anything else you want the user to see, like special note or anything else, add them into the "Additional Recommendations" category.
+            ${tripType ? `The user is taking a ${tripType} type of trip.` : ""}
+            It is vitally important that you structure your recommendations in JSON format using the following categories exactly or else the user will not see what you have to say:
+            {
+                "recommendations": {
+                    ${selectedCategories.map(category => `"${category}": []`).join(",\n    ")}
+                }
+            }
+            Populate each category with relevant items. Do not include items the user already has unless absolutely necessary.
+            Here is a list of their items they are already bringing: ${existingItemsList}. 
+        `;
+        // Create the message with Claude
         const msg = await anthropic.messages.create({
             model: "claude-3-5-haiku-20241022",
             max_tokens: 1000,
             temperature: 0,
             stream: true,
-            system: `You are an expert in hiking, backpacking, climbing, and trail running. 
-        Your role is to help users pack and prepare for outdoor adventures. Provide thoughtful, practical suggestions 
-        and share best practices tailored to each trip's unique details. Offer guidance in a friendly, supportive tone 
-        without being overly prescriptive or pushy.
-
-        Please structure your packing recommendations using the following categories exactly (Example: "Pro Tips:"):
-        - Shelter & Sleep System
-        - Clothing & Layers
-        - Food & Cooking Gear
-        - Navigation & Safety
-        - Health & Hygiene
-        - Backpack & Carrying System
-        - Lighting & Power
-        - Entertainment & Personal Items
-        - Fix-it Kit
-        - Water Management
-        - Pro Tips
-        - Weather Forecast Insights
-        - (if applicable) Specific Location Considerations
-        - (if applicable) Additional Recommendations
-        Format your output clearly and concisely, matching the categories listed above.
-        If you have anything other headings to add, or other insights, do not make another heading. Instead please add them to "Additional Recommendations"
-        Important Note: The user already has the following items: ${existingItemsList}. Please do not include these items in your response unless absolutely necessary.
-`,
+            system: systemPrompt,
             tools: [
                 {
                     name: "get_weather",
@@ -80,7 +93,8 @@ export async function POST(req: NextRequest) {
                         },
                         required: ["location"]
                     }
-                }
+                },
+                // Add other tools here if integrated
             ],
             messages: [
                 {
@@ -88,7 +102,8 @@ export async function POST(req: NextRequest) {
                     content: [
                         {
                             type: "text",
-                            text: `I'm going to ${location} from ${startDate} to ${endDate} and I need help packing.`
+                            text: `I'm going to ${location} from ${startDate} to ${endDate} and I need help packing and preparing for the trip.
+                            `
                         }
                     ]
                 },
@@ -147,6 +162,7 @@ export async function POST(req: NextRequest) {
                                             "Waterproof jacket for snow on December 15"
                                         ],
                                         gear: [
+                                            "Nice clothes to wear out on the town",
                                             "Waterproof and insulated hiking boots",
                                             "Gloves of varying insulation for activity",
                                             "Hand and feet warmers"
@@ -160,6 +176,7 @@ export async function POST(req: NextRequest) {
             ]
         });
 
+        // Handle streaming response
         const encoder = new TextEncoder();
         const readableStream = new ReadableStream({
             async start(controller) {
@@ -177,8 +194,13 @@ export async function POST(req: NextRequest) {
         });
 
         return new Response(readableStream, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        })
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Transfer-Encoding': 'chunked',
+                'Cache-Control': 'no-cache, no-transform',
+                'Connection': 'keep-alive'
+            },
+        });
     } catch (error) {
         console.error("Error generating message:", error);
         return NextResponse.json({ error: "An error occurred while processing your request." }, { status: 500 });

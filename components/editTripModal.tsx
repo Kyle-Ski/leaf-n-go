@@ -22,6 +22,8 @@ export interface UpdateTripPayload {
   location?: string | null;
   notes?: string | null;
   trip_checklists?: { checklist_id: string }[]; // Only `checklist_id` is required for updates
+  trip_category: string | null;
+  new_category?: string;
 }
 
 const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) => {
@@ -35,6 +37,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
     trip?.trip_checklists?.map((c) => c.checklist_id) || []
   );
   const [modalError, setModalError] = useState<string | null>(null);
+  const [categoryOption, setCategoryOption] = useState(trip?.trip_category?.id ? trip?.trip_category?.id : "CREATE_NEW");
+  const [newCategory, setNewCategory] = useState("");
 
   // Wrap resetForm in useCallback
   const resetForm = useCallback(() => {
@@ -45,6 +49,7 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
     setNotes(trip.notes || "");
     setSelectedChecklists(trip.trip_checklists?.map((c) => c.checklist_id) || []);
     setModalError(null);
+    setCategoryOption(trip?.trip_category?.id ? trip.trip_category.id : "CREATE_NEW")
   }, [trip]);
 
   useEffect(() => {
@@ -52,7 +57,16 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
       resetForm();
     }
   }, [isOpen, trip, resetForm]);
-  
+
+  // Ensure end date is never before start date
+  useEffect(() => {
+    if (startDate && endDate && endDate < startDate) {
+      setEndDate(startDate);
+    }
+  }, [startDate, endDate]);
+
+
+
   const handleChecklistToggle = (checklistId: string) => {
     setSelectedChecklists((prev) =>
       prev.includes(checklistId) ? prev.filter((id) => id !== checklistId) : [...prev, checklistId]
@@ -72,6 +86,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
       location,
       notes,
       trip_checklists: selectedChecklists.map((id) => ({ checklist_id: id })), // Only checklist_id
+      trip_category: categoryOption === "CREATE_NEW" ? null : categoryOption,
+      new_category: categoryOption === "CREATE_NEW" ? newCategory : undefined
     };
 
     onUpdate(updatedTrip);
@@ -99,7 +115,39 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onChange={(e) => setTitle(e.target.value)}
               className="w-full"
             />
-
+            <label htmlFor="trip-categories" className="block text-sm font-medium text-gray-700">
+              Trip Category
+            </label>
+            <select
+              value={categoryOption}
+              onChange={(e) => setCategoryOption(e.target.value)}
+              id="trip-categories"
+              className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {trip?.trip_category && state.trip_categories ? state.trip_categories.map((category) => {
+                return (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                )
+              }) :
+                <></>
+              }
+              <option value="CREATE_NEW">
+                Create New Category
+              </option>
+            </select>
+            {categoryOption === "CREATE_NEW" ? (<><label htmlFor="create-new-trip-category" className="block text-sm font-medium text-gray-700">
+              Create New Trip Category
+            </label>
+              <Input
+                id="create-new-trip-category"
+                type="text"
+                placeholder="New Trip Type"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="w-full"
+              /></>) : null}
             <label htmlFor="trip-start" className="block text-sm font-medium text-gray-700">
               Start Date
             </label>
@@ -109,6 +157,9 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onChange={(date) => setStartDate(date)}
               placeholderText="Select start date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxDate={endDate || undefined}
+              popperPlacement="top-end"
+              autoComplete="off"
             />
 
             <label htmlFor="trip-end" className="block text-sm font-medium text-gray-700">
@@ -120,6 +171,9 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onChange={(date) => setEndDate(date)}
               placeholderText="Select end date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              minDate={startDate || undefined}
+              popperPlacement="top-end"
+              autoComplete="off"
             />
 
             <label htmlFor="trip-location" className="block text-sm font-medium text-gray-700">

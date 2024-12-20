@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   const userId = user.id;
 
   try {
-    const { name, quantity, weight, notes, category_id } = await req.json();
+    const { name, quantity, weight, notes, category_id, new_category_name } = await req.json();
 
     // Validate required fields
     if (!name || quantity === undefined || weight === undefined) {
@@ -69,35 +69,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If category_id is provided, optionally validate it exists
-    let validCategory = true;
-    if (category_id) {
-      try {
-        await databaseService.fetchCategoryById(category_id);
-      } catch {
-        validCategory = false;
-      }
-    }
-
-    if (!validCategory) {
-      return NextResponse.json(
-        { error: 'Invalid category_id provided.' },
-        { status: 400 }
+    let newItem;
+    if (new_category_name && !category_id) {
+      // User wants to create a new category and item
+      newItem = await databaseService.createItemWithCategory(
+        userId,
+        { name, quantity, weight, notes: notes || null },
+        new_category_name
       );
-    }
+    } else {
+      // Validate category if provided
+      let validCategory = true;
+      if (category_id) {
+        try {
+          await databaseService.fetchCategoryById(category_id);
+        } catch {
+          validCategory = false;
+        }
+      }
 
-    const newItem = await databaseService.createItem({
-      user_id: userId,
-      name,
-      quantity,
-      weight,
-      notes: notes || null,
-      category_id: category_id || null,
-    });
+      if (!validCategory) {
+        return NextResponse.json(
+          { error: 'Invalid category_id provided.' },
+          { status: 400 }
+        );
+      }
 
-    if (error) {
-      console.error('Error creating item:', error);
-      return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
+      // Create item with existing category or no category
+      newItem = await databaseService.createItem({
+        user_id: userId,
+        name,
+        quantity,
+        weight,
+        notes: notes || null,
+        category_id: category_id || null,
+      });
     }
 
     return NextResponse.json(newItem, { status: 201 });

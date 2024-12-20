@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateAccessTokenDI } from "@/utils/auth/validateAccessToken";
 import serviceContainer from "@/di/containers/serviceContainer";
 import { DatabaseService } from "@/di/services/databaseService";
+import { UpdatedAiRecommendedItem } from "@/types/projectTypes";
 
 const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
+/**
+ * Adds the ai's recommendations to the trip table for storage and retrieval
+ * @param req 
+ * @param props 
+ * @returns 
+ */
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     // Extract tripId from the route parameters
@@ -58,6 +65,12 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
   }
 }
 
+/**
+ * Adds an item that was recommended by the AI to our inventory.
+ * If the item doesn't exist, it will create a new category (if needed) 
+ * and the item in that category. 
+ * If it already exists, it will just add it to the specified checklist.
+ */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const checklistId = await params.id;
@@ -86,39 +99,29 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       );
     }
 
-    // Find category ID by name
-    let categoryId: string | null = null;
-
-    const category = await databaseService.fetchCategoryByName(item_categories, userId);
-    if (category) {
-      categoryId = category.id;
-    }
-
     // Check if the item already exists for the user
     let existingItem = await databaseService.fetchItems({ name, user_id: userId });
 
-    // If the item doesn't exist, create a new one
+    // If the item doesn't exist, create it with category
     if (!existingItem || existingItem.length === 0) {
-      const newItem = await databaseService.createItem({
-        user_id: userId,
-        name,
-        quantity,
-        weight,
-        notes: notes || null,
-        category_id: categoryId, // Use resolved category ID or null
-      });
+      const newItem = await databaseService.createItemWithCategory(
+        userId,
+        { name, quantity, weight, notes: notes || null },
+        item_categories // categoryName
+      );
       if (!newItem) {
-        console.error('Error creating item.');
+        console.error('Error creating item with category.');
         return NextResponse.json({ error: 'Failed to create item.' }, { status: 500 });
       }
-      existingItem = [newItem]
+      existingItem = [newItem];
     }
+
     // Add the item to the `checklist_items` table
     const checklistItem = {
       checklist_id: checklistId,
       item_id: existingItem[0].id,
       quantity,
-      completed: false, // Default value for new items
+      completed: false,
     };
 
     const insertedChecklistItem = await databaseService.insertChecklistItemAndReturn(checklistItem);
@@ -144,13 +147,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     const completion = calculateChecklistCompletion(allChecklistItems);
 
     // Calculate total weight
-    const totalWeight = allChecklistItems.reduce((sum, item) => sum + item.items.weight * item.quantity, 0);
+    const totalWeight = allChecklistItems.reduce((sum, item) => sum + (item.items.weight * item.quantity), 0);
 
-    // Construct the response to match app state
-    const response = {
+    // Construct the response to match app state and explicitly type it
+    const response: UpdatedAiRecommendedItem = {
       checklists: {
         [checklistId]: {
-          items: allChecklistItems.filter((item) => item.id === insertedChecklistItem.id), // Include only the newly added item
+          items: allChecklistItems.filter((item) => item.id === insertedChecklistItem.id),
           completion,
         },
       },
@@ -165,6 +168,22 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       },
     };
 
+    // If the item was newly created with a category:
+    if (existingItem && existingItem[0] && existingItem[0].category_id && existingItem[0].item_categories) {
+      const category = existingItem[0].item_categories; // This should be an ItemCategory object
+      const catId = category.id;
+    
+      response.categories = {
+        [catId]: {
+          id: category.id,
+          name: category.name,
+          description: category.description,
+          user_id: category.user_id,
+          created_at: category.created_at,
+        },
+      };
+    }
+ 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error('Unexpected error:', error);

@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader } from "./ui/loader";
 
 interface ConfirmDeleteModalProps {
     isOpen: boolean;
@@ -31,7 +30,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{loading ? (
-                        <><Loader className="h-12 w-12 text-blue-500" />Loading...</>
+                        "Working..."
                     ) : description}</DialogDescription>
                     <DialogDescription>{thingsToDelete && thingsToDelete.map((t) => `${t.name}, `)}</DialogDescription>
                 </DialogHeader>

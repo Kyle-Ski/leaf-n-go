@@ -28,4 +28,47 @@ const parseRecommendations = (streamedText: string): Record<string, string> => (
     "Additional Recommendations": streamedText.match(/Additional Recommendations:\s*(.*?)(\n\n|$)/s)?.[1]?.trim() || "",
 });
 
-export default parseRecommendations
+/**
+ * Parses the streamed text to extract recommendations based on provided categories.
+ *
+ * @param streamedText - The accumulated streamed text from the API response.
+ * @param categories - An array of category names to extract recommendations for.
+ * @returns A record mapping each category to an array of recommended items.
+ */
+export const parseRecommendations2 = (
+    streamedText: string,
+    categories: string[]
+): Record<string, string[]> => {
+    const recommendations: Record<string, string[]> = {};
+
+    categories.forEach((category) => {
+        const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Find the start of the category array
+        // We'll match `"<Category>": [`
+        const startRegex = new RegExp(`"${escapedCategory}":\\s*\\[`, 's');
+        const startMatch = streamedText.match(startRegex);
+
+        if (startMatch) {
+            // Found the start of the category array. Now we take everything after this match.
+            const startIndex = startMatch.index! + startMatch[0].length;
+            // Find the substring from where the array starts to either the closing bracket or end of string
+            // We'll look for a closing bracket `]` after the startIndex
+            const endBracketIndex = streamedText.indexOf(']', startIndex);
+            const arrayText = endBracketIndex === -1
+                ? streamedText.slice(startIndex) // No closing bracket yet, take everything
+                : streamedText.slice(startIndex, endBracketIndex);
+
+            // Extract items from arrayText. They are quoted strings: "item"
+            const itemMatches = arrayText.match(/"([^"]*)"/g);
+            const items = itemMatches ? itemMatches.map((item) => item.replace(/"/g, '')) : [];
+
+            recommendations[category] = items;
+        } else {
+            // Category not found yet or no partial array found
+            recommendations[category] = [];
+        }
+    });
+
+    return recommendations;
+};
