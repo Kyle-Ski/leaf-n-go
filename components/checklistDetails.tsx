@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import FloatingActionButton from "./floatingActionButton";
 import { PackagePlusIcon, PlusIcon, TrashIcon } from "lucide-react";
 import DetailedItemView from "./itemDetails";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const dontShowDelete = ['trips'] as const
 type DontShowDeletePages = typeof dontShowDelete[number]
@@ -443,21 +444,24 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                     >
                         Sort Items
                     </label>
-                    <select
-                        id="sort-options"
+                    <Select
                         value={sortOption}
-                        onChange={(e) => setSortOption(e.target.value)}
-                        className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+                        onValueChange={(e) => setSortOption(e)}
                     >
-                        <option value="alphabetical-asc">Alphabetical (A-Z)</option>
-                        <option value="alphabetical-desc">Alphabetical (Z-A)</option>
-                        <option value="completed-first">Completed First</option>
-                        <option value="not-completed-first">Not Completed First</option>
-                        <option value="category-asc">Category (A-Z)</option>
-                        <option value="category-desc">Category (Z-A)</option>
-                        <option value="weight-asc">Weight (Low - High)</option>
-                        <option value="weight-desc">Weight (High - Low)</option>
-                    </select>
+                        <SelectTrigger className="w-64">
+                            <SelectValue placeholder="Select A Sort Option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="alphabetical-asc">Alphabetical (A-Z)</SelectItem>
+                            <SelectItem value="alphabetical-desc">Alphabetical (Z-A)</SelectItem>
+                            <SelectItem value="completed-first">Completed First</SelectItem>
+                            <SelectItem value="not-completed-first">Not Completed First</SelectItem>
+                            <SelectItem value="category-asc">Category (A-Z)</SelectItem>
+                            <SelectItem value="category-desc">Category (Z-A)</SelectItem>
+                            <SelectItem value="weight-asc">Weight (Low - High)</SelectItem>
+                            <SelectItem value="weight-desc">Weight (High - Low)</SelectItem>
+                        </SelectContent>
+                    </Select>
 
                 </div>
 

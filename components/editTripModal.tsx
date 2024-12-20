@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FrontendTrip } from "@/types/projectTypes";
 import Link from "next/link";
 import { useAppContext } from "@/lib/appContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface EditTripModalProps {
   isOpen: boolean;
@@ -118,25 +119,28 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
             <label htmlFor="trip-categories" className="block text-sm font-medium text-gray-700">
               Trip Category
             </label>
-            <select
+            <Select
               value={categoryOption}
-              onChange={(e) => setCategoryOption(e.target.value)}
-              id="trip-categories"
-              className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(e) => setCategoryOption(e)}
             >
+              <SelectTrigger>
+                <SelectValue placeholder="Category"/>
+              </SelectTrigger>
+              <SelectContent>
               {trip?.trip_category && state.trip_categories ? state.trip_categories.map((category) => {
                 return (
-                  <option key={category.id} value={category.id}>
+                  <SelectItem key={category.id} value={category.id}>
                     {category.name}
-                  </option>
+                  </SelectItem>
                 )
               }) :
                 <></>
               }
-              <option value="CREATE_NEW">
+              <SelectItem value="CREATE_NEW">
                 Create New Category
-              </option>
-            </select>
+              </SelectItem>
+              </SelectContent>
+            </Select>
             {categoryOption === "CREATE_NEW" ? (<><label htmlFor="create-new-trip-category" className="block text-sm font-medium text-gray-700">
               Create New Trip Category
             </label>

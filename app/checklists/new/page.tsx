@@ -7,6 +7,8 @@ import NewItemModal from "@/components/newItemModal";
 import { useAppContext } from "@/lib/appContext";
 import { formatWeight } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown } from "lucide-react";
 
 const NewChecklistPage = () => {
     const router = useRouter();
@@ -170,22 +172,25 @@ const NewChecklistPage = () => {
                         <label htmlFor="category" className="block font-semibold text-gray-700">
                             Category
                         </label>
-                        <select
-                            id="category"
+                        <Select
                             value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            onValueChange={(e) => setCategory(e)}
                             required
                         >
-                            <option value="" disabled>
-                                Select a category
-                            </option>
-                            {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
-                                </option>
-                            ))}
-                        </select>
+                                <SelectTrigger >
+                                    <SelectValue placeholder="Select a Category">
+                                        <ChevronDown/>
+                                    </SelectValue>
+                                </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                        {cat}
+                                    </SelectItem>
+
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div>
                         <div className="mb-6 p-4 bg-gray-50 rounded-md shadow-sm">

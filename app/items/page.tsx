@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import FloatingActionButton from "@/components/floatingActionButton";
 import { EyeIcon, FolderUp, PlusIcon, TrashIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { SelectValue } from "@radix-ui/react-select";
 
 const ItemsPage = () => {
     const { state, dispatch } = useAppContext();
@@ -177,21 +179,24 @@ const ItemsPage = () => {
                             <label htmlFor="sort-options" className="text-sm font-medium text-gray-700">
                                 Sort By
                             </label>
-                            <select
-                                id="sort-options"
+                            <Select
                                 value={sortOption}
-                                onChange={(e) => setSortOption(e.target.value)}
-                                className="p-2 border rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onValueChange={(e) => setSortOption(e)}
                             >
-                                <option value="name-asc">Name (A-Z)</option>
-                                <option value="name-desc">Name (Z-A)</option>
-                                <option value="weight-asc">Weight (Low-High)</option>
-                                <option value="weight-desc">Weight (High-Low)</option>
-                                <option value="quantity-asc">Quantity (Low-High)</option>
-                                <option value="quantity-desc">Quantity (High-Low)</option>
-                                <option value="category-asc">Category (A-Z)</option>
-                                <option value="category-desc">Category (Z-A)</option>
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a Sort Option" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                                    <SelectItem value="weight-asc">Weight (Low-High)</SelectItem>
+                                    <SelectItem value="weight-desc">Weight (High-Low)</SelectItem>
+                                    <SelectItem value="quantity-asc">Quantity (Low-High)</SelectItem>
+                                    <SelectItem value="quantity-desc">Quantity (High-Low)</SelectItem>
+                                    <SelectItem value="category-asc">Category (A-Z)</SelectItem>
+                                    <SelectItem value="category-desc">Category (Z-A)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
@@ -247,7 +252,7 @@ const ItemsPage = () => {
                                                 setIsItemModalOpen(true);
                                             }}
                                         >
-                                           <EyeIcon /> View
+                                            <EyeIcon /> View
                                         </Button>
                                         <p className="text-sm">Quantity: {item.quantity}</p>
                                         <p className="text-sm">
