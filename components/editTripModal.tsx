@@ -8,7 +8,6 @@ import { FrontendTrip } from "@/types/projectTypes";
 import Link from "next/link";
 import { useAppContext } from "@/lib/appContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown } from "lucide-react";
 
 interface EditTripModalProps {
   isOpen: boolean;

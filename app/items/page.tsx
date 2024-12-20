@@ -14,7 +14,7 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import ConfirmDeleteModal from "@/components/confirmDeleteModal";
 import FloatingActionButton from "@/components/floatingActionButton";
-import { ChevronDown, EyeIcon, FolderUp, PlusIcon, TrashIcon } from "lucide-react";
+import { EyeIcon, FolderUp, PlusIcon, TrashIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { SelectValue } from "@radix-ui/react-select";
 
