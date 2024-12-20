@@ -14,6 +14,7 @@ function ChecklistDetailsPage() {
     <ChecklistDetails
       id={id as string}
       state={state}
+      currentPage="checklists"
     />
   );
 }

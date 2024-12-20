@@ -1,4 +1,4 @@
-import { Checklist, ChecklistFilters, ChecklistItemFilters, ChecklistItemInsert, ItemDetails, TripFilters, UserSettings } from '@/types/projectTypes';
+import { Checklist, ChecklistFilters, ChecklistItemFilters, ChecklistItemInsert, ItemDetails, UserSettings } from '@/types/projectTypes';
 import { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 export class DatabaseService {
@@ -294,6 +294,18 @@ export class DatabaseService {
     const { data, error } = await query;
     if (error) throw new Error('Failed to fetch checklists');
     return data || [];
+  }
+
+  async updateChecklist(title: string, category: string, checklistId: string, userId: string) {
+    let query = this.databaseClient
+      .from('checklists')
+      .update({ title, category })
+      .eq('id', checklistId)
+      .eq('user_id', userId);
+
+    const { data, error } = await query;
+
+    return { data, error };
   }
 
   async fetchChecklistItems(filters: ChecklistItemFilters | ChecklistItemFilters[]): Promise<
