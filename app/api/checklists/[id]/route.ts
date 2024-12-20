@@ -162,3 +162,119 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
+
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const checklistId = await params.id;
+
+  // Validate access token
+  const { user, error: validateError } = await validateAccessTokenDI(req, databaseService);
+
+  if (validateError) {
+    return NextResponse.json({ validateError }, { status: 401 });
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized: User not found' }, { status: 401 });
+  }
+
+  const userId = user.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  }
+
+  if (!checklistId) {
+    return NextResponse.json({ error: 'Checklist ID is required' }, { status: 400 });
+  }
+
+  try {
+    const body = await req.json();
+    const { title, category, items } = body;
+
+    if (!title || !category || !Array.isArray(items)) {
+      return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
+    }
+
+    // Validate checklist ownership
+    const { data: checklistData, error: ownershipError } = await databaseService.validateChecklistOwnership(
+      checklistId,
+      userId
+    );
+
+    if (ownershipError || !checklistData) {
+      return NextResponse.json({ error: 'You do not own this checklist or it does not exist' }, { status: 403 });
+    }
+
+    // Update the checklist's title and category
+    const { error: checklistUpdateError } = await databaseService.updateChecklist(title, category, checklistId, userId);
+
+    if (checklistUpdateError) {
+      throw new Error('Failed to update checklist');
+    }
+
+    // Delete existing checklist items for this checklist
+    await databaseService.deleteChecklistItemsByChecklistId(checklistId);
+
+    // Insert updated items into the checklist
+    const formattedItems = items.map((item: { item_id: string; quantity: number; completed: boolean }) => ({
+      checklist_id: checklistId,
+      item_id: item.item_id,
+      quantity: item.quantity,
+      completed: item.completed || false,
+    }));
+
+    const insertedItems = await databaseService.insertChecklistItemsAndReturn(formattedItems);
+
+    // Calculate completion stats
+    const total = insertedItems.length;
+
+    const completed = insertedItems.filter((item) => item.completed).length;
+
+    const totalWeight = insertedItems.reduce((sum, item) => {
+      // Ensure item.items exists and is either an array or an object
+      const itemWeight = Array.isArray(item.items)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? item.items.reduce((itemSum: number, subItem: any) => itemSum + (subItem.weight || 0), 0)
+        : (0); // Fallback if item.items is a single object
+
+      return sum + itemWeight * item.quantity;
+    }, 0);
+
+    const currentWeight = insertedItems
+      .filter((item) => item.completed)
+      .reduce((sum, item) => {
+        // Ensure item.items exists and is either an array or an object
+        const itemWeight = Array.isArray(item.items)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? item.items.reduce((itemSum: number, subItem: any) => itemSum + (subItem.weight || 0), 0)
+          : (0); // Fallback if item.items is a single object
+
+        return sum + itemWeight * item.quantity;
+      }, 0);
+
+    const completion = {
+      completed,
+      total,
+      totalWeight,
+      currentWeight,
+    };
+
+    return NextResponse.json(
+      {
+        id: checklistId,
+        title,
+        category,
+        user_id: userId,
+        created_at: new Date().toISOString(),
+        items: insertedItems,
+        completion,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] Checklist updating error:`, error);
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+  }
+}

@@ -375,6 +375,7 @@ export type Action =
   | { type: 'SET_CHECKLISTS'; payload: ChecklistWithItems[] }
   | { type: 'SET_NO_CHECKLISTS_FOR_USER'; payload: boolean }
   | { type: 'ADD_CHECKLIST'; payload: ChecklistWithItems }
+  | { type: 'UPDATE_CHECKLIST'; payload: ChecklistWithItems }
   | { type: 'REMOVE_CHECKLIST'; payload: (string | string[]) }
   | { type: 'CHECK_ITEM_IN_CHECKLIST'; payload: { checkedState: CheckedState, checklistId: string | string[], itemId: string | string[] } }
   | { type: 'ADD_ITEM_TO_CHECKLIST'; payload: ChecklistItem[] }

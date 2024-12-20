@@ -21,17 +21,17 @@ import ChecklistItemComponent from "@/components/checklistItem"
 import { formatWeight } from "@/utils/convertWeight";
 import { toast } from "react-toastify";
 import FloatingActionButton from "./floatingActionButton";
-import { PackagePlusIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { PackagePlusIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import DetailedItemView from "./itemDetails";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import ChecklistForm from "./checklist/checklistForm";
 
-const dontShowDelete = ['trips'] as const
-type DontShowDeletePages = typeof dontShowDelete[number]
+const dontShowDelete = ['trips'];
 
 interface ChecklistDetailsProps {
     id: string;
     state: AppState;
-    currentPage?: DontShowDeletePages
+    currentPage?: string
 }
 
 
@@ -50,6 +50,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
     const [isItemModalOpen, setIsViewItemModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const showErrorToast = (error: string | null) => {
         if (error) {
@@ -209,6 +210,40 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
         return nameMatch || notesMatch || categoryMatch;
     });
 
+    const fetchChecklistDetails = async () => {
+        setLoading(true);
+        if (state.items.length === 0) {
+            const fetchItems = async () => {
+                try {
+                    const response = await fetch(`/api/items`, {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                    if (!response.ok) throw new Error("Failed to fetch items.");
+                    const data: ItemDetails[] = await response.json();
+                    dispatch({ type: "SET_ITEMS", payload: data });
+                } catch (err) {
+                    console.error("Failed to fetch items:", err);
+                    setError("Failed to get items, try again soon.")
+                }
+            };
+            await fetchItems();
+        }
+
+        try {
+            const response = await fetch(`/api/checklists/${id}`, {
+                headers: { "Content-Type": "application/json" },
+            });
+            if (!response.ok) throw new Error("Failed to fetch checklist details.");
+
+            const data: ChecklistWithItems = await response.json();
+            setChecklist(data);
+        } catch (err) {
+            console.error(err);
+            setError("Unable to load checklist. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -285,6 +320,48 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
             setIsRemoveModalOpen(false);
         }
     };
+
+    const handleSubmit = async (data: { title: string; category: string; items: Record<string, number> }) => {
+        try {
+            // Transform `items` to the expected API format
+            const formattedItems = Object.entries(data.items).map(([item_id, quantity]) => ({
+                item_id,
+                quantity,
+                completed: false, // Assuming all items are incomplete initially
+            }));
+
+            // Prepare the payload
+            const payload = {
+                title: data.title,
+                category: data.category,
+                items: formattedItems,
+            };
+
+            // Make the PUT request
+            const response = await fetch(`/api/checklists/${checklist?.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                toast.error(errorResponse.error || "Error Updating Checklist, please try again soon.");
+                throw new Error("Failed to update checklist.");
+            }
+
+            // Parse the updated checklist
+            const updatedChecklist = await response.json();
+
+            // Update the state
+            dispatch({ type: "UPDATE_CHECKLIST", payload: updatedChecklist });
+            toast.success("Checklist updated successfully!");
+            fetchChecklistDetails();
+        } catch (err) {
+            console.error("Error updating checklist:", err);
+        }
+    };
+
 
     const handleToggleItem = async (value: CheckedState, item: ChecklistItem) => {
         if (!id) {
@@ -394,8 +471,24 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     return (
         <div className="p-4 max-w-4xl mx-auto">
             <h1 className="text-2xl font-semibold mb-4">{checklist?.title}</h1>
+            {currentPage === "trips" && (
+                <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 mb-2">
+                    <Button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    >
+                        <PackagePlusIcon /> Add Existing Item
+                    </Button>
+                    <Button
+                        onClick={handleBulkRemoveCompletedItems}
+                        className="p-2 bg-yellow-600 text-white rounded-md shadow hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    >
+                        Remove ✔ed Item(s) From Checklist
+                    </Button>
+                </div>
 
-            <FloatingActionButton>
+            )}
+            {!(currentPage && dontShowDelete.includes(currentPage)) && (<FloatingActionButton>
                 {!(currentPage && dontShowDelete.includes(currentPage)) && (
                     <Button
                         onClick={() => setIsDeleteDialogOpen(true)}
@@ -404,6 +497,12 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         <TrashIcon /> Delete Checklist
                     </Button>
                 )}
+                <Button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                    <PencilIcon /> Edit Checklist
+                </Button>
                 <Button
                     onClick={() => setIsAddModalOpen(true)}
                     className="p-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -424,7 +523,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                 >
                     Remove ✔ed Item(s) From Checklist
                 </Button>
-            </FloatingActionButton>
+            </FloatingActionButton>)}
 
 
             {/* **Completion Progress Bar** */}
@@ -544,6 +643,28 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                         <DialogDescription>Create a new item to add to your checklist.</DialogDescription>
                     </DialogHeader>
                     <NewItemModal />
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Checklist Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Checklist</DialogTitle>
+                        <DialogDescription>Edit the Current Checklist.</DialogDescription>
+                    </DialogHeader>
+                    {checklist && (<div className="min-h-screen flex flex-col items-center p-6">
+                        <ChecklistForm
+                            initialData={{
+                                title: checklist.title,
+                                category: checklist.category,
+                                items: checklist.items,
+                            }}
+                            onSubmit={handleSubmit}
+                            items={state.items}
+                            weightUnit={state.user_settings.weight_unit}
+                        />
+                    </div>)}
                 </DialogContent>
             </Dialog>
 

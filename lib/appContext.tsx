@@ -26,8 +26,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
         case "SET_ITEMS":
             return { ...state, items: action.payload };
-        case "ADD_CATEGORY": 
-            return { ...state, item_categories: [ ...state.item_categories, action.payload ]}
+        case "ADD_CATEGORY":
+            return { ...state, item_categories: [...state.item_categories, action.payload] }
         case "ADD_ITEM":
             // Check if the item ID already exists in state
             const itemExists = state.items.some(item => item.id === action.payload.id);
@@ -286,19 +286,19 @@ const appReducer = (state: AppState, action: Action): AppState => {
 
         case "REMOVE_TRIP_CATEGORY": {
             const categoryIdToRemove = action.payload;
-      
+
             return {
-              ...state,
-              trip_categories: state.trip_categories.filter(
-                (category) => category.id !== categoryIdToRemove
-              ),
-              trips: state.trips.map((trip) =>
-                trip.trip_category?.id === categoryIdToRemove
-                  ? { ...trip, trip_category: null } // Remove the association if it matches
-                  : trip
-              ),
+                ...state,
+                trip_categories: state.trip_categories.filter(
+                    (category) => category.id !== categoryIdToRemove
+                ),
+                trips: state.trips.map((trip) =>
+                    trip.trip_category?.id === categoryIdToRemove
+                        ? { ...trip, trip_category: null } // Remove the association if it matches
+                        : trip
+                ),
             };
-          }
+        }
 
         case "SET_TRIPS":
             return { ...state, trips: action.payload };
@@ -380,6 +380,67 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 };
             }
             return { ...state, checklists: [...state.checklists, action.payload] };
+
+        case "UPDATE_CHECKLIST": {
+            const updatedChecklist = action.payload;
+
+            // Update the checklists in state
+            const updatedChecklists = state.checklists.map((checklist) => {
+                if (checklist.id === updatedChecklist.id) {
+                    // Recalculate the weights and completion stats
+                    const totalWeight = updatedChecklist.items.reduce(
+                        (sum, item) => sum + (item.items?.weight || 0) * item.quantity,
+                        0
+                    );
+                    const currentWeight = updatedChecklist.items
+                        .filter((item) => item.completed)
+                        .reduce((sum, item) => sum + (item.items?.weight || 0) * item.quantity, 0);
+
+                    return {
+                        ...updatedChecklist,
+                        completion: {
+                            completed: updatedChecklist.items.filter((item) => item.completed).length,
+                            total: updatedChecklist.items.length,
+                            totalWeight,
+                            currentWeight,
+                        },
+                    };
+                }
+                return checklist;
+            });
+
+            // Update the trips that are associated with the checklist
+            const updatedTrips = state.trips.map((trip) => {
+                const updatedTripChecklists = trip.trip_checklists.map((tripChecklist) => {
+                    if (tripChecklist.checklist_id === updatedChecklist.id) {
+                        const matchingChecklist = updatedChecklists.find(
+                            (cl) => cl.id === updatedChecklist.id
+                        );
+
+                        // Update the trip-level stats based on the checklist
+                        return {
+                            ...tripChecklist,
+                            completedItems: matchingChecklist?.completion?.completed ?? 0,
+                            totalItems: matchingChecklist?.completion?.total ?? 0,
+                            currentWeight: matchingChecklist?.completion?.currentWeight ?? 0,
+                        };
+                    }
+                    return tripChecklist;
+                });
+
+                return {
+                    ...trip,
+                    trip_checklists: updatedTripChecklists,
+                };
+            });
+
+            // Return the updated state
+            return {
+                ...state,
+                checklists: updatedChecklists,
+                trips: updatedTrips,
+            };
+        }
 
         case "REMOVE_CHECKLIST":
             return { ...state, checklists: state.checklists.filter((c) => c.id !== action.payload) };
