@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ChecklistItem, Item } from '@/types/projectTypes';
+import { Item } from '@/types/projectTypes';
 import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
 import serviceContainer from '@/di/containers/serviceContainer';
 import { DatabaseService } from '@/di/services/databaseService';
@@ -234,6 +234,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
     const totalWeight = insertedItems.reduce((sum, item) => {
       // Ensure item.items exists and is either an array or an object
       const itemWeight = Array.isArray(item.items)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? item.items.reduce((itemSum: number, subItem: any) => itemSum + (subItem.weight || 0), 0)
         : (0); // Fallback if item.items is a single object
 
@@ -245,6 +246,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
       .reduce((sum, item) => {
         // Ensure item.items exists and is either an array or an object
         const itemWeight = Array.isArray(item.items)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ? item.items.reduce((itemSum: number, subItem: any) => itemSum + (subItem.weight || 0), 0)
           : (0); // Fallback if item.items is a single object
 
