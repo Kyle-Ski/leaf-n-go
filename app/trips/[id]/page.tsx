@@ -71,6 +71,15 @@ const TripPage = () => {
             .map((ic) => ic.name);
     }
 
+    // Filter out the unwanted categories
+    const excludedCategories = [
+        "Specific Location Considerations",
+        "Additional Recommendations",
+        "Pro Tips",
+        "Weather Forecast Insights",
+    ];
+    initialCategories = initialCategories.filter(category => !excludedCategories.includes(category));
+
     const [categories, dispatch2] = useReducer(categoryReducer, initialCategories);
 
     const [customCategory, setCustomCategory] = useState("");
