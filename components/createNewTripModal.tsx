@@ -155,7 +155,8 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
                 placeholderText="Select start date"
                 className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 maxDate={newTripEndDate || undefined}
-                popperPlacement="right-end"
+                autoComplete="off"
+                popperPlacement="top-end"
               />
             </div>
 
@@ -170,7 +171,8 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
                 placeholderText="Select end date"
                 className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 minDate={newTripStartDate || undefined}
-                popperPlacement="right-end"
+                autoComplete="off"
+                popperPlacement="top-end"
               />
             </div>
 

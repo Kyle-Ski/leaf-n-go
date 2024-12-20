@@ -158,7 +158,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               placeholderText="Select start date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               maxDate={endDate || undefined}
-              popperPlacement="right-end"
+              popperPlacement="top-end"
+              autoComplete="off"
             />
 
             <label htmlFor="trip-end" className="block text-sm font-medium text-gray-700">
@@ -171,7 +172,8 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               placeholderText="Select end date"
               className="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               minDate={startDate || undefined}
-              popperPlacement="right-end"
+              popperPlacement="top-end"
+              autoComplete="off"
             />
 
             <label htmlFor="trip-location" className="block text-sm font-medium text-gray-700">

@@ -57,11 +57,22 @@ const TripPage = () => {
     const [isAiSuggestionOpen, setIsAiSuggestionOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const defaultCategories = state.item_categories
-        .filter((ic) => ic.user_id === null)
-        .map((ic) => ic.name);
+    const trip = state.trips.find((trip) => trip.id === id);
 
-    const [categories, dispatch2] = useReducer(categoryReducer, defaultCategories);
+    // Determine initial categories for this trip
+    let initialCategories: string[];
+    if (trip && trip.ai_recommendation && Object.keys(trip.ai_recommendation).length > 0) {
+        // If we have AI recommendations, use those categories
+        initialCategories = Object.keys(trip.ai_recommendation);
+    } else {
+        // No AI recommendations yet, default to the 10 essentials
+        initialCategories = state.item_categories
+            .filter((ic) => ic.user_id === null)
+            .map((ic) => ic.name);
+    }
+
+    const [categories, dispatch2] = useReducer(categoryReducer, initialCategories);
+
     const [customCategory, setCustomCategory] = useState("");
 
     const handleAddCategory = (category: string) => dispatch2({ type: "ADD_CATEGORY", payload: category });
@@ -96,8 +107,6 @@ const TripPage = () => {
             setError(null); // Clear the error after displaying
         }
     }, [error]);
-
-    const trip = state.trips.find((trip) => trip.id === id);
 
     const getAssistantHelp = async () => {
         setLoading(true);
@@ -375,17 +384,7 @@ const TripPage = () => {
                         disabled={loading}
                         className="bg-purple-600 text-white px-4 py-2"
                     >
-                        <BotIcon /> {loading ? "Loading Recommendations..." : "Edit Packing Categories for AI"}
-                    </Button>
-                )}
-                {hasConsent("aiDataUsage") && (
-                    <Button
-                        onClick={getAssistantHelp}
-                        disabled={loading}
-                        className="bg-purple-600 text-white px-4 py-2"
-                    >
-                        <BotIcon />{" "}
-                        {loading
+                        <BotIcon /> {loading
                             ? "Loading Recommendations..."
                             : hasValidRecommendations(displayedRecommendations)
                                 ? "Get New Recommendations"
