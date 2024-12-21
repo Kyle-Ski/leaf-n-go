@@ -40,7 +40,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ value, onChange, placehol
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setSuggestions(data.map((item: any) => `${item.display_name}`));
       } catch (err) {
-        console.error("Error fetching locatoin suggestions", err)
+        console.error("Error fetching location suggestions", err);
         setError("Failed to fetch location suggestions");
       } finally {
         setLoading(false);
@@ -93,6 +93,7 @@ const LocationInput: React.FC<LocationInputProps> = ({ value, onChange, placehol
               {suggestions.map((suggestion, index) => (
                 <li
                   key={index}
+                  onMouseDown={(e) => e.preventDefault()} // Prevent losing focus before `onClick`
                   onClick={() => handleSelectSuggestion(suggestion)}
                   className="px-4 py-2 cursor-pointer hover:bg-blue-100"
                 >
