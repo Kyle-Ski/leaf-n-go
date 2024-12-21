@@ -8,6 +8,7 @@ import { FrontendTrip } from "@/types/projectTypes";
 import Link from "next/link";
 import { useAppContext } from "@/lib/appContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import LocationInput from "./locationInput";
 
 interface EditTripModalProps {
   isOpen: boolean;
@@ -124,21 +125,21 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               onValueChange={(e) => setCategoryOption(e)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Category"/>
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-              {trip?.trip_category && state.trip_categories ? state.trip_categories.map((category) => {
-                return (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                )
-              }) :
-                <></>
-              }
-              <SelectItem value="CREATE_NEW">
-                Create New Category
-              </SelectItem>
+                {trip?.trip_category && state.trip_categories ? state.trip_categories.map((category) => {
+                  return (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  )
+                }) :
+                  <></>
+                }
+                <SelectItem value="CREATE_NEW">
+                  Create New Category
+                </SelectItem>
               </SelectContent>
             </Select>
             {categoryOption === "CREATE_NEW" ? (<><label htmlFor="create-new-trip-category" className="block text-sm font-medium text-gray-700">
@@ -180,18 +181,14 @@ const EditTripModal = ({ isOpen, onClose, trip, onUpdate }: EditTripModalProps) 
               autoComplete="off"
             />
 
-            <label htmlFor="trip-location" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700">
               Location
             </label>
-            <Input
-              id="trip-location"
-              type="text"
-              placeholder="Location (optional)"
+            <LocationInput
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full"
+              onChange={(e) => setLocation(e)}
+              placeholder="Enter a location (e.g., San Francisco)"
             />
-
             <label htmlFor="trip-notes" className="block text-sm font-medium text-gray-700">
               Notes
             </label>

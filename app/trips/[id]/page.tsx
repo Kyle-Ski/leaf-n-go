@@ -25,6 +25,7 @@ import { parseRecommendations2 } from "@/utils/parseTripRecommendations";
 import getExistingItems from "@/utils/getItemNamesInTrip";
 import { kgToLbs } from "@/utils/convertWeight";
 import ensureKeys from "@/utils/ensureObjectKeys";
+import WeatherCard from "@/components/weatherCard";
 
 type Action =
     | { type: "ADD_CATEGORY"; payload: string }
@@ -360,6 +361,10 @@ const TripPage = () => {
                 setIsChecklistDialogOpen={setIsChecklistDialogOpen}
                 setSelectedChecklistId={setSelectedChecklistId}
             />
+
+            {trip.location && trip.end_date && new Date(trip.end_date) >= new Date() && (
+                <WeatherCard locationString={trip.location} />
+            )}
 
             {/* AI Assistant */}
             {hasConsent("aiDataUsage") && (

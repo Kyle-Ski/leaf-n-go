@@ -139,7 +139,7 @@ const PlanningHub = () => {
         </section>
       )}
 <div className="flex overflow-x-auto overscroll-x-contain gap-4 pb-4 -mx-4 px-4">
-      <WeatherCard location={{ latitude: 37.7749, longitude: -122.4194 }} />
+      {(upcomingTrip && upcomingTrip.location) && <WeatherCard locationString={upcomingTrip.location}/>}
       </div>
       {/* Environmental Insights and Tips */}
       <section className="w-full grid gap-4 sm:grid-cols-2 max-w-md sm:max-w-lg md:max-w-4xl">
