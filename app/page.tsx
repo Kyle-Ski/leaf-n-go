@@ -138,9 +138,11 @@ const PlanningHub = () => {
           </Card>
         </section>
       )}
-<div className="flex overflow-x-auto overscroll-x-contain gap-4 pb-4 -mx-4 px-4">
-      {(upcomingTrip && upcomingTrip.location) && <WeatherCard locationString={upcomingTrip.location}/>}
-      </div>
+      {(upcomingTrip && upcomingTrip.location) && (
+        <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
+          <WeatherCard locationString={upcomingTrip.location} />
+        </section>
+      )}
       {/* Environmental Insights and Tips */}
       <section className="w-full grid gap-4 sm:grid-cols-2 max-w-md sm:max-w-lg md:max-w-4xl">
         <Card className="p-4 bg-white shadow-lg">
