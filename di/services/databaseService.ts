@@ -847,6 +847,14 @@ export class DatabaseService {
     return trips || [];
   }
 
+  
+  /**
+   * Stores a location's weather data
+   * @param weatherData 
+   * @param tripId 
+   * @returns 
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async postWeatherInfo(weatherData: any, tripId: string) {
     const { error, data } = await this.databaseClient
       .from("trips")
