@@ -79,9 +79,9 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString }) => {
         setDetailedForecastUrl(
           `https://forecast.weather.gov/MapClick.php?lat=${lat}&lon=${lon}`
         );
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error:", err);
-        setError(err.message || "An error occurred while fetching weather data");
+        setError("An error occurred while fetching weather data");
       } finally {
         setLoading(false);
       }

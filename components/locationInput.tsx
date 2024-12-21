@@ -37,9 +37,11 @@ const LocationInput: React.FC<LocationInputProps> = ({ value, onChange, placehol
 
         const data = await response.json();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setSuggestions(data.map((item: any) => `${item.display_name}`));
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch location suggestions");
+      } catch (err) {
+        console.error("Error fetching locatoin suggestions", err)
+        setError("Failed to fetch location suggestions");
       } finally {
         setLoading(false);
       }
