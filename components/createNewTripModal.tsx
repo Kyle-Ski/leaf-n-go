@@ -16,6 +16,7 @@ import { CreateTripPayload } from "@/types/projectTypes";
 import { useAppContext } from "@/lib/appContext";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import LocationInput from "./locationInput";
 
 interface CreateTripModalProps {
   isOpen: boolean;
@@ -180,16 +181,13 @@ const CreateTripModal = ({ isOpen, onClose, onCreate }: CreateTripModalProps) =>
               />
             </div>
 
-            <label htmlFor="trip-location" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700">
               Location
             </label>
-            <Input
-              id="trip-location"
-              type="text"
-              placeholder="Location (optional)"
+            <LocationInput
               value={newTripLocation}
-              onChange={(e) => setNewTripLocation(e.target.value)}
-              className="w-full"
+              onChange={(e) => setNewTripLocation(e)}
+              placeholder="Enter a location (e.g., San Francisco)"
             />
             <label htmlFor="trip-notes" className="block text-sm font-medium text-gray-700">
               Notes
