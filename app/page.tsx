@@ -12,6 +12,7 @@ import { useAppContext } from "@/lib/appContext";
 import { useConsent } from "@/lib/consentContext";
 import { toast } from "react-toastify";
 import { EyeIcon, TicketsPlaneIcon } from "lucide-react";
+import WeatherCard from "@/components/weatherCard";
 
 const PlanningHub = () => {
   const { user } = useAuth();
@@ -111,7 +112,7 @@ const PlanningHub = () => {
     );
   }
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4 space-y-8 sm:p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 space-y-8 sm:px-6">
 
       {/* Current Trip Overview */}
       {upcomingTrip && (
@@ -137,7 +138,9 @@ const PlanningHub = () => {
           </Card>
         </section>
       )}
-
+<div className="flex overflow-x-auto overscroll-x-contain gap-4 pb-4 -mx-4 px-4">
+      <WeatherCard location={{ latitude: 37.7749, longitude: -122.4194 }} />
+      </div>
       {/* Environmental Insights and Tips */}
       <section className="w-full grid gap-4 sm:grid-cols-2 max-w-md sm:max-w-lg md:max-w-4xl">
         <Card className="p-4 bg-white shadow-lg">
