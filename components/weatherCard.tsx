@@ -70,6 +70,7 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString, tripId }) => {
                 const data = await response.json();
 
                 // Format the weather data
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const forecast = data.forecast.forecastday.map((day: any) => ({
                     name: new Date(day.date).toLocaleDateString("en-US", { weekday: "long" }),
                     high: day.day.maxtemp_f,
