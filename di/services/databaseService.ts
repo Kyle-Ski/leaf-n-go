@@ -698,12 +698,12 @@ export class DatabaseService {
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .eq('name', categoryName);
-  
+
     if (fetchCategoryError) {
       console.error('Error fetching category by name:', fetchCategoryError);
       throw new Error('Error checking for existing category.');
     }
-  
+
     let categoryId: string;
     if (foundCategories && foundCategories.length > 0) {
       // Category already exists (either global or for this user), use it
@@ -714,7 +714,7 @@ export class DatabaseService {
         .from('item_categories')
         .insert({ name: categoryName, user_id: userId })
         .select('*'); // Select all fields for the new category
-  
+
       if (createCategoryError || !newCategories || newCategories.length === 0) {
         console.error('Error creating new category:', createCategoryError);
         // Check for unique constraint violation if desired
@@ -725,11 +725,11 @@ export class DatabaseService {
             .select('*')
             .eq('user_id', userId)
             .eq('name', categoryName);
-  
+
           if (refetchError || !refetchedCategories || refetchedCategories.length === 0) {
             throw new Error('Failed to create or fetch the existing category.');
           }
-  
+
           categoryId = refetchedCategories[0].id;
         } else {
           throw new Error('Failed to create new category.');
@@ -738,7 +738,7 @@ export class DatabaseService {
         categoryId = newCategories[0].id;
       }
     }
-  
+
     // Now insert the item into the found or created category
     const { name, quantity, weight, notes } = itemData;
     const { data: newItems, error: createItemError } = await this.databaseClient
@@ -752,16 +752,16 @@ export class DatabaseService {
         category_id: categoryId,
       })
       .select('*, item_categories(*)'); // Select full category details now
-      // No `.single()` here, as we expect one inserted row anyway
-  
+    // No `.single()` here, as we expect one inserted row anyway
+
     if (createItemError || !newItems || newItems.length === 0) {
       console.error('Failed to create item with category:', createItemError);
       throw new Error('Failed to create item with the specified category.');
     }
-  
+
     return newItems[0];
   }
-  
+
   /**
    * Gets all item categories for user
    * @param userId 
@@ -816,6 +816,7 @@ export class DatabaseService {
             ai_recommendation,
             created_at,
             updated_at,
+            weather_data,
             trip_category:trip_types (
               id,
               name,
@@ -844,6 +845,15 @@ export class DatabaseService {
     }
 
     return trips || [];
+  }
+
+  async postWeatherInfo(weatherData: any, tripId: string) {
+    const { error, data } = await this.databaseClient
+      .from("trips")
+      .update({ weather_data: weatherData })
+      .eq("id", tripId);
+
+      return { error, data };
   }
 
   /**

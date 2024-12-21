@@ -140,7 +140,7 @@ const PlanningHub = () => {
       )}
       {(upcomingTrip && upcomingTrip.location) && (
         <section className="w-full max-w-md sm:max-w-lg md:max-w-4xl">
-          <WeatherCard locationString={upcomingTrip.location} />
+          <WeatherCard locationString={upcomingTrip.location} tripId={upcomingTrip.id} />
         </section>
       )}
       {/* Environmental Insights and Tips */}

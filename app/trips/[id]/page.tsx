@@ -363,7 +363,7 @@ const TripPage = () => {
             />
 
             {trip.location && trip.end_date && new Date(trip.end_date) >= new Date() && (
-                <WeatherCard locationString={trip.location} />
+                <WeatherCard locationString={trip.location} tripId={trip.id}/>
             )}
 
             {/* AI Assistant */}

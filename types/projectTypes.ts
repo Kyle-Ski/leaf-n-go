@@ -66,6 +66,20 @@ export interface ChecklistWithItems extends Omit<Checklist, 'completion'> {
   };
 }
 
+export interface WeatherPeriod {
+  name: string;
+  high: number;
+  low: number;
+  temperatureUnit: string;
+  shortForecast: string;
+}
+
+export interface WeatherData {
+  forecast: WeatherPeriod[];
+  last_fetched: string;
+  location: string;
+}
+
 export interface FrontendTrip {
   id: string;
   title: string;
@@ -73,6 +87,7 @@ export interface FrontendTrip {
   end_date: string | null;
   location: string | null;
   notes: string | null;
+  weather_data: WeatherData | null;
   ai_recommendation: Record<string, string[]>;
   created_at: string;
   updated_at: string;

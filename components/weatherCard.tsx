@@ -16,32 +16,47 @@ import {
     CloudRainWind,
     CloudFog,
 } from "lucide-react";
+import { useAppContext } from "@/lib/appContext";
+import { WeatherData, WeatherPeriod } from "@/types/projectTypes";
+
 
 interface WeatherProps {
-    locationString: string; // The location string provided by the user
+    locationString: string;
+    tripId: string;
 }
 
-interface WeatherPeriod {
-    name: string; // Day of the week
-    high: number; // Daily high temperature
-    low: number; // Daily low temperature
-    temperatureUnit: string; // "°F" or "°C"
-    shortForecast: string; // Weather condition description
-}
-
-const WeatherCard: React.FC<WeatherProps> = ({ locationString }) => {
+const WeatherCard: React.FC<WeatherProps> = ({ locationString, tripId }) => {
+    const { state, dispatch } = useAppContext();
     const [weatherData, setWeatherData] = useState<WeatherPeriod[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [detailedForecastUrl, setDetailedForecastUrl] = useState<string | null>(null);
 
+    const trip = state.trips.find(t => t.id === tripId);
+    const cachedWeather = trip?.weather_data;
+
+    const isCacheValid = (lastFetched: string): boolean => {
+        const fetchedTime = new Date(lastFetched).getTime();
+        const currentTime = new Date().getTime();
+        const hoursDifference = (currentTime - fetchedTime) / (1000 * 60 * 60);
+        return hoursDifference < 8; // Cache is valid for 8 hours
+    };
+
     useEffect(() => {
         const fetchWeatherData = async () => {
+            // Check if we have valid cached data
+            if (cachedWeather &&
+                cachedWeather.location === locationString &&
+                isCacheValid(cachedWeather.last_fetched)) {
+                setWeatherData(cachedWeather.forecast)
+                setDetailedForecastUrl(`https://www.google.com/search?q=weather+in+${encodeURIComponent(locationString)}`);
+                return; // Use cached data
+            }
+
             setLoading(true);
             setError(null);
 
             try {
-                // Fetch weather data from WeatherAPI
                 const response = await fetch(
                     `https://api.weatherapi.com/v1/forecast.json?key=${process.env.NEXT_PUBLIC_WEATHERAPI_KEY}&q=${encodeURIComponent(
                         locationString
@@ -54,8 +69,7 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString }) => {
 
                 const data = await response.json();
 
-                // Extract the forecast data for the next 7 days
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // Format the weather data
                 const forecast = data.forecast.forecastday.map((day: any) => ({
                     name: new Date(day.date).toLocaleDateString("en-US", { weekday: "long" }),
                     high: day.day.maxtemp_f,
@@ -64,10 +78,42 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString }) => {
                     shortForecast: day.day.condition.text,
                 }));
 
-                setWeatherData(forecast);
-                // Construct a detailed forecast URL
-                const constructedUrl = `https://www.google.com/search?q=weather+in+${encodeURIComponent(locationString)}`;
-                setDetailedForecastUrl(constructedUrl);
+                const weatherData: WeatherData = {
+                    forecast,
+                    last_fetched: new Date().toISOString(),
+                    location: locationString,
+                };
+
+                // Update trip with new weather data
+                if (trip) {
+                    const updatedTrip = {
+                        ...trip,
+                        weather_data: weatherData,
+                    };
+                    const saveWeatherData = async (weatherData: WeatherData) => {
+                        try {
+                            const response = await fetch(`/api/trips/${tripId}/weather`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ weatherData }),
+                            });
+
+                            if (response.ok) {
+                                console.log("Weather data saved successfully");
+                            } else {
+                                console.error("Failed to save weather data");
+                            }
+                        } catch (error) {
+                            console.error("Error saving weather data:", error);
+                        }
+                    };
+                    setWeatherData(weatherData.forecast)
+                    // Call saveWeatherData when dispatching the updated trip
+                    dispatch({ type: "UPDATE_TRIP", payload: updatedTrip });
+                    saveWeatherData(weatherData);
+                }
+
+                setDetailedForecastUrl(`https://www.google.com/search?q=weather+in+${encodeURIComponent(locationString)}`);
             } catch (err) {
                 console.error("Error:", err);
                 setError("An error occurred while fetching weather data");
@@ -76,8 +122,10 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString }) => {
             }
         };
 
-        fetchWeatherData();
-    }, [locationString]);
+        if (locationString) {
+            fetchWeatherData();
+        }
+    }, [locationString, tripId, dispatch]);
 
     const getWeatherIcon = (shortForecast: string) => {
         if (/sun|clear/i.test(shortForecast)) return <Sun className="w-8 h-8 text-yellow-500" />;
