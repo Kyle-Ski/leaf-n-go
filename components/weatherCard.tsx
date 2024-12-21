@@ -43,8 +43,9 @@ const WeatherCard: React.FC<WeatherProps> = ({ location }) => {
 
                 const forecastData = await forecastResponse.json();
                 setWeatherData(forecastData.properties.periods.slice(0, 7));
-            } catch (err: any) {
-                setError(err.message || "An error occurred while fetching weather data");
+            } catch (err) {
+                console.error("Error:", err)
+                setError("An error occurred while fetching weather data");
             } finally {
                 setLoading(false);
             }
