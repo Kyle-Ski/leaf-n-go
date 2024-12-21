@@ -130,7 +130,7 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString, tripId }) => {
 
     const getWeatherIcon = (shortForecast: string) => {
         if (/sun|clear/i.test(shortForecast)) return <Sun className="w-8 h-8 text-yellow-500" />;
-        if (/partly sunny|partly clear|partly cloudy/i.test(shortForecast)) return <CloudSun className="w-8 h-8 text-orange-400" />;
+        if (/partly sunny|partly clear|partly cloudy/i.test(shortForecast)) return <CloudSun className="w-8 h-8 text-blue-400" />;
         if (/rain|shower/i.test(shortForecast)) return <CloudRain className="w-8 h-8 text-blue-500" />;
         if (/heavy rain|downpour/i.test(shortForecast)) return <CloudRainWind className="w-8 h-8 text-blue-700" />;
         if (/cloudy|overcast/i.test(shortForecast)) return <Cloud className="w-8 h-8 text-gray-500" />;
