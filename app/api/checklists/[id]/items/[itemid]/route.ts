@@ -5,6 +5,11 @@ import { DatabaseService } from '@/di/services/databaseService';
 
 const databaseService = serviceContainer.resolve<DatabaseService>("supabaseService");
 
+/**
+ * Checks off a single item in a checklist
+ * @param request 
+ * @returns 
+ */
 export async function PUT(request: NextRequest) {
   try {
     const { user, error: validateError } = await validateAccessTokenDI(request, databaseService);

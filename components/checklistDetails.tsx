@@ -25,6 +25,8 @@ import { PackagePlusIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import DetailedItemView from "./itemDetails";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import ChecklistForm from "./checklist/checklistForm";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 const dontShowDelete = ['trips'];
 
@@ -37,6 +39,7 @@ interface ChecklistDetailsProps {
 
 function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
     const { dispatch } = useAppContext();
+    const pathname = usePathname();
     const [checklist, setChecklist] = useState<ChecklistWithItems | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -523,6 +526,8 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                 >
                     Remove ✔ed Item(s) From Checklist
                 </Button>
+                <Link href={pathname + "/scan"}>
+                SCAN</Link>
             </FloatingActionButton>)}
 
 

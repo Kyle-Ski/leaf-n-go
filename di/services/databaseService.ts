@@ -360,6 +360,18 @@ export class DatabaseService {
     return { data, error }
   }
 
+  async markItemsAsCompleted(checklistId: string, itemIds: string[]) {
+    // A single query that sets all matching items to completed: true
+    const { data, error } = await this.databaseClient
+      .from('checklist_items')
+      .update({ completed: true })
+      .eq('checklist_id', checklistId)
+      .in('id', itemIds)
+      .select(); // returns all updated rows
+
+    return { data, error };
+  }
+
   /**
    * Get all items in a checklist using our join table
    * @param checklistIds 
@@ -847,7 +859,7 @@ export class DatabaseService {
     return trips || [];
   }
 
-  
+
   /**
    * Stores a location's weather data
    * @param weatherData 
@@ -861,7 +873,7 @@ export class DatabaseService {
       .update({ weather_data: weatherData })
       .eq("id", tripId);
 
-      return { error, data };
+    return { error, data };
   }
 
   /**
