@@ -5,7 +5,7 @@
 ## Table of Contents
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Installation](#installation)
+- [Local Development Setup](#local-development-setup)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
@@ -30,10 +30,13 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
 - **Node.js** (version 14 or later recommended)
 - **npm** (package manager)
 - **Git** (to clone the repository)
+- **Supabase** Your own [Supabase](https://supabase.com/) project or access to our own (to request access submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues). We'll provide you with the api keys.)
+- **Anthropic** Your own [Anthropic project](https://console.anthropic.com/dashboard) or access to our own (to request access submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues). We'll provide you with the api key.)
+- **Weather API** Your own [Weather API](https://www.weatherapi.com/) api key or request access by submitting a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues
 
 ---
 
-## Installation
+## Local Development Setup
 
 1. **Clone the repository**:
    ```bash
@@ -47,11 +50,37 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
     ```bash
     npm install
 
-4. **Run the development server:**
+4. **Copy `example.env` and get required api keys**
+_Checkout the `example.env` for more information._
+    ```bash
+    cp example.env .env
+
+5. **Get Supabase Running Locally**
+* _Follow the [Getting Started Docs](https://supabase.com/docs/guides/local-development/cli/getting-started) to install Supabase_
+* _Make sure you have all of the required API keys or have [created your own project](https://supabase.com/)_
+* _Link your Supabase Project like [this](https://supabase.com/docs/guides/local-development/overview#link-your-project)_
+
+    ```bash
+    cd supabase && supabase start
+    ```
+    _Only do this step if the schema isn't in your local instance:_
+    ```bash
+    supabase db pull && supabase db reset
+    ```
+
+This should get supabase up and running, make sure to note all of the information printed out to the command line. There will be links to your locally running database, and locally running dashboard.
+
+6. **Acquire Development Credentials or Create a new User**
+Get development log in credentials, or create your own new user in the live Supabase dashboard. You will need to `supabase db pull && supabase db reset` to get the data locally.
+
+7. **Run the development server:**
     ```bash
     npm run dev
 
-5. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
+8. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
+
+_If you have any trouble, feel free to submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues).
+
 
 ## Usage
 Once installed, you can use the following commands to interact with the project:
