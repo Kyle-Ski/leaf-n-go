@@ -2,23 +2,25 @@
 
 **Leaf-N-Go** is an environmental tech packing tool designed to help outdoor adventurers prepare for their trips with efficiency, sustainability, and customization. The app combines smart packing checklists, eco-friendly recommendations, and AI-powered insights to support responsible, well-prepared outdoor journeys.
 
+Check out a live version of the site [here](https://leaf-n-go.vercel.app/about). This is a personal project and currently funded with my own resources, please don't abuse <3. If you'd like to help fund, you can "Buy me Coffee" [here](https://www.buymeacoffee.com/skiroyjenkins)
+
 ## Table of Contents
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Installation](#installation)
+- [Local Development Setup](#local-development-setup)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 
 ---
 
-## Features (?)
+## Features (Subject to Change)
 
 - **Customizable Packing Checklists**: Create tailored lists based on trip length, destination type, and personal preferences.
-- **Environmental Impact Insights**: View sustainability ratings and eco-friendly alternatives for gear and materials to reduce environmental impact.
+- **Environmental Impact Insights (WIP)**: View sustainability ratings and eco-friendly alternatives for gear and materials to reduce environmental impact.
 - **AI-Powered Suggestions**: Smart packing suggestions and essential reminders, with options to prioritize based on adventure type.
-- **User Personas and Preferences**: Designed for different types of adventurers, from minimalists to eco-conscious users.
-- **Multi-Device Compatibility**: Accessible on smartphones, tablets, and desktops, with offline capabilities for remote areas.
+- **User Personas and Preferences (WIP)**: Designed for different types of adventurers, from minimalists to eco-conscious users.
+- **Multi-Device Compatibility**: Accessible on smartphones, tablets, and desktops.
 
 ---
 
@@ -30,10 +32,13 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
 - **Node.js** (version 14 or later recommended)
 - **npm** (package manager)
 - **Git** (to clone the repository)
+- **Supabase** Your own [Supabase](https://supabase.com/) project or access to our own (to request access submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues). We'll provide you with the api keys.)
+- **Anthropic** Your own [Anthropic project](https://console.anthropic.com/dashboard) or access to our own (to request access submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues). We'll provide you with the api key.)
+- **Weather API** Your own [Weather API](https://www.weatherapi.com/) api key or request access by submitting a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues).
 
 ---
 
-## Installation
+## Local Development Setup
 
 1. **Clone the repository**:
    ```bash
@@ -47,11 +52,34 @@ To start using Leaf-N-Go, you’ll need to clone the repository, install depende
     ```bash
     npm install
 
-4. **Run the development server:**
+4. **Copy `example.env` and get required api keys**
+_Checkout the `example.env` for more information._
+    ```bash
+    cp example.env .env
+
+5. **Get Supabase Running Locally**
+* _Follow the [Getting Started Docs](https://supabase.com/docs/guides/local-development/cli/getting-started) to install Supabase_
+* _Make sure you have all of the required API keys or have [created your own project](https://supabase.com/)_
+* _Follow [this](https://supabase.com/docs/guides/local-development/overview#link-your-project) guide to link your Supabase Project_
+
+    _Only do this step if the schema isn't in your local instance:_
+    ```bash
+    supabase db pull && supabase db reset
+    ```
+
+ - _This should get supabase up and running, make sure to note all of the information printed out to the command line. There will be links to your locally running database, and locally running dashboard._
+
+6. **Acquire Development Credentials or Create a new User**
+* Get development log in credentials, or create your own new user in the live Supabase dashboard. You will need to `supabase db pull && supabase db reset` to get the data locally.
+
+7. **Run the development server:**
     ```bash
     npm run dev
 
-5. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
+8. **Open [http://localhost:3000](http://localhost:3000) in your browser to view the app.**
+
+_If you have any trouble, feel free to submit a request in [Issues](https://github.com/Kyle-Ski/leaf-n-go/issues)._
+
 
 ## Usage
 Once installed, you can use the following commands to interact with the project:
