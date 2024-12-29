@@ -1,5 +1,5 @@
 // Define the password requirements
-interface PasswordRequirement {
+export interface PasswordRequirement {
     id: string;
     label: string;
     test: (password: string) => boolean;

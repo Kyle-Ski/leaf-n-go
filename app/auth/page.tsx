@@ -85,7 +85,7 @@ export default function AuthPage() {
 
   const isPasswordValid = Object.values(passwordValidations).every(Boolean);
 
-  const validatePassword = (password: string) => {
+  const validatePassword = () => {
     return isPasswordValid;
   };
 
@@ -233,7 +233,7 @@ export default function AuthPage() {
     setConfirmationMessage("");
     setIsLoading(true); // Start loading
 
-    if (isSignUp && !validatePassword(password)) {
+    if (isSignUp && !validatePassword()) {
       setError(
         "Password must be at least 8 characters long, include uppercase and lowercase letters, numbers, and symbols."
       );
@@ -283,11 +283,9 @@ const passwordStrength = Object.values(passwordValidations).filter(Boolean).leng
 
 // Define strength labels and colors
 const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
-const strengthColors = ["red", "orange", "yellow", "blue", "green"];
 
 // Determine the label and color based on strength
 const strengthLabel = strengthLabels[passwordStrength] || "";
-const strengthColor = strengthColors[passwordStrength - 1] || "red";
 
 return (
   <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
