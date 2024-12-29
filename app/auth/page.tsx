@@ -10,6 +10,9 @@ import { UserSettings } from "@/types/projectTypes";
 import ConsentModal from "@/components/consentModal";
 import { useConsent } from "@/lib/consentContext";
 import { toast } from "react-toastify";
+import passwordRequirements from "@/utils/auth/validateNewPassowrd";
+import { CheckIcon, XIcon } from "lucide-react";
+import clsx from "clsx";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -25,6 +28,13 @@ export default function AuthPage() {
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(!consent.cookies.functional && !consent.aiDataUsage);
+  const [passwordValidations, setPasswordValidations] = useState<Record<string, boolean>>({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    symbol: false,
+  });
 
   const showErrorToast = (error: string | null) => {
     if (error) {
@@ -65,18 +75,18 @@ export default function AuthPage() {
     setIsSignUp(mode === "signup"); // Set isSignUp based on query param
   }, [searchParams]);
 
+  useEffect(() => {
+    const validations: Record<string, boolean> = {};
+    passwordRequirements.forEach((req) => {
+      validations[req.id] = req.test(password);
+    });
+    setPasswordValidations(validations);
+  }, [password]);
+
+  const isPasswordValid = Object.values(passwordValidations).every(Boolean);
+
   const validatePassword = (password: string) => {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    return (
-      password.length >= 8 &&
-      hasUpperCase &&
-      hasLowerCase &&
-      hasNumber &&
-      hasSpecialChar
-    );
+    return isPasswordValid;
   };
 
   const fetchUserSettings = async () => {
@@ -268,38 +278,51 @@ export default function AuthPage() {
       setIsLoading(false); // Stop loading
     }
   };
+// Calculate password strength based on the number of requirements met
+const passwordStrength = Object.values(passwordValidations).filter(Boolean).length;
 
-  return (
-    <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
-      <h1 className="text-2xl font-semibold mb-6">
+// Define strength labels and colors
+const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
+const strengthColors = ["red", "orange", "yellow", "blue", "green"];
 
-        {isSignUp ? "Sign Up" : "Sign In"}
-      </h1>
-      {isSignUp && (
-        <p className="text-sm text-gray-600 mb-4">
-          Welcome new user! Create an account to start planning your adventures.
-        </p>
-      )}
-      {isLoading ? (
-        <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-2 text-blue-500">Processing...</p>
-        </div>
-      ) : confirmationMessage ? (
-        <p className="text-green-600 text-center">{confirmationMessage}</p>
-      ) : (
-        <form
-          onSubmit={handleAuth}
-          className={`flex flex-col space-y-4 w-full max-w-md transition-opacity ${isLoading ? "opacity-50" : "opacity-100"
-            }`}
-        >
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+// Determine the label and color based on strength
+const strengthLabel = strengthLabels[passwordStrength] || "";
+const strengthColor = strengthColors[passwordStrength - 1] || "red";
+
+return (
+  <div className="flex flex-col items-center min-h-screen justify-center p-4 bg-gray-50">
+    <h1 className="text-2xl font-semibold mb-6">
+      {isSignUp ? "Sign Up" : "Sign In"}
+    </h1>
+    {isSignUp && (
+      <p className="text-sm text-gray-600 mb-4">
+        Welcome new user! Create an account to start planning your adventures.
+      </p>
+    )}
+    {isLoading ? (
+      <div className="flex flex-col items-center">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-2 text-blue-500">Processing...</p>
+      </div>
+    ) : confirmationMessage ? (
+      <p className="text-green-600 text-center">{confirmationMessage}</p>
+    ) : (
+      <form
+        onSubmit={handleAuth}
+        className={`flex flex-col space-y-4 w-full max-w-md transition-opacity ${isLoading ? "opacity-50" : "opacity-100"
+          }`}
+      >
+        {/* Email Input */}
+        <Input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        
+        {/* Password Input */}
+        <div className="relative">
           <Input
             type="password"
             placeholder="Password"
@@ -307,29 +330,88 @@ export default function AuthPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" className="bg-blue-500 text-white">
-            {isSignUp ? "Sign Up" : "Sign In"}
-          </Button>
-        </form>
-      )}
-      {!isLoading && (
-        <p className="mt-4 text-gray-600">
-          {isSignUp ? "Already have an account?" : `Don't have an account?`}
-          <span
-            onClick={() => {
-              setError("");
-              setConfirmationMessage("");
-              setIsSignUp(!isSignUp);
-            }}
-            className="text-blue-500 cursor-pointer ml-1"
-          >
-            {isSignUp ? "Sign In" : "Sign Up"}
-          </span>
-        </p>
-      )}
-      <ConsentModal isOpen={isConsentModalOpen} onClose={() => {
-        setIsConsentModalOpen(false)
-      }} />
-    </div>
-  );
+          {/* Optional: Toggle Password Visibility */}
+          {/* Implement if desired */}
+        </div>
+        
+        {/* Password Requirements */}
+        {isSignUp && (
+          <div className="mt-2 space-y-1">
+            {passwordRequirements.map((req) => (
+              <div key={req.id} className="flex items-center">
+                {passwordValidations[req.id] ? (
+                  <CheckIcon className="h-5 w-5 text-green-500" />
+                ) : (
+                  <XIcon className="h-5 w-5 text-red-500" />
+                )}
+                <span className={`ml-2 text-sm ${passwordValidations[req.id] ? "text-green-700" : "text-gray-500"}`}>
+                  {req.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Password Strength Meter */}
+        {isSignUp && password && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">Password Strength</label>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+              <div
+                className={clsx(
+                  "h-2.5 rounded-full",
+                  {
+                    "bg-red-500": passwordStrength <= 1,
+                    "bg-orange-500": passwordStrength === 2,
+                    "bg-yellow-500": passwordStrength === 3,
+                    "bg-blue-500": passwordStrength === 4,
+                    "bg-green-500": passwordStrength === 5,
+                  }
+                )}
+                style={{ width: `${(passwordStrength / passwordRequirements.length) * 100}%` }}
+              ></div>
+            </div>
+            <p
+              className={clsx(
+                "mt-1 text-sm",
+                {
+                  "text-red-700": passwordStrength <= 1,
+                  "text-orange-700": passwordStrength === 2,
+                  "text-yellow-700": passwordStrength === 3,
+                  "text-blue-700": passwordStrength === 4,
+                  "text-green-700": passwordStrength === 5,
+                }
+              )}
+            >
+              {strengthLabel}
+            </p>
+          </div>
+        )}
+        
+        {/* Submit Button */}
+        <Button type="submit" className="bg-blue-500 text-white" disabled={isSignUp && !isPasswordValid}>
+          {isSignUp ? "Sign Up" : "Sign In"}
+        </Button>
+      </form>
+    )}
+    {!isLoading && (
+      <p className="mt-4 text-gray-600">
+        {isSignUp ? "Already have an account?" : `Don't have an account?`}
+        <span
+          onClick={() => {
+            setError("");
+            setConfirmationMessage("");
+            setIsSignUp(!isSignUp);
+          }}
+          className="text-blue-500 cursor-pointer ml-1"
+        >
+          {isSignUp ? "Sign In" : "Sign Up"}
+        </span>
+      </p>
+    )}
+    <ConsentModal isOpen={isConsentModalOpen} onClose={() => {
+      setIsConsentModalOpen(false)
+    }} />
+  </div>
+);
 }

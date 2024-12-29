@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function AuthCallback() {
       setTimeout(() => router.push("/auth"), 2000);
     }
   };
-//diff
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
       <h1 className="text-2xl font-semibold mb-4">Authentication</h1>
@@ -78,7 +79,7 @@ export default function AuthCallback() {
           }}
           className="flex flex-col space-y-4 w-full max-w-md"
         >
-          <input
+          <Input
             type="password"
             placeholder="New Password"
             className="p-2 border rounded"
