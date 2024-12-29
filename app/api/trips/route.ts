@@ -116,14 +116,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Add participants to the trip
-    // if (participants.length) {
-    //   const tripParticipants = participants.map((participant: { user_id: string; role: string }) => ({
-    //     trip_id: newTrip.id,
-    //     user_id: participant.user_id,
-    //     role: participant.role,
-    //   }));
-    //   await databaseService.addTripParticipants(tripParticipants);
-    // }
+    if (participants.length) {
+      const tripParticipants = participants.map((participant: { user_id: string; role: string }) => ({
+        trip_id: newTrip.id,
+        user_id: participant.user_id,
+        role: participant.role,
+      }));
+      console.log("Trip Participants:", tripParticipants)
+      // await databaseService.addTripParticipants(tripParticipants);
+    }
 
     return NextResponse.json(newTrip, { status: 201 });
   } catch (err) {

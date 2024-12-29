@@ -25,6 +25,7 @@ import { PackagePlusIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import DetailedItemView from "./itemDetails";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import ChecklistForm from "./checklist/checklistForm";
+import TripLinks from "./tripLinks";
 
 const dontShowDelete = ['trips'];
 
@@ -488,6 +489,7 @@ function ChecklistDetails({ id, state, currentPage }: ChecklistDetailsProps) {
                 </div>
 
             )}
+            {currentPage !== "trips" && (<TripLinks  checklistId={id}/>)}
             {!(currentPage && dontShowDelete.includes(currentPage)) && (<FloatingActionButton>
                 {!(currentPage && dontShowDelete.includes(currentPage)) && (
                     <Button
