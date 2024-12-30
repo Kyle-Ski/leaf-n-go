@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import anthropic from '@/lib/anthropicClient';
-import { trackAiUsage } from '@/utils/trackAiUsage';
+import { checkTokenAvailability, trackAiUsage, trackTokenUsage } from '@/utils/trackAiUsage';
 import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
 import serviceContainer from '@/di/containers/serviceContainer';
 import { DatabaseService } from '@/di/services/databaseService';
@@ -24,6 +24,13 @@ export async function POST(req: NextRequest) {
 
         const userId = user.id;
         const { location, startDate, endDate, existingItems, tripId, tripType, categories } = body;
+
+        const estimatedTokens = 1000; // Estimate based on your typical usage
+        const hasAvailableTokens = await checkTokenAvailability(userId, estimatedTokens, databaseService);
+
+        if (!hasAvailableTokens) {
+            return NextResponse.json({ error: "Monthly token limit exceeded" }, { status: 429 });
+        }
 
         // Validate user input
         if (!location || !startDate || !endDate || !userId || !tripId) {
@@ -176,6 +183,8 @@ export async function POST(req: NextRequest) {
             ]
         });
 
+        let inputTokens = 0;
+        let outputTokens = 0;
         // Handle streaming response
         const encoder = new TextEncoder();
         const readableStream = new ReadableStream({
@@ -188,7 +197,24 @@ export async function POST(req: NextRequest) {
                             controller.enqueue(encoder.encode(text));
                         }
                     }
+
+                    // Track input and output tokens
+                    if (event.type === 'message_start') {
+                        inputTokens = event.message.usage.input_tokens;
+                    }
+                    if (event.type === 'message_delta') {
+                        outputTokens = event.usage.output_tokens;
+                    }
                 }
+                // Track token usage after completion
+                if (outputTokens > 0) {
+                    await trackTokenUsage(userId, {
+                        inputTokens,
+                        outputTokens,
+                        totalTokens: inputTokens + outputTokens
+                    }, databaseService);
+                }
+
                 controller.close();
             },
         });
