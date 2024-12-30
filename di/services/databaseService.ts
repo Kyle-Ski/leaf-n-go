@@ -240,6 +240,62 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Gets the user's AI usage data
+   * @param userId 
+   * @returns 
+   */
+  async getAiUsageForUser(userId: string) {
+    const { error, data } = await this.databaseClient
+      .from('user_ai_usage')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    return { error, data }
+  }
+
+  /**
+   * Creates a new record if one doesn't exist
+   * @param user_id 
+   * @param tokens_used 
+   * @returns 
+   */
+  async createAiUsageRecord(user_id: string, tokens_used: number) {
+
+    const { data, error } = await this.databaseClient
+      .from('user_ai_usage')
+      .insert([{
+        user_id,
+        tokens_used,
+        usage_count: 1,
+        last_used: new Date().toISOString()
+      }]);
+
+    return { data, error }
+  }
+
+  /**
+   * Updates the users token usage.
+   * @param tokens_used should be the existing usage + the new total tokens used
+   * @param usage_count should be the existing usage count + 1
+   * @param userId 
+   * @returns 
+   */
+  async updateAiUsage(tokens_used: number, usage_count: number, userId: string) {
+
+    const { data, error } = await this.databaseClient
+      .from('user_ai_usage')
+      .update({
+        tokens_used,
+        usage_count,
+        last_used: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+
+    return { data, error } 
+  }
+
   /* AUTH METHODS */
   /**
    * Signs in with email and password
@@ -847,7 +903,7 @@ export class DatabaseService {
     return trips || [];
   }
 
-  
+
   /**
    * Stores a location's weather data
    * @param weatherData 
@@ -861,7 +917,7 @@ export class DatabaseService {
       .update({ weather_data: weatherData })
       .eq("id", tripId);
 
-      return { error, data };
+    return { error, data };
   }
 
   /**

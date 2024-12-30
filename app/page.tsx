@@ -13,11 +13,14 @@ import { useConsent } from "@/lib/consentContext";
 import { toast } from "react-toastify";
 import { EyeIcon, TicketsPlaneIcon } from "lucide-react";
 import WeatherCard from "@/components/weatherCard";
+import AiUsageWidget from "@/components/aiUsageWidget";
+import { useAiUsage } from "@/hooks/aiUsageHook";
 
 const PlanningHub = () => {
   const { user } = useAuth();
   const { state, dispatch } = useAppContext();
   const { hasConsent } = useConsent();
+  const { usage, isLoading } = useAiUsage();
 
   const [upcomingTrip, setUpcomingTrip] = useState<FrontendTrip | null>(null);
   const [recentTrips, setRecentTrips] = useState<FrontendTrip[]>([]);
@@ -161,6 +164,7 @@ const PlanningHub = () => {
             Remember to check for fire restrictions and follow park guidelines.
           </CardContent>
         </Card>
+        <AiUsageWidget usage={usage} isLoading={isLoading} />
       </section>
 
       {/* Recent Trips and Activity */}
