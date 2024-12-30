@@ -4,7 +4,6 @@ import { checkTokenAvailability, trackAiUsage, trackTokenUsage } from '@/utils/t
 import { validateAccessTokenDI } from '@/utils/auth/validateAccessToken';
 import serviceContainer from '@/di/containers/serviceContainer';
 import { DatabaseService } from '@/di/services/databaseService';
-import { Message } from '@anthropic-ai/sdk/resources/messages.mjs';
 
 const databaseService = serviceContainer.resolve<DatabaseService>('supabaseService');
 

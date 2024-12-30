@@ -169,7 +169,7 @@ export default function AiUsagePage() {
                 <Alert className="bg-yellow-50 border-yellow-200">
                     <AlertTriangle className="h-4 w-4 text-yellow-600" />
                     <AlertDescription className="text-yellow-800">
-                        You've used {Math.round(usagePercentage)}% of your monthly token limit.
+                        You&apos;ve used {Math.round(usagePercentage)}% of your monthly token limit.
                         Consider upgrading your plan or managing usage to avoid hitting the limit.
                     </AlertDescription>
                 </Alert>
