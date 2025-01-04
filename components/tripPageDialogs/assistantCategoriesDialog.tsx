@@ -51,7 +51,7 @@ The assistant will always give recommendations for the following: "Specific Loca
 For example: "I'm going on a road trip to the Grand Canyon and need help with: Flight Considerations, Clothing & Layers, Snacks, Electronics & Personal Items, and Health & Hygiene."
 
 `}
-*We&apos;re always working on the assistant's recommendations, so some categories you add might not be populated. Please give us feedback in the <Link style={{color: "blue", textDecoration: "underline"}} href="/about">about</Link> page!
+*We&apos;re always working on the assistant&apos;s recommendations, so some categories you add might not be populated. Please give us feedback in the <Link style={{color: "blue", textDecoration: "underline"}} href="/about">about</Link> page!
                     </DialogDescription>
                 </DialogHeader>
                 <CategorySelector
