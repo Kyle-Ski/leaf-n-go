@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ConsentCategories, useConsent, defaultConsent } from "@/lib/consentContext"; // Import defaultConsent
+import InfoBox from "./informationBox";
 
 // Inline SVG for Checkmark
 export const CheckMark = () => (
@@ -179,7 +180,7 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     <Dialog
       open={isOpen}
       onOpenChange={handleDialogChange}
-      // Removed initialFocus ref as per user request
+    // Removed initialFocus ref as per user request
     >
       {/* Conditionally Render Overlay and Modal Content */}
       {isOpen && (
@@ -189,9 +190,8 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
           {/* Modal Content with Fade-in/Fade-out */}
           <div
-            className={`fixed inset-0 flex items-center justify-center p-4 transition-all duration-300 ${
-              isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-            }`}
+            className={`fixed inset-0 flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+              }`}
             aria-modal="true"
             role="dialog"
           >
@@ -211,9 +211,8 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   <button
                     type="button"
                     onClick={() => applyPreset("full")}
-                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${
-                      selectedPreset === "full" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
-                    } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${selectedPreset === "full" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
+                      } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     aria-pressed={selectedPreset === "full"}
                   >
                     <div className="flex flex-col">
@@ -231,9 +230,8 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   <button
                     type="button"
                     onClick={() => applyPreset("functional")}
-                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${
-                      selectedPreset === "functional" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
-                    } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${selectedPreset === "functional" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
+                      } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     aria-pressed={selectedPreset === "functional"}
                   >
                     <div className="flex flex-col">
@@ -251,9 +249,8 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   <button
                     type="button"
                     onClick={() => applyPreset("essential")}
-                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${
-                      selectedPreset === "essential" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
-                    } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`text-left flex items-center justify-between p-4 border rounded-lg transition-colors duration-300 ${selectedPreset === "essential" ? "bg-blue-100 border-blue-500" : "bg-white border-gray-300"
+                      } hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     aria-pressed={selectedPreset === "essential"}
                   >
                     <div className="flex flex-col">
@@ -268,6 +265,8 @@ const ConsentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                   </button>
                 </div>
               </div>
+
+              <InfoBox message={`NOTE: We do not use analytics in the app as of Jan 2025. This is just a placeholder.`} />
 
               {/* Divider */}
               <div className="my-6 border-t border-gray-200"></div>

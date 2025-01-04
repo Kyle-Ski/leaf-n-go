@@ -47,7 +47,10 @@ We have the 10 essentials already picked, feel free to remove them and add your 
 
 The assistant will always give recommendations for the following: "Specific Location Considerations", "Additional Recommendations", "Pro Tips", and "Weather Forecast Insights"
 
-For example: "I'm going on a road trip to the Grand Canyon and need help with: Flight Considerations, Clothing & Layers, Snacks, Electronics & Personal Items, and Health & Hygiene."`}
+For example: "I'm going on a road trip to the Grand Canyon and need help with: Flight Considerations, Clothing & Layers, Snacks, Electronics & Personal Items, and Health & Hygiene."
+
+*We're always working on the assistant's recommendations, so some categories you add might not be populated. Please give us feedback in the about page!
+`}
                     </DialogDescription>
                 </DialogHeader>
                 <CategorySelector

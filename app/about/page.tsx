@@ -1,6 +1,8 @@
 "use client";
 
+import InfoBox from "@/components/informationBox";
 import { useAuth } from "@/lib/auth-Context";
+import Link from "next/link";
 
 const AboutPage = () => {
     const { user } = useAuth();
@@ -25,6 +27,7 @@ const AboutPage = () => {
                 <p className="mt-2 text-lg text-gray-600">
                     Your ultimate tool for stress-free and sustainable outdoor adventures.
                 </p>
+                <InfoBox message={"We're currently in development and still working on things. All of the features listed here are not currently in the app. Thanks for checking us out!"} />
             </header>
 
             {/* Overview */}
@@ -49,7 +52,15 @@ const AboutPage = () => {
             <section className="mb-10">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4">Meet the Creator</h2>
                 <p className="text-gray-700 leading-relaxed">
-                    Hi, I’m Kyle, a passionate outdoor enthusiast and software engineer. After countless adventures planning hikes, climbs, and backpacking trips, I realized the need for a tool to make trip preparation easier and more environmentally conscious. Leaf-N-Go is my way of helping fellow adventurers spend more time exploring and less time planning.
+                    Hi, I&apos;m Kyle, a passionate outdoor enthusiast and software engineer. After countless adventures planning hikes, climbs, and backpacking trips, I realized the need for a tool to make trip preparation easier and more environmentally conscious. Leaf-N-Go is my way of helping fellow adventurers spend more time exploring and less time planning.
+                </p>
+            </section>
+
+            <section className="mb-10">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Give us Feedback</h2>
+                <p className="text-gray-700 leading-relaxed">
+                    Thanks for trying out the app! If you find any bugs or have any feedback we&apos;d be happy to hear from you! Send an <Link style={{ color: 'blue', textDecoration: "underline" }} href="mailto:feedback+kyle@czajkowski.tech">email</Link> over,
+                    or submit an <Link style={{ color: 'blue', textDecoration: "underline" }} href="https://github.com/Kyle-Ski/leaf-n-go/issues">issue</Link> in the GitHub Repository.
                 </p>
             </section>
 

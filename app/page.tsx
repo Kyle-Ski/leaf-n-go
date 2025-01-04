@@ -15,6 +15,7 @@ import { EyeIcon, TicketsPlaneIcon } from "lucide-react";
 import WeatherCard from "@/components/weatherCard";
 import AiUsageWidget from "@/components/aiUsageWidget";
 import { useAiUsage } from "@/hooks/aiUsageHook";
+import InfoBox from "@/components/informationBox";
 
 const PlanningHub = () => {
   const { user } = useAuth();
@@ -154,6 +155,7 @@ const PlanningHub = () => {
           </CardHeader>
           <CardContent>
             Bring reusable containers for snacks to reduce waste on the trail.
+            <InfoBox message="Work in progress, check back soon for full feature!"/>
           </CardContent>
         </Card>
         <Card className="p-4 bg-white shadow-lg">
@@ -162,6 +164,7 @@ const PlanningHub = () => {
           </CardHeader>
           <CardContent>
             Remember to check for fire restrictions and follow park guidelines.
+            <InfoBox message="Work in progress, check back soon for full feature!"/>
           </CardContent>
         </Card>
         <AiUsageWidget usage={usage} isLoading={isLoading} />

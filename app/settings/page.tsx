@@ -11,6 +11,7 @@ import { useAppContext } from "@/lib/appContext";
 import { UserSettings } from "@/types/projectTypes";
 import { Loader } from "@/components/ui/loader"; // Ensure Loader is imported
 import { ConsentCategories, useConsent, defaultConsent } from "@/lib/consentContext";
+import InfoBox from "@/components/informationBox";
 
 interface UpdateUserSettingAction {
   type: "UPDATE_USER_SETTING";
@@ -368,141 +369,6 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Profile Information */}
-        <Card className="p-6 bg-white shadow-lg relative">
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 relative">
-            <div>
-              <label className="block text-gray-700">Name</label>
-              <Input
-                type="text"
-                value={updatedName}
-                onChange={(e) => console.log("changing name:", e.target.value)}//{(e) => handleFieldChange("name", e.target.value)}
-                placeholder="Your Name"
-                className="w-full mt-1"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">Email</label>
-              <Input
-                type="email"
-                value={updatedEmail}
-                onChange={(e) => console.log("changing email:", e.target.value)}//(e) => handleFieldChange("email", e.target.value)}
-                className="w-full mt-1 bg-gray-100"
-                readOnly // Assuming email is not editable; remove if it should be editable
-              />
-            </div>
-
-            {/* Loader */}
-            {isSavingProfile && (
-              <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
-                <Loader className="h-8 w-8 text-blue-500" />
-              </div>
-            )}
-
-            {/* Success Message */}
-            {saveSuccessProfile && (
-              <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
-            )}
-
-            <div className="flex space-x-4 mt-4">
-              <Button
-                onClick={
-                  () => console.log("Save Profile")
-                  // () => handleSave(["name", "email"], "profile")
-                }
-                className="bg-green-500 text-white hover:bg-green-600"
-                disabled={isSavingProfile} // Disable button while saving
-              >
-                Save
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Appearance Settings */}
-        <Card className="p-6 bg-white shadow-lg relative">
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center space-x-4">
-            <label className="text-gray-700">Dark Mode</label>
-            <Switch
-              checked={darkMode}
-              onCheckedChange={(value) => handleFieldChange("dark_mode", value)}
-            />
-          </CardContent>
-
-          {/* Loader */}
-          {isSavingAppearance && (
-            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
-              <Loader className="h-8 w-8 text-blue-500" />
-            </div>
-          )}
-
-          {/* Success Message */}
-          {saveSuccessAppearance && (
-            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
-          )}
-
-          <CardContent className="flex space-x-4 mt-4">
-            <Button
-              onClick={() => handleSave(["dark_mode"], "appearance")}
-              className="bg-green-500 text-white hover:bg-green-600"
-              disabled={isSavingAppearance} // Disable button while saving
-            >
-              Save
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Notifications Settings */}
-        <Card className="p-6 bg-white shadow-lg relative">
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <label className="text-gray-700">Email Notifications</label>
-              <Switch
-                checked={emailNotifications}
-                onCheckedChange={(value) => handleFieldChange("email_notifications", value)}
-              />
-            </div>
-            <div className="flex items-center space-x-4">
-              <label className="text-gray-700">Push Notifications</label>
-              <Switch
-                checked={pushNotifications}
-                onCheckedChange={(value) => handleFieldChange("push_notifications", value)}
-              />
-            </div>
-          </CardContent>
-
-          {/* Loader */}
-          {isSavingNotifications && (
-            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
-              <Loader className="h-8 w-8 text-blue-500" />
-            </div>
-          )}
-
-          {/* Success Message */}
-          {saveSuccessNotifications && (
-            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
-          )}
-
-          <CardContent className="flex space-x-4 mt-4">
-            <Button
-              onClick={() => handleSave(["email_notifications", "push_notifications"], "notifications")}
-              className="bg-green-500 text-white hover:bg-green-600"
-              disabled={isSavingNotifications} // Disable button while saving
-            >
-              Save
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Preferred Weight Setting */}
         <Card className="p-6 bg-white shadow-lg relative">
           <CardHeader>
@@ -623,7 +489,7 @@ const SettingsPage = () => {
                 </button>
               </div>
             </div>
-
+            <InfoBox message={`NOTE: We do not use analytics in the app as of Jan 2025. This is just a placeholder.`} />
             {/* Divider */}
             <div className="my-6 border-t border-gray-200"></div>
 
@@ -741,7 +607,7 @@ const SettingsPage = () => {
                       ...localConsent,
                       localStorage: true,
                     };
-                    
+
                     if (user?.id) {
                       await updateConsent(updatedConsentToSave, true, user.id);
                     } else {
@@ -795,17 +661,6 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-
-        {/* Security Settings */}
-        <Card className="p-6 bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle>Security</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button className="bg-blue-500 text-white hover:bg-blue-600">Change Password</Button>
-          </CardContent>
-        </Card>
-
         {/* Logout Button */}
         <Card className="p-6 bg-white shadow-lg">
           <CardHeader>
@@ -820,6 +675,156 @@ const SettingsPage = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Profile Information */}
+        <Card className="p-6 bg-white shadow-lg relative">
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 relative">
+            <InfoBox message="Work in progress, check back soon for full feature!" />
+            <div>
+              <label className="block text-gray-700">Name</label>
+              <Input
+                type="text"
+                value={updatedName}
+                onChange={(e) => console.log("changing name:", e.target.value)}//{(e) => handleFieldChange("name", e.target.value)}
+                placeholder="Your Name"
+                className="w-full mt-1"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700">Email</label>
+              <Input
+                type="email"
+                value={updatedEmail}
+                onChange={(e) => console.log("changing email:", e.target.value)}//(e) => handleFieldChange("email", e.target.value)}
+                className="w-full mt-1 bg-gray-100"
+                readOnly // Assuming email is not editable; remove if it should be editable
+              />
+            </div>
+
+            {/* Loader */}
+            {isSavingProfile && (
+              <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+                <Loader className="h-8 w-8 text-blue-500" />
+              </div>
+            )}
+
+            {/* Success Message */}
+            {saveSuccessProfile && (
+              <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+            )}
+
+            <div className="flex space-x-4 mt-4">
+              <Button
+                onClick={
+                  () => console.log("Save Profile")
+                  // () => handleSave(["name", "email"], "profile")
+                }
+                className="bg-green-500 text-white hover:bg-green-600"
+                disabled={isSavingProfile} // Disable button while saving
+              >
+                Save
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card className="p-6 bg-white shadow-lg relative">
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center space-x-4">
+            <InfoBox message="Work in progress, check back soon for full feature!" />
+            <label className="text-gray-700">Dark Mode</label>
+            <Switch
+              checked={darkMode}
+              onCheckedChange={(value) => handleFieldChange("dark_mode", value)}
+            />
+          </CardContent>
+
+          {/* Loader */}
+          {isSavingAppearance && (
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+              <Loader className="h-8 w-8 text-blue-500" />
+            </div>
+          )}
+
+          {/* Success Message */}
+          {saveSuccessAppearance && (
+            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+          )}
+
+          <CardContent className="flex space-x-4 mt-4">
+            <Button
+              onClick={() => handleSave(["dark_mode"], "appearance")}
+              className="bg-green-500 text-white hover:bg-green-600"
+              disabled={isSavingAppearance} // Disable button while saving
+            >
+              Save
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Notifications Settings */}
+        <Card className="p-6 bg-white shadow-lg relative">
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <InfoBox message="Work in progress, check back soon for full feature!" />
+            <div className="flex items-center space-x-4">
+              <label className="text-gray-700">Email Notifications</label>
+              <Switch
+                checked={emailNotifications}
+                onCheckedChange={(value) => handleFieldChange("email_notifications", value)}
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="text-gray-700">Push Notifications</label>
+              <Switch
+                checked={pushNotifications}
+                onCheckedChange={(value) => handleFieldChange("push_notifications", value)}
+              />
+            </div>
+          </CardContent>
+
+          {/* Loader */}
+          {isSavingNotifications && (
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-white bg-opacity-75">
+              <Loader className="h-8 w-8 text-blue-500" />
+            </div>
+          )}
+
+          {/* Success Message */}
+          {saveSuccessNotifications && (
+            <p className="text-green-500 text-sm mt-2">Settings saved successfully!</p>
+          )}
+
+          <CardContent className="flex space-x-4 mt-4">
+            <Button
+              onClick={() => handleSave(["email_notifications", "push_notifications"], "notifications")}
+              className="bg-green-500 text-white hover:bg-green-600"
+              disabled={isSavingNotifications} // Disable button while saving
+            >
+              Save
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card className="p-6 bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Security</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InfoBox message="Work in progress, check back soon for full feature!" />
+            <Button className="bg-blue-500 text-white hover:bg-blue-600">Change Password</Button>
+          </CardContent>
+        </Card>
+
       </section>
     </div>
   );

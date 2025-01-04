@@ -151,7 +151,7 @@ const WeatherCard: React.FC<WeatherProps> = ({ locationString, tripId }) => {
             <Card className="w-full max-w-full overflow-hidden">
                 <CardHeader>
                     <div className="flex flex-col items-start">
-                        <CardTitle>Current Weather Forecast for: {locationString}</CardTitle>
+                        <CardTitle>Three Day Weather Forecast for: {locationString}</CardTitle>
                         {detailedForecastUrl && (
                             <a
                                 href={detailedForecastUrl}
